@@ -315,7 +315,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v1.3 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v1.3.1 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -751,7 +751,8 @@ async function buildPrecipLayer() {
   try {
     const frame = RV.frames[RV.idx];
     if (!frame) return;
-    const layer = await buildMosaic((z, x, y) => tileUrl(frame, z, x, y));
+    // RainViewer radar tiles also top out (placeholder tiles beyond z7)
+    const layer = await buildMosaic((z, x, y) => tileUrl(frame, z, x, y), 7);
     if (layer) precipLayer = layer;
   } catch (e) { console.warn('precip build error', e); }
   finally { precipBuilding = false; }
