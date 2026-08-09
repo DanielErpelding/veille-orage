@@ -315,7 +315,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v1.6 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v1.7 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -581,6 +581,16 @@ if (!state._migrPersist30) {
   state._migrPersist30 = true;
   saveState();
 }
+
+// fixed startup state (whatever the previous session left): all layers on,
+// 100 km range, rain at 25% opacity, live (no animation)
+state.precipOn = true;
+state.cloudsOn = true;
+state.strikesShow = true;
+state.range = 100;
+state.precipOpacity = 0.25;
+state.animate = false;
+saveState();
 
 /* runtime-only */
 let strikes = [];                 // {t(ms), lat, lon, dist(km), brg(deg)}
@@ -1831,6 +1841,7 @@ function init() {
   if (state.viewMode === 'map') buildBaseLayer();
   if (state.animate) startAnim();
   autoLocateNow();
+  connectWs(); // lightning feed live from the start
 
   requestAnimationFrame(loop);
 
