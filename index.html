@@ -315,7 +315,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v1.3.2 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v1.4 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -369,7 +369,7 @@
   </div>
   <div class="legend-grid">
     <div class="leg-item"><span class="leg-ico"><span class="leg-precip"></span></span><span>Pluie : faible → intense</span></div>
-    <div class="leg-item"><span class="leg-ico"><span class="leg-clouds"></span></span><span>Couverture nuageuse (satellite IR)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-clouds"></span></span><span>Couverture nuageuse (modèle météo)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-dot fresh"></span></span><span>Éclair à l'instant (&lt;&nbsp;3&nbsp;s)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-dot recent"></span></span><span>Éclair récent</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-dot old"></span></span><span>Éclair ancien (s'estompe)</span></div>
@@ -459,7 +459,7 @@
     </div>
 
     <div class="set-row">
-      <div class="sk">Opacité nuages<small>couche satellite infrarouge</small></div>
+      <div class="sk">Opacité nuages<small>modèle météo Open-Meteo</small></div>
       <input type="range" class="set-range" id="setCloudsOpacity" min="0.1" max="1" step="0.05">
     </div>
 
@@ -489,7 +489,7 @@
       <p>Vue « Plan Position Indicator » centrée sur votre site. Le Nord est en haut. Les anneaux marquent la distance ; la portée totale est réglable via les pastilles.</p>
       <ul>
         <li><strong>Précipitations</strong> — couche radar <code>RainViewer</code> projetée dans le cadran (bouton <code>Pluie</code>).</li>
-        <li><strong>Couverture nuageuse</strong> — satellite infrarouge RainViewer (bouton <code>Nuages</code>).</li>
+        <li><strong>Couverture nuageuse</strong> — modèle météo Open-Meteo, mise à jour horaire (bouton <code>Nuages</code>).</li>
         <li><strong>Impacts de foudre</strong> — éclairs jaunes, plus vifs quand récents, qui s'estompent avec le temps (bouton <code>Impacts</code>).</li>
         <li><strong>Balayage</strong> — la ligne verte tourne comme un vrai radar (esthétique).</li>
       </ul>
@@ -499,6 +499,7 @@
       <h3>Sources</h3>
       <ul>
         <li><code>api.rainviewer.com</code> — mosaïque radar mondiale des précipitations (gratuite, sans clé).</li>
+        <li><code>open-meteo.com</code> — couverture nuageuse (analyse du modèle météo, gratuite, sans clé).</li>
         <li><code>ws*.blitzortung.org</code> — réseau communautaire de détection de foudre, diffusé en direct par WebSocket.</li>
       </ul>
       <p>Les impacts sont détectés par triangulation par un réseau de bénévoles : latence de quelques secondes et couverture variable selon la région.</p>
@@ -627,8 +628,6 @@ const RV = {
   host: null,
   frames: [],      // radar [{time, path}]
   idx: -1,         // current radar frame
-  satFrames: [],   // satellite infrared [{time, path}]
-  satIdx: -1,
   color: 2,        // radar color scheme (2 = universal blue)
   fetchedAt: 0
 };
@@ -650,8 +649,6 @@ async function loadRainviewerIndex() {
     const now = (j.radar && j.radar.nowcast) || [];
     RV.frames = past.concat(now);
     RV.idx = Math.max(0, past.length - 1); // latest observed frame
-    RV.satFrames = (j.satellite && j.satellite.infrared) || [];
-    RV.satIdx = RV.satFrames.length - 1;   // latest satellite frame
     RV.fetchedAt = Date.now();
     schedulePrecip();
   } catch (e) {
@@ -663,10 +660,6 @@ async function loadRainviewerIndex() {
 function tileUrl(frame, z, x, y) {
   // {host}{path}/{size}/{z}/{x}/{y}/{color}/{smooth}_{snow}.png
   return `${RV.host}${frame.path}/256/${z}/${x}/${y}/${RV.color}/1_1.png`;
-}
-function satTileUrl(frame, z, x, y) {
-  // satellite infrared: color 0 (grayscale), no smoothing/snow options
-  return `${RV.host}${frame.path}/256/${z}/${x}/${y}/0/0_0.png`;
 }
 function baseTileUrl(z, x, y) {
   // basemap (light "voyager" or dark), subdomain rotation
@@ -787,18 +780,92 @@ async function buildPrecipLayer() {
   finally { precipBuilding = false; }
 }
 
+/* Inverse web-mercator: global pixel at zoom z -> lat/lon */
+function mercPxToLatLon(px, py, z) {
+  const worldPx = 256 * Math.pow(2, z);
+  const lon = px / worldPx * 360 - 180;
+  const n = Math.PI * (1 - 2 * py / worldPx);
+  return { lat: deg(Math.atan(Math.sinh(n))), lon };
+}
+
+/* Cloud cover from Open-Meteo (free, no key, CORS-enabled): a 12x12 grid of
+   current cloud_cover percentages around the site, rendered as a smooth
+   white alpha map georeferenced like the other layers.
+   (RainViewer removed satellite imagery from its public API.) */
+let cloudsError = false;
+let cloudsFetchedAt = 0;
 async function buildCloudLayer() {
-  if (!state.cloudsOn || !RV.host || RV.satIdx < 0 || cloudsBuilding) return;
+  if (!state.cloudsOn || cloudsBuilding) return;
   cloudsBuilding = true;
   try {
-    const frame = RV.satFrames[RV.satIdx];
-    if (!frame) return;
-    // RainViewer satellite infrared tops out at low zooms — beyond that the
-    // server returns "Zoom Level Not Supported" placeholder tiles.
-    const layer = await buildMosaic((z, x, y) => satTileUrl(frame, z, x, y), 6);
-    if (layer) { cloudLayer = layer; updateLogMeta(); }
-  } catch (e) { console.warn('clouds build error', e); }
-  finally { cloudsBuilding = false; }
+    const { lat, lon } = state.site;
+    const z = Math.min(zoomForRange(state.range), 7);
+    const margin = 1.5;
+    const dLat = (state.range / 111.32) * margin;
+    const dLon = (state.range / (111.32 * Math.cos(rad(lat)))) * margin;
+    const worldPx = 256 * (1 << z);
+    const clampPx = (v) => Math.max(0, Math.min(worldPx, v));
+    const pxMinX = clampPx(lonToTileX(lon - dLon, z) * 256);
+    const pxMaxX = clampPx(lonToTileX(lon + dLon, z) * 256);
+    const pxMinY = clampPx(latToTileY(lat + dLat, z) * 256);
+    const pxMaxY = clampPx(latToTileY(lat - dLat, z) * 256);
+    const w = Math.round(pxMaxX - pxMinX), h = Math.round(pxMaxY - pxMinY);
+    if (w < 8 || h < 8) return;
+
+    const N = 12;
+    const lats = [], lons = [];
+    for (let j = 0; j < N; j++) {
+      for (let i = 0; i < N; i++) {
+        const px = pxMinX + (i + 0.5) * (pxMaxX - pxMinX) / N;
+        const py = pxMinY + (j + 0.5) * (pxMaxY - pxMinY) / N;
+        const ll = mercPxToLatLon(px, py, z);
+        lats.push(ll.lat.toFixed(3));
+        lons.push(ll.lon.toFixed(3));
+      }
+    }
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lats.join(',') +
+                '&longitude=' + lons.join(',') + '&current=cloud_cover';
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    let arr = await res.json();
+    if (!Array.isArray(arr)) arr = [arr];
+    if (arr.length < N * N) throw new Error('réponse incomplète');
+
+    // low-res alpha map -> bilinear upscale for smooth cloud shading
+    const small = document.createElement('canvas');
+    small.width = N; small.height = N;
+    const sctx = small.getContext('2d');
+    const idata = sctx.createImageData(N, N);
+    for (let k = 0; k < N * N; k++) {
+      const cur = arr[k] && arr[k].current;
+      const cc = Math.max(0, Math.min(100, (cur && cur.cloud_cover) || 0));
+      idata.data[k * 4]     = 235;
+      idata.data[k * 4 + 1] = 240;
+      idata.data[k * 4 + 2] = 245;
+      idata.data[k * 4 + 3] = Math.round(cc / 100 * 210);
+    }
+    sctx.putImageData(idata, 0, 0);
+
+    const off = document.createElement('canvas');
+    off.width = w; off.height = h;
+    const octx = off.getContext('2d');
+    octx.imageSmoothingEnabled = true;
+    octx.imageSmoothingQuality = 'high';
+    octx.drawImage(small, 0, 0, N, N, 0, 0, w, h);
+
+    cloudLayer = {
+      canvas: off, z, tilesOk: 1,
+      originPxX: pxMinX, originPxY: pxMinY,
+      lat, lon, range: state.range
+    };
+    cloudsError = false;
+    cloudsFetchedAt = Date.now();
+    updateLogMeta();
+  } catch (e) {
+    console.warn('clouds build error', e);
+    cloudsError = true;
+    updateLogMeta();
+  } finally { cloudsBuilding = false; }
 }
 
 async function buildBaseLayer() {
@@ -1374,9 +1441,9 @@ function updateLogMeta() {
   if (state.precipOn && RV.frames.length && RV.idx >= 0) {
     parts.push('pluie ' + fmtFrameTime(RV.frames[RV.idx].time));
   }
-  if (state.cloudsOn && RV.satFrames.length && RV.satIdx >= 0) {
-    if (cloudLayer && cloudLayer.tilesOk === 0) parts.push('sat ✗');
-    else parts.push('sat ' + fmtFrameTime(RV.satFrames[RV.satIdx].time));
+  if (state.cloudsOn) {
+    if (cloudsError) parts.push('nuages ✗');
+    else if (cloudsFetchedAt) parts.push('nuages ' + fmtFrameTime(cloudsFetchedAt / 1000));
   }
   meta.textContent = parts.length ? parts.join(' · ') : '—';
 }
@@ -1458,7 +1525,7 @@ $('#cloudsBtn').onclick = () => {
   state.cloudsOn = !state.cloudsOn;
   $('#cloudsBtn').classList.toggle('on', state.cloudsOn);
   saveState();
-  if (state.cloudsOn) { if (!RV.host) loadRainviewerIndex(); else buildCloudLayer(); }
+  if (state.cloudsOn) buildCloudLayer();
   updateLogMeta();
 };
 $('#strikesBtn').onclick = () => {
@@ -1610,12 +1677,17 @@ $('#legendHead').onclick = () => {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     // refresh weather layers if stale (> 4 min)
-    if ((state.precipOn || state.cloudsOn) && (Date.now() - RV.fetchedAt > 240000)) loadRainviewerIndex();
+    if (state.precipOn && (Date.now() - RV.fetchedAt > 240000)) loadRainviewerIndex();
+    if (state.cloudsOn && (Date.now() - cloudsFetchedAt > 600000)) buildCloudLayer();
     if (wsWanted && !ws) { wsBackoff = 1000; openWs(); }
   }
 });
 // periodic radar refresh
-setInterval(() => { if ((state.precipOn || state.cloudsOn) && document.visibilityState === 'visible') loadRainviewerIndex(); }, 300000);
+setInterval(() => {
+  if (document.visibilityState !== 'visible') return;
+  if (state.precipOn) loadRainviewerIndex();
+  if (state.cloudsOn) buildCloudLayer();
+}, 300000);
 
 /* ============================================================
    STARTUP
@@ -1636,7 +1708,8 @@ function init() {
   updateConnectBtn();
   renderLog();
 
-  if (state.precipOn || state.cloudsOn) loadRainviewerIndex();
+  if (state.precipOn) loadRainviewerIndex();
+  if (state.cloudsOn) buildCloudLayer();
   if (state.viewMode === 'map') buildBaseLayer();
   if (state.animate) startAnim();
 
