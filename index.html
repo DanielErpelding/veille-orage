@@ -155,6 +155,52 @@
   }
   .fs-btn:active { background: var(--accent); color: var(--bg); }
 
+  .map-ctls {
+    position: absolute;
+    top: 22px; left: 20px;
+    z-index: 5;
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+  }
+  body.mapmode .map-ctls { display: flex; }
+  .map-ctl {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(10,28,18,0.78);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    font-size: 15px;
+    display: grid; place-items: center;
+    cursor: pointer;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
+  .map-ctl:active { background: var(--accent); color: var(--bg); }
+  .map-ctl.on { background: var(--error); border-color: var(--error); color: #fff; }
+  .map-ctl.hidden { display: none; }
+  body.fullscreen .map-ctls {
+    top: calc(14px + env(safe-area-inset-top));
+    left: calc(14px + env(safe-area-inset-left));
+  }
+
+  .pick-bar {
+    display: none;
+    margin: 0 16px 10px;
+    background: var(--panel);
+    border: 1px solid var(--error);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--text);
+    text-align: center;
+  }
+  .pick-bar.show { display: block; }
+  .pick-bar .pick-coord { color: var(--warn); display: block; margin: 4px 0 8px; font-size: 12px; }
+  .pick-bar .pick-actions { display: flex; gap: 8px; }
+  .pick-bar .pick-actions button { flex: 1; }
+
   body.fullscreen .scope-wrap {
     position: fixed; inset: 0;
     z-index: 90;
@@ -395,7 +441,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v2.3 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v2.4 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -439,6 +485,14 @@
 
 <div class="alarm-banner" id="alarmBanner"></div>
 <div class="cell-banner" id="cellBanner"></div>
+<div class="pick-bar" id="pickBar">
+  <span id="pickMsg">Touche la carte à l'endroit du site à surveiller.</span>
+  <span class="pick-coord" id="pickCoord"></span>
+  <div class="pick-actions">
+    <button class="ctl" id="pickCancel">Annuler</button>
+    <button class="ctl primary" id="pickSave" disabled>Enregistrer</button>
+  </div>
+</div>
 <div class="om-banner" id="omBanner">
   <span class="om-title">Données météo indisponibles</span>
   <span id="omBannerMsg"></span>
@@ -449,6 +503,10 @@
 <div class="scope-wrap" id="scopeWrap">
   <canvas id="scope"></canvas>
   <button class="fs-btn" id="fsBtn" title="Plein écran">⛶</button>
+  <div class="map-ctls" id="mapCtls">
+    <button class="map-ctl" id="pickBtn" title="Choisir un site sur la carte">📍</button>
+    <button class="map-ctl hidden" id="recenterBtn" title="Recentrer sur ma position">⌖</button>
+  </div>
 </div>
 <div class="map-attrib" id="mapAttrib">fond de carte © OpenStreetMap · © CARTO</div>
 
@@ -656,7 +714,15 @@
       <p>Lecture de l'étiquette : la 1<sup>re</sup> ligne donne la <strong>position</strong> de la cellule (distance et direction depuis toi), la 2<sup>e</sup> son <strong>cap de déplacement</strong> (« va vers NE ») et sa vitesse.</p>
 
       <h3>Sites surveillés</h3>
-      <p>Dans la fenêtre Site → Préréglés, <strong>« ＋ Mémoriser le site affiché »</strong> enregistre le site courant (maison, chalet…). Tout impact tombant sous le seuil d'alerte autour d'un site mémorisé (marqué ⚡) déclenche une alerte nommée, où que soit centré le cadran. Le ✕ retire un site.</p>
+      <p>Deux façons d'enregistrer un lieu à surveiller (maison, chalet, terrain…) :</p>
+      <ul>
+        <li><strong>Sur la carte</strong> — passe en vue <code>Carte</code>, touche le bouton <span style="color:var(--warn)">📍</span> en haut à gauche, place-toi sur le lieu voulu puis touche la carte : une épingle se pose, tu la nommes et elle est enregistrée.</li>
+        <li><strong>Depuis le site courant</strong> — fenêtre Site → Préréglés → <strong>« ＋ Mémoriser le site affiché »</strong>.</li>
+      </ul>
+      <p>Les sites enregistrés apparaissent en épingles jaunes sur la carte. Tout impact tombant sous le seuil d'alerte autour de l'un d'eux déclenche une alerte nommée, où que soit centré le cadran. Le ✕ dans la liste des préréglés retire un site.</p>
+
+      <h3>Déplacer et zoomer la carte</h3>
+      <p>En vue <code>Carte</code> : un doigt pour déplacer, deux doigts pour zoomer (molette sur ordinateur). Le <strong>site de référence reste inchangé</strong> — distances, cap et alertes continuent d'être calculés depuis ta position, dont l'anneau d'alerte et les cercles de distance restent solidaires même quand elle sort de l'écran. Le bouton <span style="color:var(--accent)">⌖</span> recentre la carte ; changer de portée ou revenir au cadran la recentre aussi.</p>
 
       <h3>Notifications système</h3>
       <p>Activables dans Réglages : impact proche et cellule en approche génèrent une notification (avec l'accord du système). Limite à connaître : sans serveur, l'app ne peut notifier que <strong>pendant qu'elle tourne</strong> — sur iPhone, le système suspend l'app en arrière-plan après quelques dizaines de secondes ; sur ordinateur ou Android, les notifications fonctionnent aussi en arrière-plan.</p>
@@ -796,10 +862,14 @@ function latToTileY(lat, z) {
   return (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * Math.pow(2, z);
 }
 function zoomForRange(km) {
+  if (km <= 6)   return 12;
+  if (km <= 12)  return 11;
+  if (km <= 25)  return 10;
   if (km <= 50)  return 9;
   if (km <= 100) return 8;
   if (km <= 200) return 7;
-  return 6;
+  if (km <= 400) return 6;
+  return 5;
 }
 
 /* ============================================================
@@ -877,13 +947,13 @@ function schedulePrecip() {
    maxZ caps the tile zoom for sources with limited native resolution
    (drawGeoLayer scales per-layer, so a coarser mosaic still lines up). */
 async function buildMosaic(urlFn, maxZ) {
-  const { lat, lon } = state.site;
-  const z = Math.min(zoomForRange(state.range), maxZ || 99);
+  const { lat, lon } = view;
+  const z = Math.min(zoomForRange(view.range), maxZ || 99);
 
   // Geographic half-span (with margin) -> tile bounds
   const margin = 1.5; // covers square-map corners (sqrt(2) ~= 1.41)
-  const dLat = (state.range / 111.32) * margin;
-  const dLon = (state.range / (111.32 * Math.cos(rad(lat)))) * margin;
+  const dLat = (view.range / 111.32) * margin;
+  const dLon = (view.range / (111.32 * Math.cos(rad(lat)))) * margin;
 
   const n = 1 << z;
   const clampT = (v) => Math.max(0, Math.min(n - 1, v));
@@ -917,7 +987,7 @@ async function buildMosaic(urlFn, maxZ) {
     canvas: off, z, tilesOk,
     originPxX: xMin * 256,   // global mercator pixel of offscreen top-left
     originPxY: yMin * 256,
-    lat, lon, range: state.range
+    lat, lon, range: view.range
   };
 }
 
@@ -949,8 +1019,20 @@ function tintedClouds(layer) {
   return layer.tinted;
 }
 
+/* The map viewport can be panned/zoomed away from the site. The site stays
+   the reference for every distance, bearing and alert; `view` only drives
+   what is rendered and which tiles are fetched. In PPI mode the two are
+   kept identical, since a radar scope is centred on the observer. */
+const view = { lat: 0, lon: 0, range: 100, custom: false };
+function syncView() {
+  view.lat = state.site.lat;
+  view.lon = state.site.lon;
+  view.range = state.range;
+  view.custom = false;
+  updateViewUi();
+}
 function layerFits(l) {
-  return l && l.range === state.range && l.lat === state.site.lat && l.lon === state.site.lon;
+  return l && l.range === view.range && l.lat === view.lat && l.lon === view.lon;
 }
 
 async function buildPrecipLayer() {
@@ -1043,16 +1125,16 @@ async function buildMeteoLayers() {
   const cloudsOk = !state.cloudsOn || (layerFits(cloudLayer) && nowT - cloudsFetchedAt < 480000);
   const windOk = !state.windOn || (windLayer && layerFits(windLayer) && nowT - windFetchedAt < 480000);
   if (cloudsOk && windOk) return;
-  const key = state.site.lat + ',' + state.site.lon + ',' + state.range;
+  const key = view.lat + ',' + view.lon + ',' + view.range;
   if (meteoInFlightKey === key) return;
   meteoInFlightKey = key;
   const seq = ++meteoBuildSeq;
   try {
-    const { lat, lon } = state.site;
-    const z = Math.min(zoomForRange(state.range), 7);
+    const { lat, lon } = view;
+    const z = Math.min(zoomForRange(view.range), 7);
     const margin = 1.5;
-    const dLat = (state.range / 111.32) * margin;
-    const dLon = (state.range / (111.32 * Math.cos(rad(lat)))) * margin;
+    const dLat = (view.range / 111.32) * margin;
+    const dLon = (view.range / (111.32 * Math.cos(rad(lat)))) * margin;
     const worldPx = 256 * (1 << z);
     const clampPx = (v) => Math.max(0, Math.min(worldPx, v));
     const pxMinX = clampPx(lonToTileX(lon - dLon, z) * 256);
@@ -1112,7 +1194,7 @@ async function buildMeteoLayers() {
     cloudLayer = {
       canvas: off, z, tilesOk: 1,
       originPxX: pxMinX, originPxY: pxMinY,
-      lat, lon, range: state.range
+      lat, lon, range: view.range
     };
     cloudsError = false;
     cloudsFetchedAt = Date.now();
@@ -1125,7 +1207,7 @@ async function buildMeteoLayers() {
       points.push({ lat: +lats[k], lon: +lons[k],
                     spd: cur.wind_speed_10m || 0, dir: cur.wind_direction_10m || 0 });
     }
-    windLayer = { points, lat, lon, range: state.range };
+    windLayer = { points, lat, lon, range: view.range };
     windError = false;
     windFetchedAt = Date.now();
     omOk();
@@ -1190,13 +1272,13 @@ async function buildLightLayer() {
   if (layerFits(lightLayer)) return; // static atlas: same view never refetched
   const seq = ++lightBuildSeq;
   try {
-    const { lat, lon } = state.site;
-    const zt = Math.max(0, Math.min(6, zoomForRange(state.range) - 2)); // file zoom
+    const { lat, lon } = view;
+    const zt = Math.max(0, Math.min(6, zoomForRange(view.range) - 2)); // file zoom
     const ze = zt + 2; // effective 256px zoom used for projection
 
     const margin = 1.5;
-    const dLat = (state.range / 111.32) * margin;
-    const dLon = (state.range / (111.32 * Math.cos(rad(lat)))) * margin;
+    const dLat = (view.range / 111.32) * margin;
+    const dLon = (view.range / (111.32 * Math.cos(rad(lat)))) * margin;
     const n = 1 << zt;
     const clampT = (v) => Math.max(0, Math.min(n - 1, v));
     const xMin = clampT(Math.floor(lonToTileX(lon - dLon, zt)));
@@ -1227,7 +1309,7 @@ async function buildLightLayer() {
       canvas: off, z: ze, tilesOk,
       originPxX: xMin * 1024,  // 1 zt-tile = 1024 px at ze scale
       originPxY: yMin * 1024,
-      lat, lon, range: state.range
+      lat, lon, range: view.range
     };
     if (!tilesOk && !lightToastShown) {
       lightToastShown = true;
@@ -1295,15 +1377,15 @@ async function buildFireLayer(force) {
       'Ouvre Réglages → « Clé NASA FIRMS » et colle une clé (gratuite et immédiate sur firms.modaps.eosdis.nasa.gov/api/map_key). Elle reste sur ton appareil.');
     return;
   }
-  const sameView = firesSite && firesSite.lat === state.site.lat &&
-                   firesSite.lon === state.site.lon && firesSite.range === state.range;
+  const sameView = firesSite && firesSite.lat === view.lat &&
+                   firesSite.lon === view.lon && firesSite.range === view.range;
   if (!force && sameView && Date.now() - firesFetchedAt < 1800000) return; // FIRMS updates ~3 h
 
   const seq = ++firesBuildSeq;
   try {
-    const { lat, lon } = state.site;
-    const dLat = (state.range / 111.32) * 1.5;
-    const dLon = (state.range / (111.32 * Math.cos(rad(lat)))) * 1.5;
+    const { lat, lon } = view;
+    const dLat = (view.range / 111.32) * 1.5;
+    const dLon = (view.range / (111.32 * Math.cos(rad(lat)))) * 1.5;
     const bbox = [lon - dLon, lat - dLat, lon + dLon, lat + dLat]
       .map(v => v.toFixed(3)).join(',');
     // 3 days: enough freshness, and enough repetition to spot fixed sources
@@ -1350,9 +1432,9 @@ async function buildFireLayer(force) {
       f.dist = haversine(state.site.lat, state.site.lon, f.lat, f.lon);
       f.brg = bearing(state.site.lat, state.site.lon, f.lat, f.lon);
     }
-    fires = out.filter(f => f.dist <= state.range * 1.2).sort((a, b) => a.t - b.t);
+    fires = out.sort((a, b) => a.t - b.t);
     firesFetchedAt = Date.now();
-    firesSite = { lat: state.site.lat, lon: state.site.lon, range: state.range };
+    firesSite = { lat: view.lat, lon: view.lon, range: view.range };
     clearDataError('fires');
     updateLogMeta();
   } catch (e) {
@@ -2072,11 +2154,11 @@ function drawGeoLayer(cx, cy, R, layer, alpha, canvasOverride) {
 
 /* Mercator projection of a lat/lon point onto the view (map mode). */
 function projectPoint(lat, lon, cx, cy, R) {
-  const z = zoomForRange(state.range);
-  const centerPxX = lonToTileX(state.site.lon, z) * 256;
-  const centerPxY = latToTileY(state.site.lat, z) * 256;
-  const metersPerPx = 156543.03392 * Math.cos(rad(state.site.lat)) / Math.pow(2, z);
-  const scale = metersPerPx * R / (state.range * 1000);
+  const z = zoomForRange(view.range);
+  const centerPxX = lonToTileX(view.lon, z) * 256;
+  const centerPxY = latToTileY(view.lat, z) * 256;
+  const metersPerPx = 156543.03392 * Math.cos(rad(view.lat)) / Math.pow(2, z);
+  const scale = metersPerPx * R / (view.range * 1000);
   return {
     x: cx + (lonToTileX(lon, z) * 256 - centerPxX) * scale,
     y: cy + (latToTileY(lat, z) * 256 - centerPxY) * scale
@@ -2118,24 +2200,29 @@ function drawMap() {
     return p;
   }, light);
 
-  // faint distance rings for scale reading (contrast depends on basemap)
+  // Distance rings and the alert circle belong to the SITE, not to the
+  // screen centre: once the map is panned the site drifts away from it.
+  const sp = projectPoint(state.site.lat, state.site.lon, cx, cy, R);
+  const pxPerKm = (R / view.range);
   ctx.lineWidth = 1;
   ctx.font = '10px ' + getCSS('--mono');
   ctx.textAlign = 'left';
-  for (let i = 1; i <= 2; i++) {
-    const rr = R * i / 2;
+  const ringStep = niceRingStep(view.range);
+  for (let i = 1; i <= 3; i++) {
+    const rr = ringStep * i * pxPerKm;
+    if (rr > R * 2.2) break;
     ctx.strokeStyle = light ? 'rgba(15,90,50,0.5)' : 'rgba(56,224,138,0.28)';
-    ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(sp.x, sp.y, rr, 0, Math.PI * 2); ctx.stroke();
     ctx.fillStyle = light ? 'rgba(15,45,30,0.85)' : 'rgba(214,234,217,0.65)';
-    ctx.fillText(Math.round(state.range * i / 2) + ' km', cx + 3, cy - rr + 12);
+    ctx.fillText(ringStep * i + ' km', sp.x + 3, sp.y - rr + 12);
   }
 
   // alert-radius ring
-  if (state.alertKm < state.range) {
-    const ar = R * state.alertKm / state.range;
+  const ar = state.alertKm * pxPerKm;
+  if (ar > 6 && ar < R * 2.2) {
     ctx.setLineDash([4, 5]);
     ctx.strokeStyle = 'rgba(229,87,78,0.8)';
-    ctx.beginPath(); ctx.arc(cx, cy, ar, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(sp.x, sp.y, ar, 0, Math.PI * 2); ctx.stroke();
     ctx.setLineDash([]);
   }
 
@@ -2145,8 +2232,9 @@ function drawMap() {
     const maxAge = state.maxAgeMin * 60000;
     for (const s of strikes) {
       const age = now - s.t;
-      if (age > maxAge || s.dist > state.range * 1.5) continue;
+      if (age > maxAge) continue;
       const p = projectPoint(s.lat, s.lon, cx, cy, R);
+      if (Math.abs(p.x - cx) > R + 20 || Math.abs(p.y - cy) > R + 20) continue;
       drawStrike(p.x, p.y, 1 - age / maxAge, age);
     }
   }
@@ -2160,11 +2248,29 @@ function drawMap() {
   drawFires(mapProject);
   drawCells(mapProject);
 
-  // center marker
+  // saved watched sites
+  drawSavedSites((la, lo) => {
+    const p = projectPoint(la, lo, cx, cy, R);
+    if (Math.abs(p.x - cx) > R || Math.abs(p.y - cy) > R) return null;
+    return p;
+  }, light);
+
+  // the site itself (may be off-centre once panned)
   ctx.fillStyle = light ? '#0E7A42' : (getCSS('--accent') || '#38E08A');
-  ctx.beginPath(); ctx.arc(cx, cy, 3.5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(sp.x, sp.y, 3.5, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = light ? 'rgba(14,122,66,0.8)' : 'rgba(56,224,138,0.6)';
-  ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(sp.x, sp.y, 7, 0, Math.PI * 2); ctx.stroke();
+
+  // point being picked
+  if (pickPoint) {
+    const p = projectPoint(pickPoint.lat, pickPoint.lon, cx, cy, R);
+    drawPin(p.x, p.y, '#E5574E', null, light);
+    ctx.strokeStyle = 'rgba(229,87,78,0.55)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.arc(p.x, p.y, 14, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+  }
 
   ctx.restore();
 
@@ -2175,6 +2281,55 @@ function drawMap() {
   if (ctx.roundRect) ctx.roundRect(x0, y0, side, side, 10);
   else ctx.rect(x0, y0, side, side);
   ctx.stroke();
+}
+
+/* Ring spacing that stays readable at any zoom (1-2-5 sequence). */
+function niceRingStep(rangeKm) {
+  const raw = rangeKm / 2.5;
+  const pow = Math.pow(10, Math.floor(Math.log10(Math.max(raw, 0.1))));
+  const n = raw / pow;
+  const step = (n < 1.5 ? 1 : n < 3.5 ? 2 : n < 7.5 ? 5 : 10) * pow;
+  return step < 1 ? Math.round(step * 10) / 10 : Math.round(step);
+}
+
+/* Map pin with an optional label underneath. */
+function drawPin(x, y, color, label, light) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.strokeStyle = light ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.55)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.bezierCurveTo(x - 7, y - 9, x - 6, y - 18, x, y - 18);
+  ctx.bezierCurveTo(x + 6, y - 18, x + 7, y - 9, x, y);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = light ? '#FFFFFF' : '#04120A';
+  ctx.beginPath(); ctx.arc(x, y - 12, 2.6, 0, Math.PI * 2); ctx.fill();
+  if (label) {
+    ctx.font = '10px ' + getCSS('--mono');
+    ctx.textAlign = 'center';
+    const w = ctx.measureText(label).width + 8;
+    ctx.fillStyle = light ? 'rgba(255,255,255,0.9)' : 'rgba(4,18,10,0.85)';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x - w / 2, y + 3, w, 14, 3);
+    else ctx.rect(x - w / 2, y + 3, w, 14);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = light ? '#14321F' : '#D6EAD9';
+    ctx.fillText(label, x, y + 13);
+  }
+  ctx.restore();
+}
+
+function drawSavedSites(project, light) {
+  if (!Array.isArray(state.savedSites)) return;
+  for (const w of state.savedSites) {
+    const p = project(w.lat, w.lon);
+    if (!p) continue;
+    drawPin(p.x, p.y, '#F2C14E', w.name, light);
+  }
 }
 
 function getCSS(v) {
@@ -2309,6 +2464,7 @@ function renderRangeBar() {
       state.range = r;
       saveState();
       renderRangeBar();
+      syncView();
       rebuildLayers();
       updateCounts();
       renderLog();
@@ -2363,8 +2519,12 @@ function updateAttrib() {
 }
 $('#viewBtn').onclick = () => {
   state.viewMode = state.viewMode === 'map' ? 'ppi' : 'map';
+  document.body.classList.toggle('mapmode', state.viewMode === 'map');
+  if (state.viewMode !== 'map') { setPickMode(false); syncView(); rebuildLayers(); }
   $('#viewBtn').classList.toggle('on', state.viewMode === 'map');
   $('#mapAttrib').style.display = state.viewMode === 'map' ? 'block' : 'none';
+  document.body.classList.toggle('mapmode', state.viewMode === 'map');
+  syncView();
   saveState();
   if (state.viewMode === 'map') buildBaseLayer();
 };
@@ -2488,6 +2648,7 @@ $('#saveSiteBtn').onclick = () => {
   saveState();
   updateStatusBar();
   recomputeStrikeGeo();
+  syncView();
   rebuildLayers();
   renderLog();
   closeModal('siteModal');
@@ -2601,6 +2762,183 @@ document.addEventListener('fullscreenchange', () => {
 });
 window.addEventListener('orientationchange', () => { setTimeout(resizeCanvas, 300); });
 
+
+/* ============================================================
+   MAP INTERACTION — pan, pinch/wheel zoom, tap to pick a site
+   Gestures only apply to the map view; the PPI scope stays locked on
+   the observer. Layers are rebuilt once the gesture settles, so a drag
+   never fires a burst of tile/API requests.
+   ============================================================ */
+let pickMode = false;
+let pickPoint = null;
+const pointers = new Map();
+let gestureStart = null;   // {dist, range} while pinching
+let tapCandidate = null;   // {x, y, t} to tell a tap from a drag
+let viewRebuildTimer = null;
+
+function scopeGeom() {
+  const cx = cssSize / 2, cy = cssSize / 2;
+  return { cx, cy, R: Math.min(cx, cy) - 8 };
+}
+
+/* Canvas point -> lat/lon, the exact inverse of projectPoint. */
+function unprojectPoint(x, y, cx, cy, R) {
+  const z = zoomForRange(view.range);
+  const metersPerPx = 156543.03392 * Math.cos(rad(view.lat)) / Math.pow(2, z);
+  const scale = metersPerPx * R / (view.range * 1000);
+  const px = (x - cx) / scale + lonToTileX(view.lon, z) * 256;
+  const py = (y - cy) / scale + latToTileY(view.lat, z) * 256;
+  return mercPxToLatLon(px, py, z);
+}
+
+function canvasPos(ev) {
+  const r = canvas.getBoundingClientRect();
+  return { x: (ev.clientX - r.left) * (cssSize / r.width),
+           y: (ev.clientY - r.top) * (cssSize / r.height) };
+}
+
+function markViewCustom() {
+  view.custom = (view.lat !== state.site.lat || view.lon !== state.site.lon ||
+                 view.range !== state.range);
+  updateViewUi();
+}
+
+function scheduleViewRebuild() {
+  clearTimeout(viewRebuildTimer);
+  viewRebuildTimer = setTimeout(() => { rebuildLayers(); }, 350);
+}
+
+function panBy(fromX, fromY, toX, toY) {
+  const { cx, cy, R } = scopeGeom();
+  const a = unprojectPoint(fromX, fromY, cx, cy, R);
+  const b = unprojectPoint(toX, toY, cx, cy, R);
+  view.lat = Math.max(-85, Math.min(85, view.lat + (a.lat - b.lat)));
+  view.lon = ((view.lon + (a.lon - b.lon) + 540) % 360) - 180;
+  markViewCustom();
+}
+
+function zoomBy(factor) {
+  view.range = Math.max(2, Math.min(800, view.range / factor));
+  markViewCustom();
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+  if (state.viewMode !== 'map') return;
+  canvas.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, canvasPos(e));
+  if (pointers.size === 1) {
+    const p = pointers.get(e.pointerId);
+    tapCandidate = { x: p.x, y: p.y, t: Date.now() };
+  } else if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    gestureStart = { dist: Math.hypot(a.x - b.x, a.y - b.y) };
+    tapCandidate = null;
+  }
+});
+
+canvas.addEventListener('pointermove', (e) => {
+  if (state.viewMode !== 'map' || !pointers.has(e.pointerId)) return;
+  const prev = pointers.get(e.pointerId);
+  const cur = canvasPos(e);
+  pointers.set(e.pointerId, cur);
+
+  if (pointers.size === 1) {
+    if (tapCandidate && Math.hypot(cur.x - tapCandidate.x, cur.y - tapCandidate.y) > 10) {
+      tapCandidate = null; // it is a drag
+    }
+    panBy(prev.x, prev.y, cur.x, cur.y);
+  } else if (pointers.size === 2 && gestureStart) {
+    const [a, b] = [...pointers.values()];
+    const d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (gestureStart.dist > 0 && d > 0) {
+      zoomBy(d / gestureStart.dist);
+      gestureStart.dist = d;
+    }
+  }
+});
+
+function endPointer(e) {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) gestureStart = null;
+  if (pointers.size === 0) {
+    if (tapCandidate && Date.now() - tapCandidate.t < 600) {
+      const { cx, cy, R } = scopeGeom();
+      if (pickMode) {
+        const ll = unprojectPoint(tapCandidate.x, tapCandidate.y, cx, cy, R);
+        pickPoint = { lat: ll.lat, lon: ll.lon };
+        updatePickBar();
+      }
+    }
+    tapCandidate = null;
+    if (view.custom) scheduleViewRebuild();
+  }
+}
+canvas.addEventListener('pointerup', endPointer);
+canvas.addEventListener('pointercancel', endPointer);
+
+canvas.addEventListener('wheel', (e) => {
+  if (state.viewMode !== 'map') return;
+  e.preventDefault();
+  zoomBy(e.deltaY < 0 ? 1.15 : 1 / 1.15);
+  scheduleViewRebuild();
+}, { passive: false });
+
+/* ----- pick-a-site flow ----- */
+function updateViewUi() {
+  const rc = $('#recenterBtn');
+  if (rc) rc.classList.toggle('hidden', !view.custom);
+}
+
+function updatePickBar() {
+  const bar = $('#pickBar');
+  if (!pickMode) { bar.classList.remove('show'); return; }
+  bar.classList.add('show');
+  if (pickPoint) {
+    const d = haversine(state.site.lat, state.site.lon, pickPoint.lat, pickPoint.lon);
+    $('#pickMsg').textContent = 'Site sélectionné — touche ailleurs pour corriger.';
+    $('#pickCoord').textContent =
+      `${pickPoint.lat.toFixed(4)}°, ${pickPoint.lon.toFixed(4)}° · à ${d.toFixed(1)} km de toi`;
+    $('#pickSave').disabled = false;
+  } else {
+    $('#pickMsg').textContent = 'Touche la carte à l\'endroit du site à surveiller.';
+    $('#pickCoord').textContent = 'Déplace la carte d\'un doigt, zoome à deux doigts.';
+    $('#pickSave').disabled = true;
+  }
+}
+
+function setPickMode(on) {
+  pickMode = on;
+  if (!on) pickPoint = null;
+  $('#pickBtn').classList.toggle('on', on);
+  updatePickBar();
+}
+
+$('#pickBtn').onclick = (e) => {
+  e.stopPropagation();
+  if (state.viewMode !== 'map') return;
+  setPickMode(!pickMode);
+  if (pickMode) showToast('Touche la carte pour placer le site');
+};
+$('#pickCancel').onclick = () => setPickMode(false);
+$('#pickSave').onclick = () => {
+  if (!pickPoint) return;
+  const name = prompt('Nom du site à surveiller :', 'Site ' + ((state.savedSites || []).length + 1));
+  if (!name || !name.trim()) return;
+  state.savedSites = state.savedSites || [];
+  state.savedSites.push({ name: name.trim(), lat: pickPoint.lat, lon: pickPoint.lon, alt: 0 });
+  saveState();
+  renderSitePresets();
+  setPickMode(false);
+  showToast(`« ${name.trim()} » enregistré et surveillé`);
+};
+$('#recenterBtn').onclick = (e) => {
+  e.stopPropagation();
+  syncView();
+  rebuildLayers();
+  showToast('Carte recentrée sur ta position');
+};
+
 /* --- Auto-locate at startup --- */
 function autoLocateNow() {
   if (!state.autoLocate || !navigator.geolocation) return;
@@ -2613,6 +2951,7 @@ function autoLocateNow() {
     saveState();
     updateStatusBar();
     recomputeStrikeGeo();
+    syncView();
     rebuildLayers();
     renderLog();
     updateCounts();
@@ -2669,6 +3008,8 @@ function init() {
   $('#strikesBtn').classList.toggle('on', state.strikesShow);
   $('#viewBtn').classList.toggle('on', state.viewMode === 'map');
   $('#mapAttrib').style.display = state.viewMode === 'map' ? 'block' : 'none';
+  document.body.classList.toggle('mapmode', state.viewMode === 'map');
+  syncView();
   $('#lightBtn').classList.toggle('on', state.lightOn);
   $('#firesBtn').classList.toggle('on', state.firesOn);
   updateAttrib();
