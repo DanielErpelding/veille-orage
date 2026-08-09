@@ -315,7 +315,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v1.2 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v1.2.1 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -687,10 +687,12 @@ function schedulePrecip() {
 }
 
 /* Generic tile-mosaic builder: assembles the tiles covering the current
-   site + range (with margin for map corners) into one offscreen canvas. */
-async function buildMosaic(urlFn) {
+   site + range (with margin for map corners) into one offscreen canvas.
+   maxZ caps the tile zoom for sources with limited native resolution
+   (drawGeoLayer scales per-layer, so a coarser mosaic still lines up). */
+async function buildMosaic(urlFn, maxZ) {
   const { lat, lon } = state.site;
-  const z = zoomForRange(state.range);
+  const z = Math.min(zoomForRange(state.range), maxZ || 99);
 
   // Geographic half-span (with margin) -> tile bounds
   const margin = 1.5; // covers square-map corners (sqrt(2) ~= 1.41)
@@ -754,7 +756,9 @@ async function buildCloudLayer() {
   try {
     const frame = RV.satFrames[RV.satIdx];
     if (!frame) return;
-    const layer = await buildMosaic((z, x, y) => satTileUrl(frame, z, x, y));
+    // RainViewer satellite infrared tops out at low zooms — beyond that the
+    // server returns "Zoom Level Not Supported" placeholder tiles.
+    const layer = await buildMosaic((z, x, y) => satTileUrl(frame, z, x, y), 6);
     if (layer) cloudLayer = layer;
   } catch (e) { console.warn('clouds build error', e); }
   finally { cloudsBuilding = false; }
