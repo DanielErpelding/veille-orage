@@ -315,7 +315,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v1.2.1 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v1.3 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -464,6 +464,11 @@
     </div>
 
     <div class="set-row">
+      <div class="sk">Fond de carte clair<small>vue Carte : clair ou sombre</small></div>
+      <label class="switch"><input type="checkbox" id="setMapLight"><span class="slider"></span></label>
+    </div>
+
+    <div class="set-row">
       <div class="sk">Reconnexion auto<small>rouvre le flux si coupé</small></div>
       <label class="switch"><input type="checkbox" id="setAuto"><span class="slider"></span></label>
     </div>
@@ -551,6 +556,7 @@ const state = Object.assign({
   cloudsOpacity: 0.5,
   strikesShow: true,
   viewMode: 'ppi',
+  mapStyle: 'clair',
   animate: false,
   sound: true,
   vibrate: true,
@@ -663,9 +669,10 @@ function satTileUrl(frame, z, x, y) {
   return `${RV.host}${frame.path}/256/${z}/${x}/${y}/0/0_0.png`;
 }
 function baseTileUrl(z, x, y) {
-  // dark basemap, subdomain rotation
+  // basemap (light "voyager" or dark), subdomain rotation
+  const style = state.mapStyle === 'sombre' ? 'dark_all' : 'rastertiles/voyager';
   const sub = 'abcd'[(x + y) % 4];
-  return `https://${sub}.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png`;
+  return `https://${sub}.basemaps.cartocdn.com/${style}/${z}/${x}/${y}.png`;
 }
 function loadTile(url) {
   if (tileCache.has(url)) return tileCache.get(url);
@@ -767,11 +774,16 @@ async function buildCloudLayer() {
 async function buildBaseLayer() {
   if (state.viewMode !== 'map' || baseBuilding) return;
   baseBuilding = true;
+  const styleAtStart = state.mapStyle;
   try {
     const layer = await buildMosaic(baseTileUrl);
-    if (layer) baseLayer = layer;
+    if (layer && styleAtStart === state.mapStyle) baseLayer = layer;
   } catch (e) { console.warn('base map build error', e); }
-  finally { baseBuilding = false; }
+  finally {
+    baseBuilding = false;
+    // style switched mid-build: rebuild with the new one
+    if (styleAtStart !== state.mapStyle) buildBaseLayer();
+  }
 }
 
 function rebuildLayers() {
@@ -1205,23 +1217,24 @@ function drawMap() {
   else ctx.rect(x0, y0, side, side);
   ctx.clip();
 
-  ctx.fillStyle = '#0B0F0C';
+  const light = state.mapStyle !== 'sombre';
+  ctx.fillStyle = light ? '#D9D4C8' : '#0B0F0C';
   ctx.fillRect(x0, y0, side, side);
 
   // base map, then data layers
-  if (layerFits(baseLayer)) drawGeoLayer(cx, cy, R, baseLayer, 0.95);
+  if (layerFits(baseLayer)) drawGeoLayer(cx, cy, R, baseLayer, 1);
   if (state.cloudsOn && layerFits(cloudLayer)) drawGeoLayer(cx, cy, R, cloudLayer, state.cloudsOpacity);
   if (state.precipOn && layerFits(precipLayer)) drawGeoLayer(cx, cy, R, precipLayer, state.precipOpacity);
 
-  // faint distance rings for scale reading
+  // faint distance rings for scale reading (contrast depends on basemap)
   ctx.lineWidth = 1;
   ctx.font = '10px ' + getCSS('--mono');
   ctx.textAlign = 'left';
   for (let i = 1; i <= 2; i++) {
     const rr = R * i / 2;
-    ctx.strokeStyle = 'rgba(56,224,138,0.28)';
+    ctx.strokeStyle = light ? 'rgba(15,90,50,0.5)' : 'rgba(56,224,138,0.28)';
     ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI * 2); ctx.stroke();
-    ctx.fillStyle = 'rgba(214,234,217,0.65)';
+    ctx.fillStyle = light ? 'rgba(15,45,30,0.85)' : 'rgba(214,234,217,0.65)';
     ctx.fillText(Math.round(state.range * i / 2) + ' km', cx + 3, cy - rr + 12);
   }
 
@@ -1247,9 +1260,9 @@ function drawMap() {
   }
 
   // center marker
-  ctx.fillStyle = getCSS('--accent') || '#38E08A';
+  ctx.fillStyle = light ? '#0E7A42' : (getCSS('--accent') || '#38E08A');
   ctx.beginPath(); ctx.arc(cx, cy, 3.5, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = 'rgba(56,224,138,0.6)';
+  ctx.strokeStyle = light ? 'rgba(14,122,66,0.8)' : 'rgba(56,224,138,0.6)';
   ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2); ctx.stroke();
 
   ctx.restore();
@@ -1506,6 +1519,7 @@ function syncSettingsInputs() {
   $('#setVibrate').checked = state.vibrate;
   $('#setOpacity').value = state.precipOpacity;
   $('#setCloudsOpacity').value = state.cloudsOpacity;
+  $('#setMapLight').checked = state.mapStyle !== 'sombre';
   $('#setAuto').checked = state.autoReconnect;
 }
 $('#settingsBtn').onclick = () => { syncSettingsInputs(); openModal('settingsModal'); };
@@ -1515,6 +1529,12 @@ $('#setSound').onchange = (e) => { state.sound = e.target.checked; saveState(); 
 $('#setVibrate').onchange = (e) => { state.vibrate = e.target.checked; saveState(); };
 $('#setOpacity').oninput = (e) => { state.precipOpacity = parseFloat(e.target.value); saveState(); };
 $('#setCloudsOpacity').oninput = (e) => { state.cloudsOpacity = parseFloat(e.target.value); saveState(); };
+$('#setMapLight').onchange = (e) => {
+  state.mapStyle = e.target.checked ? 'clair' : 'sombre';
+  saveState();
+  baseLayer = null; // invalidate: next build fetches the other style
+  if (state.viewMode === 'map') buildBaseLayer();
+};
 $('#setAuto').onchange = (e) => { state.autoReconnect = e.target.checked; saveState(); };
 $('#simBtn').onclick = () => {
   ensureAudio();
