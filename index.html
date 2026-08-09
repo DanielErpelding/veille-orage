@@ -364,7 +364,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v1.9.1 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v1.9.2 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -580,6 +580,7 @@
 
       <h3>Cellules orageuses &amp; trajectoire</h3>
       <p>L'app regroupe les impacts des 16 dernières minutes en <strong>cellules</strong> (cercles pointillés) et estime leur déplacement : la flèche montre la position prévue dans 30 minutes. Si une cellule se dirige vers ton rayon d'alerte, elle passe en rouge et un bandeau ambre annonce distance, vitesse et heure d'arrivée estimée. C'est une extrapolation simple : fiable pour des cellules bien actives, indicative sinon.</p>
+      <p>Lecture de l'étiquette : la 1<sup>re</sup> ligne donne la <strong>position</strong> de la cellule (distance et direction depuis toi), la 2<sup>e</sup> son <strong>cap de déplacement</strong> (« va vers NE ») et sa vitesse.</p>
 
       <h3>Sites surveillés</h3>
       <p>Dans la fenêtre Site → Préréglés, <strong>« ＋ Mémoriser le site affiché »</strong> enregistre le site courant (maison, chalet…). Tout impact tombant sous le seuil d'alerte autour d'un site mémorisé (marqué ⚡) déclenche une alerte nommée, où que soit centré le cadran. Le ✕ retire un site.</p>
@@ -1290,7 +1291,8 @@ function computeCells() {
         lat: site.lat + cR.y / ky,
         lon: site.lon + cR.x / kx,
         dist: Math.hypot(cR.x, cR.y),
-        brg: (deg(Math.atan2(cR.x, cR.y)) + 360) % 360,
+        brg: (deg(Math.atan2(cR.x, cR.y)) + 360) % 360,     // where it IS (from site)
+        hdg: spd ? (deg(Math.atan2(vx, vy)) + 360) % 360 : null, // where it GOES
         count: members.length,
         vx, vy, spd: Math.round(spd), etaMin
       });
@@ -1305,7 +1307,7 @@ function updateCellBanner() {
   const el = $('#cellBanner');
   const c = cells.find(c => c.etaMin != null && c.dist > state.alertKm);
   if (!c) { el.classList.remove('show'); return; }
-  el.textContent = `⚠ CELLULE (${c.count} imp.) À ${c.dist.toFixed(0)} KM ${compass(c.brg)} · ${c.spd} KM/H → ~${c.etaMin} MIN`;
+  el.textContent = `⚠ CELLULE À ${c.dist.toFixed(0)} KM ${compass(c.brg)}, VA VERS ${compass(c.hdg)} · ${c.spd} KM/H · ARRIVÉE ~${c.etaMin} MIN`;
   el.classList.add('show');
   const now = Date.now();
   if (c.etaMin <= 45 && now - lastCellNotifyAt > 600000) {
@@ -1351,8 +1353,11 @@ function drawCells(project) {
 /* Info pill next to a cell: distance/bearing/strike count, speed + ETA.
    Dark pill with light text: readable on the scope and on both basemaps. */
 function drawCellLabel(p, c) {
+  // line 1 = where the cell is (bearing from the site); line 2 = where it goes
   const l1 = `${c.dist.toFixed(0)} km ${compass(c.brg)} · ${c.count}⚡`;
-  const l2 = c.spd ? `${c.spd} km/h${c.etaMin != null ? ' → ~' + c.etaMin + ' min' : ''}` : 'statique';
+  const l2 = c.spd
+    ? `va vers ${compass(c.hdg)} · ${c.spd} km/h${c.etaMin != null ? ' · ~' + c.etaMin + ' min' : ''}`
+    : 'statique';
   ctx.save();
   ctx.font = '9px ' + getCSS('--mono');
   ctx.textAlign = 'left';
