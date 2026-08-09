@@ -255,6 +255,7 @@
   .leg-center { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px rgba(56,224,138,0.25); }
   .leg-cellico { width: 16px; height: 16px; border: 1.5px dashed var(--warn); border-radius: 50%; color: var(--warn); font-size: 10px; display: flex; align-items: center; justify-content: center; }
   .leg-windico { color: #78CDFF; font-size: 14px; font-weight: 600; }
+  .leg-lightgrad { width: 30px; height: 9px; border-radius: 2px; background: linear-gradient(90deg, #14224E, #2C5BA8, #3E9A4E, #E8E84A, #E88A2A, #D8352A, #FFFFFF); }
   .leg-clouds { width: 26px; height: 11px; border-radius: 8px; background: radial-gradient(ellipse at 35% 45%, rgba(230,236,232,0.85), rgba(180,190,184,0.45) 65%, transparent); }
 
   .map-attrib {
@@ -365,7 +366,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v2.0.2 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v2.1 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -395,6 +396,7 @@
   <button class="ctl" id="viewBtn">Carte</button>
   <button class="ctl on" id="precipBtn">Pluie</button>
   <button class="ctl" id="cloudsBtn">Nuages</button>
+  <button class="ctl" id="lightBtn">Lumières</button>
   <button class="ctl on" id="strikesBtn">Impacts</button>
   <button class="ctl" id="animBtn">Anim</button>
   <button class="ctl" id="settingsBtn">Réglages</button>
@@ -431,6 +433,7 @@
     <div class="leg-item"><span class="leg-ico"><span class="leg-sweep"></span></span><span>Balayage (décoratif)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-cellico">↗</span></span><span>Cellule orageuse · flèche = trajectoire +30 min (rouge si elle vient vers toi)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-windico">→</span></span><span>Vent à 10 m (vue Carte) : flèche = sens du vent, longueur = vitesse</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-lightgrad"></span></span><span>Pollution lumineuse : ciel noir → très pollué (bouton Lumières)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-center"></span></span><span>Votre position (centre)</span></div>
   </div>
 </div>
@@ -538,6 +541,11 @@
     </div>
 
     <div class="set-row">
+      <div class="sk">Opacité pollution lumineuse<small>couche « Lumières » (atlas 2022)</small></div>
+      <input type="range" class="set-range" id="setLightOpacity" min="0.1" max="1" step="0.05">
+    </div>
+
+    <div class="set-row">
       <div class="sk">Notifications système<small>impact proche & cellule en approche</small></div>
       <label class="switch"><input type="checkbox" id="setNotify"><span class="slider"></span></label>
     </div>
@@ -564,6 +572,7 @@
       <ul>
         <li><strong>Précipitations</strong> — couche radar <code>RainViewer</code> projetée dans le cadran (bouton <code>Pluie</code>).</li>
         <li><strong>Couverture nuageuse</strong> — modèle météo Open-Meteo, mise à jour horaire (bouton <code>Nuages</code>).</li>
+        <li><strong>Pollution lumineuse</strong> — atlas 2022, couche statique activable (bouton <code>Lumières</code>), opacité réglable dans Réglages.</li>
         <li><strong>Vent à 10 m</strong> — flèches sur la vue Carte, orientées dans le sens du vent, longueur et intensité selon la vitesse (Réglages → « Vent sur la carte »).</li>
         <li><strong>Impacts de foudre</strong> — rouges quand récents (moins de 2 minutes), puis ambre en s'estompant avec le temps (bouton <code>Impacts</code>).</li>
         <li><strong>Balayage</strong> — la ligne verte tourne comme un vrai radar (esthétique).</li>
@@ -575,6 +584,7 @@
       <ul>
         <li><code>api.rainviewer.com</code> — mosaïque radar mondiale des précipitations (gratuite, sans clé).</li>
         <li><code>open-meteo.com</code> — couverture nuageuse et vent à 10 m (analyse du modèle météo, gratuite, sans clé).</li>
+        <li><code>djlorenz.github.io</code> — atlas mondial de pollution lumineuse 2022 (David Lorenz), utile pour préparer une session astro.</li>
         <li><code>ws*.blitzortung.org</code> — réseau communautaire de détection de foudre, diffusé en direct par WebSocket.</li>
       </ul>
       <p>Les impacts sont détectés par triangulation par un réseau de bénévoles : latence de quelques secondes et couverture variable selon la région.</p>
@@ -652,6 +662,8 @@ const state = Object.assign({
   savedSites: [],
   cellLabels: true,
   windOn: true,
+  lightOn: false,
+  lightOpacity: 0.5,
   animate: false,
   sound: true,
   vibrate: true,
@@ -1078,9 +1090,34 @@ function drawWind(project, light) {
   ctx.restore();
 }
 
+/* Light pollution overlay: World Atlas 2022 tiles by David Lorenz
+   (djlorenz.github.io, free, CORS-enabled, static data). */
+let lightLayer = null;
+let lightBuildSeq = 0;
+let lightToastShown = false;
+function lightTileUrl(z, x, y) {
+  return 'https://djlorenz.github.io/astronomy/lp2022/overlay/tiles/tile_' + z + '_' + x + '_' + y + '.png';
+}
+async function buildLightLayer() {
+  if (!state.lightOn) return;
+  if (layerFits(lightLayer)) return; // static atlas: same view never refetched
+  const seq = ++lightBuildSeq;
+  try {
+    const layer = await buildMosaic(lightTileUrl, 8);
+    if (layer && seq === lightBuildSeq) {
+      lightLayer = layer;
+      if (!layer.tilesOk && !lightToastShown) {
+        lightToastShown = true;
+        showToast('Pollution lumineuse indisponible', true);
+      }
+    }
+  } catch (e) { console.warn('light build error', e); }
+}
+
 function rebuildLayers() {
   if (state.precipOn) buildPrecipLayer();
   if (state.cloudsOn || state.windOn) buildMeteoLayers();
+  if (state.lightOn) buildLightLayer();
   if (state.viewMode === 'map') buildBaseLayer();
 }
 
@@ -1592,7 +1629,9 @@ function drawScope(ts) {
   ctx.fillStyle = grd;
   ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
 
-  // data layers (georeferenced, conformal placement): clouds below rain
+  // data layers (georeferenced, conformal placement): light pollution at
+  // the bottom, then clouds, then rain
+  if (state.lightOn && layerFits(lightLayer)) drawGeoLayer(cx, cy, R, lightLayer, state.lightOpacity);
   if (state.cloudsOn && layerFits(cloudLayer)) drawGeoLayer(cx, cy, R, cloudLayer, state.cloudsOpacity);
   if (state.precipOn && layerFits(precipLayer)) drawGeoLayer(cx, cy, R, precipLayer, state.precipOpacity);
   ctx.restore();
@@ -1788,6 +1827,7 @@ function drawMap() {
   // base map, then data layers (clouds tinted slate on the light basemap,
   // where white IR clouds would be invisible)
   if (layerFits(baseLayer)) drawGeoLayer(cx, cy, R, baseLayer, 1);
+  if (state.lightOn && layerFits(lightLayer)) drawGeoLayer(cx, cy, R, lightLayer, state.lightOpacity);
   if (state.cloudsOn && layerFits(cloudLayer)) {
     drawGeoLayer(cx, cy, R, cloudLayer, state.cloudsOpacity, light ? tintedClouds(cloudLayer) : null);
   }
@@ -2013,11 +2053,22 @@ $('#cloudsBtn').onclick = () => {
   if (state.cloudsOn) buildMeteoLayers();
   updateLogMeta();
 };
+$('#lightBtn').onclick = () => {
+  state.lightOn = !state.lightOn;
+  $('#lightBtn').classList.toggle('on', state.lightOn);
+  saveState();
+  updateAttrib();
+  if (state.lightOn) buildLightLayer();
+};
 $('#strikesBtn').onclick = () => {
   state.strikesShow = !state.strikesShow;
   $('#strikesBtn').classList.toggle('on', state.strikesShow);
   saveState();
 };
+function updateAttrib() {
+  $('#mapAttrib').textContent = 'fond de carte © OpenStreetMap · © CARTO' +
+    (state.lightOn ? ' · pollution lumineuse © D. Lorenz' : '');
+}
 $('#viewBtn').onclick = () => {
   state.viewMode = state.viewMode === 'map' ? 'ppi' : 'map';
   $('#viewBtn').classList.toggle('on', state.viewMode === 'map');
@@ -2027,6 +2078,8 @@ $('#viewBtn').onclick = () => {
 };
 $('#animBtn').onclick = () => {
   state.animate = !state.animate;
+  $('#lightBtn').classList.toggle('on', state.lightOn);
+  updateAttrib();
   $('#animBtn').classList.toggle('on', state.animate);
   saveState();
   if (state.animate) { if (!RV.host) loadRainviewerIndex(); startAnim(); showToast('Animation pluie activée'); }
@@ -2160,6 +2213,7 @@ function syncSettingsInputs() {
   $('#setAutoLoc').checked = state.autoLocate;
   $('#setCellLabels').checked = state.cellLabels;
   $('#setWind').checked = state.windOn;
+  $('#setLightOpacity').value = state.lightOpacity;
   $('#setNotify').checked = state.notify;
   $('#setAuto').checked = state.autoReconnect;
 }
@@ -2183,6 +2237,7 @@ $('#setAutoLoc').onchange = (e) => {
   if (state.autoLocate) autoLocateNow();
 };
 $('#setCellLabels').onchange = (e) => { state.cellLabels = e.target.checked; saveState(); };
+$('#setLightOpacity').oninput = (e) => { state.lightOpacity = parseFloat(e.target.value); saveState(); };
 $('#setWind').onchange = (e) => {
   state.windOn = e.target.checked;
   saveState();
@@ -2308,6 +2363,8 @@ function init() {
   $('#strikesBtn').classList.toggle('on', state.strikesShow);
   $('#viewBtn').classList.toggle('on', state.viewMode === 'map');
   $('#mapAttrib').style.display = state.viewMode === 'map' ? 'block' : 'none';
+  $('#lightBtn').classList.toggle('on', state.lightOn);
+  updateAttrib();
   $('#animBtn').classList.toggle('on', state.animate);
   $('#legend').classList.toggle('open', state.legendOpen !== false);
   updateConnectBtn();
@@ -2319,6 +2376,7 @@ function init() {
 
   if (state.precipOn) loadRainviewerIndex();
   if (state.cloudsOn || state.windOn) buildMeteoLayers();
+  if (state.lightOn) buildLightLayer();
   if (state.viewMode === 'map') buildBaseLayer();
   if (state.animate) startAnim();
   autoLocateNow();
