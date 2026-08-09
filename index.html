@@ -365,7 +365,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v2.0 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v2.0.1 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -908,6 +908,26 @@ function mercPxToLatLon(px, py, z) {
   return { lat: deg(Math.atan(Math.sinh(n))), lon };
 }
 
+/* Shared Open-Meteo multi-point fetch: surfaces the API's own error reason
+   so field failures are diagnosable, and reports once via toast. */
+let omToastShown = false;
+async function fetchOpenMeteo(lats, lons, vars) {
+  const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lats.join(',') +
+              '&longitude=' + lons.join(',') + '&current=' + vars;
+  const res = await fetch(url);
+  let j = null;
+  try { j = await res.json(); } catch {}
+  if (!res.ok) throw new Error((j && j.reason) ? j.reason : ('HTTP ' + res.status));
+  return Array.isArray(j) ? j : [j];
+}
+function omFail(e) {
+  console.warn('Open-Meteo error', e);
+  if (!omToastShown) {
+    omToastShown = true;
+    showToast('Open-Meteo : ' + (e && e.message ? e.message : 'indisponible'), true);
+  }
+}
+
 /* Cloud cover from Open-Meteo (free, no key, CORS-enabled): a 12x12 grid of
    current cloud_cover percentages around the site, rendered as a smooth
    white alpha map georeferenced like the other layers.
@@ -932,24 +952,28 @@ async function buildCloudLayer() {
     const w = Math.round(pxMaxX - pxMinX), h = Math.round(pxMaxY - pxMinY);
     if (w < 8 || h < 8) return;
 
-    const N = 12;
-    const lats = [], lons = [];
-    for (let j = 0; j < N; j++) {
-      for (let i = 0; i < N; i++) {
-        const px = pxMinX + (i + 0.5) * (pxMaxX - pxMinX) / N;
-        const py = pxMinY + (j + 0.5) * (pxMaxY - pxMinY) / N;
-        const ll = mercPxToLatLon(px, py, z);
-        lats.push(ll.lat.toFixed(3));
-        lons.push(ll.lon.toFixed(3));
+    const gridLatLon = (N) => {
+      const lats = [], lons = [];
+      for (let j = 0; j < N; j++) {
+        for (let i = 0; i < N; i++) {
+          const px = pxMinX + (i + 0.5) * (pxMaxX - pxMinX) / N;
+          const py = pxMinY + (j + 0.5) * (pxMaxY - pxMinY) / N;
+          const ll = mercPxToLatLon(px, py, z);
+          lats.push(ll.lat.toFixed(3));
+          lons.push(ll.lon.toFixed(3));
+        }
       }
+      return [lats, lons];
+    };
+    // full grid, then a coarser fallback if the API refuses the big request
+    let N = 10, arr;
+    try {
+      arr = await fetchOpenMeteo(...gridLatLon(N), 'cloud_cover');
+    } catch (e1) {
+      N = 6;
+      arr = await fetchOpenMeteo(...gridLatLon(N), 'cloud_cover');
     }
-    const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lats.join(',') +
-                '&longitude=' + lons.join(',') + '&current=cloud_cover';
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    let arr = await res.json();
-    if (!Array.isArray(arr)) arr = [arr];
-    if (arr.length < N * N) throw new Error('réponse incomplète');
+    if (arr.length < N * N) throw new Error(`réponse incomplète (${arr.length}/${N * N})`);
 
     // low-res alpha map -> bilinear upscale for smooth cloud shading
     const small = document.createElement('canvas');
@@ -983,7 +1007,7 @@ async function buildCloudLayer() {
     cloudsFetchedAt = Date.now();
     updateLogMeta();
   } catch (e) {
-    console.warn('clouds build error', e);
+    omFail(e);
     if (seq === cloudsBuildSeq) { cloudsError = true; updateLogMeta(); }
   }
 }
@@ -1002,6 +1026,7 @@ async function buildBaseLayer() {
 let windLayer = null; // {points:[{lat,lon,spd,dir}], lat, lon, range}
 let windBuildSeq = 0;
 let windFetchedAt = 0;
+let windError = false;
 async function buildWindLayer() {
   if (!state.windOn) return;
   const seq = ++windBuildSeq;
@@ -1010,20 +1035,25 @@ async function buildWindLayer() {
     const margin = 1.4;
     const dLat = (state.range / 111.32) * margin;
     const dLon = (state.range / (111.32 * Math.cos(rad(lat)))) * margin;
-    const N = 7;
-    const lats = [], lons = [];
-    for (let j = 0; j < N; j++) {
-      for (let i = 0; i < N; i++) {
-        lats.push((lat - dLat + (j + 0.5) * 2 * dLat / N).toFixed(3));
-        lons.push((lon - dLon + (i + 0.5) * 2 * dLon / N).toFixed(3));
+    const grid = (N) => {
+      const lats = [], lons = [];
+      for (let j = 0; j < N; j++) {
+        for (let i = 0; i < N; i++) {
+          lats.push((lat - dLat + (j + 0.5) * 2 * dLat / N).toFixed(3));
+          lons.push((lon - dLon + (i + 0.5) * 2 * dLon / N).toFixed(3));
+        }
       }
+      return [lats, lons];
+    };
+    let N = 7, lats, lons, arr;
+    try {
+      [lats, lons] = grid(N);
+      arr = await fetchOpenMeteo(lats, lons, 'wind_speed_10m,wind_direction_10m');
+    } catch (e1) {
+      N = 5;
+      [lats, lons] = grid(N);
+      arr = await fetchOpenMeteo(lats, lons, 'wind_speed_10m,wind_direction_10m');
     }
-    const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lats.join(',') +
-                '&longitude=' + lons.join(',') + '&current=wind_speed_10m,wind_direction_10m';
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    let arr = await res.json();
-    if (!Array.isArray(arr)) arr = [arr];
     if (seq !== windBuildSeq) return;
     const points = [];
     for (let k = 0; k < arr.length && k < lats.length; k++) {
@@ -1032,9 +1062,15 @@ async function buildWindLayer() {
       points.push({ lat: +lats[k], lon: +lons[k],
                     spd: cur.wind_speed_10m || 0, dir: cur.wind_direction_10m || 0 });
     }
+    if (!points.length) throw new Error('réponse vide');
     windLayer = { points, lat, lon, range: state.range };
+    windError = false;
     windFetchedAt = Date.now();
-  } catch (e) { console.warn('wind build error', e); }
+    updateLogMeta();
+  } catch (e) {
+    omFail(e);
+    if (seq === windBuildSeq) { windError = true; updateLogMeta(); }
+  }
 }
 
 function drawWind(project, light) {
@@ -1910,6 +1946,10 @@ function updateLogMeta() {
   if (state.cloudsOn) {
     if (cloudsError) parts.push('nuages ✗');
     else if (cloudsFetchedAt) parts.push('nuages ' + fmtFrameTime(cloudsFetchedAt / 1000));
+  }
+  if (state.windOn) {
+    if (windError) parts.push('vent ✗');
+    else if (windFetchedAt) parts.push('vent ' + fmtFrameTime(windFetchedAt / 1000));
   }
   meta.textContent = parts.length ? parts.join(' · ') : '—';
 }
