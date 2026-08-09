@@ -315,7 +315,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v1.5.1 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v1.5.2 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -656,6 +656,7 @@ async function loadRainviewerIndex() {
     const past = (j.radar && j.radar.past) || [];
     const now = (j.radar && j.radar.nowcast) || [];
     RV.frames = past.concat(now);
+    RV.pastCount = past.length;
     RV.idx = Math.max(0, past.length - 1); // latest observed frame
     RV.fetchedAt = Date.now();
     schedulePrecip();
@@ -1609,7 +1610,16 @@ $('#animBtn').onclick = () => {
   $('#animBtn').classList.toggle('on', state.animate);
   saveState();
   if (state.animate) { if (!RV.host) loadRainviewerIndex(); startAnim(); showToast('Animation pluie activée'); }
-  else { stopAnim(); buildPrecipLayer(); showToast('Animation arrêtée'); }
+  else {
+    stopAnim();
+    // back to live: jump to the latest observed frame right away,
+    // then re-sync the index so every layer is current
+    RV.idx = Math.max(0, (RV.pastCount || RV.frames.length) - 1);
+    buildPrecipLayer();
+    updateLogMeta();
+    loadRainviewerIndex();
+    showToast('Animation arrêtée · retour au direct');
+  }
 };
 
 /* ============================================================
