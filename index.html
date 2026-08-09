@@ -315,7 +315,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v1.5.2 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v1.5.3 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -643,9 +643,11 @@ const tileCache = new Map(); // url -> Promise<Image|null>
 let precipLayer = null;      // {canvas, z, originPxX, originPxY, lat, lon, range}
 let cloudLayer = null;
 let baseLayer = null;
-let precipBuilding = false;
-let cloudsBuilding = false;
-let baseBuilding = false;
+// build generations: only the most recently requested build of each layer
+// may publish its result (stale in-flight builds are discarded)
+let precipBuildSeq = 0;
+let cloudsBuildSeq = 0;
+let baseBuildSeq = 0;
 
 async function loadRainviewerIndex() {
   try {
@@ -682,7 +684,9 @@ function loadTile(url) {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
+    // don't cache failures: a dropped download (frequent on mobile during
+    // animation) must be retryable on the next build
+    img.onerror = () => { tileCache.delete(url); resolve(null); };
     img.src = url;
   });
   tileCache.set(url, p);
@@ -777,16 +781,19 @@ function layerFits(l) {
 }
 
 async function buildPrecipLayer() {
-  if (!state.precipOn || !RV.host || RV.idx < 0 || precipBuilding) return;
-  precipBuilding = true;
+  if (!state.precipOn || !RV.host || RV.idx < 0) return;
+  const seq = ++precipBuildSeq;
+  const frame = RV.frames[RV.idx];
+  if (!frame) return;
   try {
-    const frame = RV.frames[RV.idx];
-    if (!frame) return;
     // RainViewer radar tiles also top out (placeholder tiles beyond z7)
     const layer = await buildMosaic((z, x, y) => tileUrl(frame, z, x, y), 7);
-    if (layer) { precipLayer = layer; updateLogMeta(); }
+    if (layer && seq === precipBuildSeq) {
+      layer.frameTime = frame.time;
+      precipLayer = layer;
+      updateLogMeta();
+    }
   } catch (e) { console.warn('precip build error', e); }
-  finally { precipBuilding = false; }
 }
 
 /* Inverse web-mercator: global pixel at zoom z -> lat/lon */
@@ -804,8 +811,8 @@ function mercPxToLatLon(px, py, z) {
 let cloudsError = false;
 let cloudsFetchedAt = 0;
 async function buildCloudLayer() {
-  if (!state.cloudsOn || cloudsBuilding) return;
-  cloudsBuilding = true;
+  if (!state.cloudsOn) return;
+  const seq = ++cloudsBuildSeq;
   try {
     const { lat, lon } = state.site;
     const z = Math.min(zoomForRange(state.range), 7);
@@ -862,6 +869,7 @@ async function buildCloudLayer() {
     octx.imageSmoothingQuality = 'high';
     octx.drawImage(small, 0, 0, N, N, 0, 0, w, h);
 
+    if (seq !== cloudsBuildSeq) return; // a newer build was requested meanwhile
     cloudLayer = {
       canvas: off, z, tilesOk: 1,
       originPxX: pxMinX, originPxY: pxMinY,
@@ -872,24 +880,17 @@ async function buildCloudLayer() {
     updateLogMeta();
   } catch (e) {
     console.warn('clouds build error', e);
-    cloudsError = true;
-    updateLogMeta();
-  } finally { cloudsBuilding = false; }
+    if (seq === cloudsBuildSeq) { cloudsError = true; updateLogMeta(); }
+  }
 }
 
 async function buildBaseLayer() {
-  if (state.viewMode !== 'map' || baseBuilding) return;
-  baseBuilding = true;
-  const styleAtStart = state.mapStyle;
+  if (state.viewMode !== 'map') return;
+  const seq = ++baseBuildSeq;
   try {
     const layer = await buildMosaic(baseTileUrl);
-    if (layer && styleAtStart === state.mapStyle) baseLayer = layer;
+    if (layer && seq === baseBuildSeq) baseLayer = layer;
   } catch (e) { console.warn('base map build error', e); }
-  finally {
-    baseBuilding = false;
-    // style switched mid-build: rebuild with the new one
-    if (styleAtStart !== state.mapStyle) buildBaseLayer();
-  }
 }
 
 function rebuildLayers() {
