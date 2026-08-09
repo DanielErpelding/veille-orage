@@ -163,6 +163,21 @@
   }
   .alarm-banner.show { display: block; }
 
+  .cell-banner {
+    display: none;
+    margin: 0 16px 10px;
+    background: rgba(242,193,78,0.1);
+    border: 1px solid var(--warn);
+    color: var(--warn);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 9px 12px;
+    border-radius: 6px;
+    text-align: center;
+    letter-spacing: 0.03em;
+  }
+  .cell-banner.show { display: block; }
+
   /* ===== Legend ===== */
   .legend {
     margin: 2px 16px 10px;
@@ -205,6 +220,7 @@
   .leg-ring-dist::after { content: ''; width: 6px; height: 6px; border: 1px solid rgba(30,122,71,0.7); border-radius: 50%; }
   .leg-sweep { width: 16px; height: 16px; border-radius: 50%; background: conic-gradient(from 0deg, rgba(56,224,138,0.55), rgba(56,224,138,0) 70deg, transparent 70deg); border: 1px solid rgba(30,122,71,0.4); }
   .leg-center { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px rgba(56,224,138,0.25); }
+  .leg-cellico { width: 16px; height: 16px; border: 1.5px dashed var(--warn); border-radius: 50%; color: var(--warn); font-size: 10px; display: flex; align-items: center; justify-content: center; }
   .leg-clouds { width: 26px; height: 11px; border-radius: 8px; background: radial-gradient(ellipse at 35% 45%, rgba(230,236,232,0.85), rgba(180,190,184,0.45) 65%, transparent); }
 
   .map-attrib {
@@ -315,7 +331,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v1.7 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v1.8 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -356,6 +372,7 @@
 </div>
 
 <div class="alarm-banner" id="alarmBanner"></div>
+<div class="cell-banner" id="cellBanner"></div>
 
 <div class="scope-wrap" id="scopeWrap">
   <canvas id="scope"></canvas>
@@ -377,6 +394,7 @@
     <div class="leg-item"><span class="leg-ico"><span class="leg-ring-alert"></span></span><span>Seuil d'alerte (Réglages)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-ring-dist"></span></span><span>Anneaux de distance (km)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-sweep"></span></span><span>Balayage (décoratif)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-cellico">↗</span></span><span>Cellule orageuse · flèche = trajectoire +30 min (rouge si elle vient vers toi)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-center"></span></span><span>Votre position (centre)</span></div>
   </div>
 </div>
@@ -474,6 +492,11 @@
     </div>
 
     <div class="set-row">
+      <div class="sk">Notifications système<small>impact proche & cellule en approche</small></div>
+      <label class="switch"><input type="checkbox" id="setNotify"><span class="slider"></span></label>
+    </div>
+
+    <div class="set-row">
       <div class="sk">Reconnexion auto<small>rouvre le flux si coupé</small></div>
       <label class="switch"><input type="checkbox" id="setAuto"><span class="slider"></span></label>
     </div>
@@ -515,6 +538,15 @@
 
       <h3>Alerte de proximité</h3>
       <p>Quand un impact tombe sous le <strong>seuil d'alerte</strong>, le cadran clignote en rouge, avec bip et vibration (si activés). Utile pour surveiller une cellule orageuse qui approche.</p>
+
+      <h3>Cellules orageuses &amp; trajectoire</h3>
+      <p>L'app regroupe les impacts des 16 dernières minutes en <strong>cellules</strong> (cercles pointillés) et estime leur déplacement : la flèche montre la position prévue dans 30 minutes. Si une cellule se dirige vers ton rayon d'alerte, elle passe en rouge et un bandeau ambre annonce distance, vitesse et heure d'arrivée estimée. C'est une extrapolation simple : fiable pour des cellules bien actives, indicative sinon.</p>
+
+      <h3>Sites surveillés</h3>
+      <p>Dans la fenêtre Site → Préréglés, <strong>« ＋ Mémoriser le site affiché »</strong> enregistre le site courant (maison, chalet…). Tout impact tombant sous le seuil d'alerte autour d'un site mémorisé (marqué ⚡) déclenche une alerte nommée, où que soit centré le cadran. Le ✕ retire un site.</p>
+
+      <h3>Notifications système</h3>
+      <p>Activables dans Réglages : impact proche et cellule en approche génèrent une notification (avec l'accord du système). Limite à connaître : sans serveur, l'app ne peut notifier que <strong>pendant qu'elle tourne</strong> — sur iPhone, le système suspend l'app en arrière-plan après quelques dizaines de secondes ; sur ordinateur ou Android, les notifications fonctionnent aussi en arrière-plan.</p>
 
       <h3>Installer comme app</h3>
       <p>Dans Safari (iOS) ou Chrome (Android) : menu Partager → <strong>Sur l'écran d'accueil</strong>. Fonctionne hors-ligne pour l'interface (les données nécessitent le réseau).</p>
@@ -568,6 +600,8 @@ const state = Object.assign({
   viewMode: 'ppi',
   mapStyle: 'clair',
   autoLocate: true,
+  notify: false,
+  savedSites: [],
   animate: false,
   sound: true,
   vibrate: true,
@@ -1062,8 +1096,9 @@ function addStrike(lat, lon, tms) {
   strikesDirty = true;
   // prune
   pruneStrikes();
-  // proximity
+  // proximity (main site, then watched sites)
   if (dist <= state.alertKm) triggerAlert(s);
+  checkWatchedSites(lat, lon);
   updateCounts();
   renderLog();
 }
@@ -1136,8 +1171,162 @@ function nearestStrike() {
 }
 
 /* ============================================================
+   STORM CELL TRACKING
+   Clusters recent strikes, estimates each cell's motion from the
+   displacement of its centroid (recent half-window vs older one),
+   and projects an ETA to the alert radius.
+   ============================================================ */
+let cells = []; // {lat, lon, dist, brg, count, vx, vy, spd, etaMin}
+let lastCellNotifyAt = 0;
+
+function computeCells() {
+  const now = Date.now();
+  const W = 16 * 60000, HALF = 8 * 60000;
+  const site = state.site;
+  const kx = 111.32 * Math.cos(rad(site.lat)), ky = 111.32; // deg -> km
+  const pts = [];
+  for (const s of strikes) {
+    const age = now - s.t;
+    if (age > W) continue;
+    pts.push({ x: (s.lon - site.lon) * kx, y: (s.lat - site.lat) * ky, old: age > HALF });
+  }
+  cells = [];
+  if (pts.length >= 6) {
+    // 12 km grid bins, clusters = connected bins (8-neighbours)
+    const BIN = 12;
+    const bins = new Map();
+    for (const p of pts) {
+      const key = Math.round(p.x / BIN) + '_' + Math.round(p.y / BIN);
+      let arr = bins.get(key);
+      if (!arr) { arr = []; bins.set(key, arr); }
+      arr.push(p);
+    }
+    const seen = new Set();
+    for (const start of bins.keys()) {
+      if (seen.has(start)) continue;
+      seen.add(start);
+      const stack = [start];
+      const members = [];
+      while (stack.length) {
+        const k = stack.pop();
+        members.push(...bins.get(k));
+        const [ix, iy] = k.split('_').map(Number);
+        for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+          const nk = (ix + dx) + '_' + (iy + dy);
+          if (!seen.has(nk) && bins.has(nk)) { seen.add(nk); stack.push(nk); }
+        }
+      }
+      if (members.length < 6) continue;
+
+      const rec = members.filter(p => !p.old), old = members.filter(p => p.old);
+      const cen = (a) => ({ x: a.reduce((t, p) => t + p.x, 0) / a.length,
+                           y: a.reduce((t, p) => t + p.y, 0) / a.length });
+      const cR = cen(rec.length >= 3 ? rec : members);
+      let vx = 0, vy = 0, spd = 0;
+      if (rec.length >= 3 && old.length >= 3) {
+        const cO = cen(old);
+        const dtH = HALF / 3600000; // window centers ~8 min apart
+        vx = (cR.x - cO.x) / dtH;
+        vy = (cR.y - cO.y) / dtH;
+        spd = Math.hypot(vx, vy);
+        if (spd < 5 || spd > 130) { vx = vy = 0; spd = 0; } // implausible -> static
+      }
+
+      // smallest positive t (h) where |centroid + v*t| = alert radius
+      let etaMin = null;
+      if (spd) {
+        const r = Math.max(state.alertKm, 5);
+        const a = vx * vx + vy * vy;
+        const b = 2 * (cR.x * vx + cR.y * vy);
+        const c = cR.x * cR.x + cR.y * cR.y - r * r;
+        const disc = b * b - 4 * a * c;
+        if (disc >= 0 && c > 0) {
+          const t1 = (-b - Math.sqrt(disc)) / (2 * a);
+          if (t1 > 0 && t1 <= 1.5) etaMin = Math.round(t1 * 60);
+        }
+      }
+
+      cells.push({
+        lat: site.lat + cR.y / ky,
+        lon: site.lon + cR.x / kx,
+        dist: Math.hypot(cR.x, cR.y),
+        brg: (deg(Math.atan2(cR.x, cR.y)) + 360) % 360,
+        count: members.length,
+        vx, vy, spd: Math.round(spd), etaMin
+      });
+    }
+    cells.sort((a, b) => ((a.etaMin ?? 999) - (b.etaMin ?? 999)) || (a.dist - b.dist));
+  }
+  updateCellBanner();
+}
+setInterval(computeCells, 15000);
+
+function updateCellBanner() {
+  const el = $('#cellBanner');
+  const c = cells.find(c => c.etaMin != null && c.dist > state.alertKm);
+  if (!c) { el.classList.remove('show'); return; }
+  el.textContent = `⚠ CELLULE (${c.count} imp.) À ${c.dist.toFixed(0)} KM ${compass(c.brg)} · ${c.spd} KM/H → ~${c.etaMin} MIN`;
+  el.classList.add('show');
+  const now = Date.now();
+  if (c.etaMin <= 45 && now - lastCellNotifyAt > 600000) {
+    lastCellNotifyAt = now;
+    notifySystem('Cellule orageuse en approche',
+      `À ${c.dist.toFixed(0)} km ${compass(c.brg)}, arrivée estimée ~${c.etaMin} min`);
+  }
+}
+
+/* Cell markers + 30-min trajectory arrows; `project` maps lat/lon to
+   canvas coords (or null when outside the current view). */
+function drawCells(project) {
+  for (const c of cells) {
+    const p = project(c.lat, c.lon);
+    if (!p) continue;
+    const col = c.etaMin != null ? 'rgba(229,87,78,0.9)' : 'rgba(242,193,78,0.85)';
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.arc(p.x, p.y, 11, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+    if (c.spd) {
+      const t = 0.5; // 30 min ahead
+      const la2 = c.lat + (c.vy * t) / 111.32;
+      const lo2 = c.lon + (c.vx * t) / (111.32 * Math.cos(rad(c.lat)));
+      const q = project(la2, lo2);
+      if (q && (q.x !== p.x || q.y !== p.y)) {
+        ctx.strokeStyle = col;
+        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
+        const ang = Math.atan2(q.y - p.y, q.x - p.x);
+        ctx.beginPath();
+        ctx.moveTo(q.x, q.y);
+        ctx.lineTo(q.x - 7 * Math.cos(ang - 0.4), q.y - 7 * Math.sin(ang - 0.4));
+        ctx.moveTo(q.x, q.y);
+        ctx.lineTo(q.x - 7 * Math.cos(ang + 0.4), q.y - 7 * Math.sin(ang + 0.4));
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+/* ============================================================
    PROXIMITY ALERT
    ============================================================ */
+/* System notifications (opt-in). Useful when the app is open in the
+   background on desktop/Android; iOS suspends PWA JS in background, so
+   only alerts raised while the app runs can notify. */
+let lastNotifAt = 0;
+function notifySystem(title, body) {
+  if (!state.notify || typeof Notification === 'undefined') return;
+  if (Notification.permission !== 'granted') return;
+  const opts = { body, tag: 'veille-orage' };
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.ready
+      .then(reg => reg.showNotification(title, opts))
+      .catch(() => { try { new Notification(title, opts); } catch {} });
+  } else {
+    try { new Notification(title, opts); } catch {}
+  }
+}
+
 let audioCtx = null;
 function ensureAudio() {
   if (!audioCtx) {
@@ -1173,6 +1362,25 @@ function triggerAlert(s) {
     lastAlertAt = now;
     beep();
     if (state.vibrate && navigator.vibrate) navigator.vibrate([60, 40, 90]);
+  }
+  if (now - lastNotifAt > 60000) {
+    lastNotifAt = now;
+    notifySystem('⚡ Impact proche', `${s.dist.toFixed(1)} km ${compass(s.brg)} de ta position`);
+  }
+}
+
+/* Watched sites: an impact near any saved site raises a named alert */
+const lastRemoteAlertAt = {};
+function checkWatchedSites(lat, lon) {
+  if (!Array.isArray(state.savedSites)) return;
+  for (const w of state.savedSites) {
+    const dw = haversine(w.lat, w.lon, lat, lon);
+    if (dw > state.alertKm) continue;
+    const now = Date.now();
+    if (now - (lastRemoteAlertAt[w.name] || 0) < 60000) continue;
+    lastRemoteAlertAt[w.name] = now;
+    showToast(`⚡ Impact à ${dw.toFixed(1)} km de « ${w.name} »`, true);
+    notifySystem(`⚡ Impact près de « ${w.name} »`, `${dw.toFixed(1)} km du site surveillé`);
   }
 }
 function updateAlarm() {
@@ -1317,6 +1525,15 @@ function drawScope(ts) {
     }
   }
 
+  // storm cells + trajectories
+  drawCells((la, lo) => {
+    const d = haversine(state.site.lat, state.site.lon, la, lo);
+    if (d > state.range * 1.02) return null;
+    const b = rad(bearing(state.site.lat, state.site.lon, la, lo));
+    const rr = R * d / state.range;
+    return { x: cx + Math.sin(b) * rr, y: cy - Math.cos(b) * rr };
+  });
+
   // center marker
   ctx.fillStyle = getCSS('--accent') || '#38E08A';
   ctx.beginPath(); ctx.arc(cx, cy, 3.5, 0, Math.PI * 2); ctx.fill();
@@ -1443,6 +1660,13 @@ function drawMap() {
       drawStrike(p.x, p.y, 1 - age / maxAge, age);
     }
   }
+
+  // storm cells + trajectories
+  drawCells((la, lo) => {
+    const p = projectPoint(la, lo, cx, cy, R);
+    if (Math.abs(p.x - cx) > R || Math.abs(p.y - cy) > R) return null;
+    return p;
+  });
 
   // center marker
   ctx.fillStyle = light ? '#0E7A42' : (getCSS('--accent') || '#38E08A');
@@ -1681,13 +1905,44 @@ $('#getLocBtn').onclick = () => {
 function renderSitePresets() {
   const grid = $('#sitePresetGrid');
   grid.innerHTML = '';
-  SITE_PRESETS.forEach(p => {
+  const mkBtn = (p, removableIdx) => {
     const btn = document.createElement('button');
     btn.className = 'preset-btn';
-    btn.innerHTML = `<strong>${p.name}</strong><br><span style="color:var(--muted-2);font-size:10px;">${p.lat.toFixed(2)}°, ${p.lon.toFixed(2)}°</span>`;
-    btn.onclick = () => { pendingSite = { ...p }; $$('.preset-btn').forEach(b => b.style.borderColor = ''); btn.style.borderColor = 'var(--accent)'; };
-    grid.appendChild(btn);
-  });
+    const watched = removableIdx != null ? ' <span style="color:var(--warn);">⚡</span>' : '';
+    btn.innerHTML = `<strong>${p.name}</strong>${watched}<br><span style="color:var(--muted-2);font-size:10px;">${p.lat.toFixed(2)}°, ${p.lon.toFixed(2)}°</span>` +
+      (removableIdx != null ? `<span class="site-del" style="float:right;color:var(--error);padding:0 4px;">✕</span>` : '');
+    btn.onclick = (e) => {
+      if (e.target.classList.contains('site-del')) {
+        state.savedSites.splice(removableIdx, 1);
+        saveState();
+        renderSitePresets();
+        showToast('Site retiré de la surveillance');
+        return;
+      }
+      pendingSite = { ...p };
+      $$('.preset-btn').forEach(b => b.style.borderColor = '');
+      btn.style.borderColor = 'var(--accent)';
+    };
+    return btn;
+  };
+  SITE_PRESETS.forEach(p => grid.appendChild(mkBtn(p, null)));
+  (state.savedSites || []).forEach((p, i) => grid.appendChild(mkBtn(p, i)));
+
+  const add = document.createElement('button');
+  add.className = 'preset-btn';
+  add.style.borderStyle = 'dashed';
+  add.innerHTML = `<span style="color:var(--accent);">＋ Mémoriser le site affiché</span><br><span style="color:var(--muted-2);font-size:10px;">alerte ⚡ si impact proche de ce site</span>`;
+  add.onclick = () => {
+    const def = state.site.name === 'Position actuelle' ? 'Maison' : state.site.name;
+    const name = prompt('Nom du site à surveiller :', def);
+    if (!name || !name.trim()) return;
+    state.savedSites = state.savedSites || [];
+    state.savedSites.push({ name: name.trim(), lat: state.site.lat, lon: state.site.lon, alt: state.site.alt || 0 });
+    saveState();
+    renderSitePresets();
+    showToast(`« ${name.trim()} » mémorisé et surveillé`);
+  };
+  grid.appendChild(add);
 }
 $('#saveSiteBtn').onclick = () => {
   let newSite = null;
@@ -1727,6 +1982,7 @@ function syncSettingsInputs() {
   $('#setCloudsOpacity').value = state.cloudsOpacity;
   $('#setMapLight').checked = state.mapStyle !== 'sombre';
   $('#setAutoLoc').checked = state.autoLocate;
+  $('#setNotify').checked = state.notify;
   $('#setAuto').checked = state.autoReconnect;
 }
 $('#settingsBtn').onclick = () => { syncSettingsInputs(); openModal('settingsModal'); };
@@ -1747,6 +2003,22 @@ $('#setAutoLoc').onchange = (e) => {
   state.autoLocate = e.target.checked;
   saveState();
   if (state.autoLocate) autoLocateNow();
+};
+$('#setNotify').onchange = (e) => {
+  state.notify = e.target.checked;
+  saveState();
+  if (state.notify && typeof Notification !== 'undefined') {
+    Notification.requestPermission().then(p => {
+      if (p !== 'granted') {
+        state.notify = false;
+        saveState();
+        $('#setNotify').checked = false;
+        showToast('Notifications refusées par le système', true);
+      } else {
+        showToast('Notifications activées');
+      }
+    });
+  }
 };
 $('#simBtn').onclick = () => {
   ensureAudio();
@@ -1841,6 +2113,7 @@ function init() {
   if (state.viewMode === 'map') buildBaseLayer();
   if (state.animate) startAnim();
   autoLocateNow();
+  computeCells();
   connectWs(); // lightning feed live from the start
 
   requestAnimationFrame(loop);
