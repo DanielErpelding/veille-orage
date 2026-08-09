@@ -231,7 +231,7 @@
     font-family: var(--mono); font-size: 12px;
   }
   .strike-row .sdot { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 6px var(--warn); }
-  .strike-row.near .sdot { background: var(--error); box-shadow: 0 0 8px var(--error); }
+  .strike-row .sdot.recent { background: var(--error); box-shadow: 0 0 8px var(--error); }
   .strike-row .sdist { color: var(--text); text-align: right; }
   .strike-row .sdist.near { color: var(--error); font-weight: 600; }
   .strike-row .sbrg { color: var(--muted); }
@@ -315,7 +315,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v1.5 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v1.5.1 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -1285,10 +1285,12 @@ function drawScope(ts) {
         const y = cy - Math.cos(ar) * rr;
         drawStrike(x, y, lifeFrac, age);
       } else if (s.dist <= state.range * 2) {
-        // off-scope indicator on the rim — nearby storms only (< 2x range)
+        // off-scope indicator on the rim — nearby storms only (< 2x range),
+        // same age-based color as in-scope strikes (red = recent)
         const x = cx + Math.sin(ar) * (R - 2);
         const y = cy - Math.cos(ar) * (R - 2);
-        ctx.fillStyle = `rgba(242,193,78,${0.25 + 0.4 * lifeFrac})`;
+        const rgb = age < STRIKE_RED_MS ? '229,87,78' : '242,193,78';
+        ctx.fillStyle = `rgba(${rgb},${0.3 + 0.4 * lifeFrac})`;
         ctx.beginPath(); ctx.arc(x, y, 2.2, 0, Math.PI * 2); ctx.fill();
       }
     }
@@ -1526,7 +1528,7 @@ function renderLog() {
     const near = s.dist <= state.alertKm;
     row.className = 'strike-row' + (near ? ' near' : '');
     row.innerHTML =
-      `<span class="sdot"></span>` +
+      `<span class="sdot${now - s.t < STRIKE_RED_MS ? ' recent' : ''}"></span>` +
       `<span class="sbrg">${compass(s.brg)} · ${Math.round(s.brg)}°</span>` +
       `<span class="sdist ${near ? 'near' : ''}">${s.dist.toFixed(1)} km</span>` +
       `<span class="sage">${ageStr(now - s.t)}</span>`;
