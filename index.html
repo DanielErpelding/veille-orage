@@ -315,7 +315,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v1.4.1 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v1.5 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -503,6 +503,7 @@
         <li><code>ws*.blitzortung.org</code> — réseau communautaire de détection de foudre, diffusé en direct par WebSocket.</li>
       </ul>
       <p>Les impacts sont détectés par triangulation par un réseau de bénévoles : latence de quelques secondes et couverture variable selon la région.</p>
+      <p><strong>Historique local :</strong> les impacts reçus sont mémorisés sur l'appareil (1 h glissante) et restaurés à l'ouverture de l'app. Le flux Blitzortung étant un direct pur, l'app ne peut montrer que ce qu'elle a reçu pendant qu'elle était ouverte — la « Durée de persistance » des Réglages fixe la fenêtre affichée.</p>
 
       <h3>Alerte de proximité</h3>
       <p>Quand un impact tombe sous le <strong>seuil d'alerte</strong>, le cadran clignote en rouge, avec bip et vibration (si activés). Utile pour surveiller une cellule orageuse qui approche.</p>
@@ -550,7 +551,7 @@ const state = Object.assign({
   site: { name: 'Cugnaux (FR)', lat: 43.5345, lon: 1.3445, alt: 165 },
   range: 200,
   alertKm: 30,
-  maxAgeMin: 20,
+  maxAgeMin: 30,
   precipOn: true,
   precipOpacity: 0.55,
   cloudsOn: true,
@@ -564,6 +565,13 @@ const state = Object.assign({
   autoReconnect: true,
   legendOpen: true
 }, loadState() || {});
+
+// one-time migration: old default persistence was 20 min, new default is 30
+if (!state._migrPersist30) {
+  if (state.maxAgeMin === 20) state.maxAgeMin = 30;
+  state._migrPersist30 = true;
+  saveState();
+}
 
 /* runtime-only */
 let strikes = [];                 // {t(ms), lat, lon, dist(km), brg(deg)}
@@ -1030,6 +1038,7 @@ function addStrike(lat, lon, tms) {
   const brg = bearing(state.site.lat, state.site.lon, lat, lon);
   const s = { t: tms || Date.now(), lat, lon, dist, brg };
   strikes.push(s);
+  strikesDirty = true;
   // prune
   pruneStrikes();
   // proximity
@@ -1039,9 +1048,56 @@ function addStrike(lat, lon, tms) {
 }
 
 function pruneStrikes() {
-  const cutoff = Date.now() - state.maxAgeMin * 60000;
+  // memory keeps up to 1 h regardless of the display persistence setting,
+  // so raising the setting brings older strikes back into view
+  const cutoff = Date.now() - Math.max(state.maxAgeMin, 60) * 60000;
   if (strikes.length > 4000) strikes = strikes.slice(-4000);
   strikes = strikes.filter(s => s.t >= cutoff);
+}
+
+/* --- Local strike history: persists received strikes across app restarts
+   (the Blitzortung feed is live-only and offers no replay). --- */
+const STRIKES_KEY = 'jlp-radar-strikes-v1';
+let strikesDirty = false;
+
+function persistStrikes() {
+  if (!strikesDirty) return;
+  strikesDirty = false;
+  try {
+    const cutoff = Date.now() - 60 * 60000;
+    const compact = strikes
+      .filter(s => s.t >= cutoff)
+      .slice(-3000)
+      .map(s => [s.t, +s.lat.toFixed(4), +s.lon.toFixed(4)]);
+    localStorage.setItem(STRIKES_KEY, JSON.stringify(compact));
+  } catch {}
+}
+setInterval(persistStrikes, 10000);
+window.addEventListener('pagehide', persistStrikes);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') persistStrikes();
+});
+
+function restoreStrikes() {
+  try {
+    const raw = localStorage.getItem(STRIKES_KEY);
+    if (!raw) return 0;
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return 0;
+    const cutoff = Date.now() - 60 * 60000;
+    let n = 0;
+    for (const it of arr) {
+      if (!Array.isArray(it) || typeof it[0] !== 'number') continue;
+      const [t, lat, lon] = it;
+      if (t < cutoff || typeof lat !== 'number' || typeof lon !== 'number') continue;
+      const dist = haversine(state.site.lat, state.site.lon, lat, lon);
+      if (dist > 1000) continue;
+      strikes.push({ t, lat, lon, dist, brg: bearing(state.site.lat, state.site.lon, lat, lon) });
+      n++;
+    }
+    strikes.sort((a, b) => a.t - b.t);
+    return n;
+  } catch { return 0; }
 }
 
 function recomputeStrikeGeo() {
@@ -1712,7 +1768,11 @@ function init() {
   $('#animBtn').classList.toggle('on', state.animate);
   $('#legend').classList.toggle('open', state.legendOpen !== false);
   updateConnectBtn();
+
+  const restored = restoreStrikes();
   renderLog();
+  updateCounts();
+  if (restored > 0) showToast(`${restored} impact${restored > 1 ? 's' : ''} restauré${restored > 1 ? 's' : ''} (historique local)`);
 
   if (state.precipOn) loadRainviewerIndex();
   if (state.cloudsOn) buildCloudLayer();
