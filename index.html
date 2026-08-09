@@ -350,7 +350,7 @@
     text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted-2);
     border-top: 1px solid var(--border);
   }
-  .log { padding: 0 0 90px; }
+  .log { padding: 0; }
   .strike-row {
     display: grid; grid-template-columns: 10px 1fr auto auto; gap: 10px; align-items: center;
     padding: 9px 16px; border-bottom: 1px solid var(--border);
@@ -422,6 +422,46 @@
   .help-block h3 { font-size: 11px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); margin: 14px 0 6px; }
   .help-block ul, .help-block ol { padding-left: 18px; margin: 6px 0; }
 
+  /* ===== Credits & safety footer ===== */
+  .credits {
+    padding: 14px 16px calc(24px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border);
+    background: var(--panel);
+    font-family: var(--mono);
+    font-size: 9.5px;
+    line-height: 1.7;
+    color: var(--muted-2);
+    letter-spacing: 0.02em;
+  }
+  .credits .cr-warn {
+    display: block;
+    margin-bottom: 7px;
+    color: var(--warn);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+  }
+  .credits .cr-src { color: var(--muted); }
+
+  .disclaimer-body { font-size: 12.5px; line-height: 1.6; color: var(--text); }
+  .disclaimer-body p { margin: 0 0 10px; }
+  .disclaimer-body .dz-key {
+    display: block;
+    background: rgba(242,193,78,0.1);
+    border-left: 2px solid var(--warn);
+    padding: 9px 11px;
+    color: var(--warn);
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1.55;
+    margin: 0 0 12px;
+  }
+  .disclaimer-body .dz-src {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--muted-2);
+    line-height: 1.6;
+  }
+
   /* ===== Toast ===== */
   .toast {
     position: fixed;
@@ -441,7 +481,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v2.4 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v2.5 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -580,7 +620,7 @@
     <h2>Réglages</h2>
 
     <div class="set-row">
-      <div class="sk">Seuil d'alerte<small>déclenche l'alarme sous cette distance</small></div>
+      <div class="sk">Seuil d'alerte<small>déclenche l'alarme sous cette distance — repère d'observation, pas un dispositif de sécurité</small></div>
       <div style="display:flex;align-items:center;gap:6px;">
         <input type="number" class="set-num" id="setAlertKm" min="1" max="500" step="1">
         <span style="font-family:var(--mono);font-size:11px;color:var(--muted-2)">km</span>
@@ -696,6 +736,11 @@
         <li><code>ws*.blitzortung.org</code> — réseau communautaire de détection de foudre, diffusé en direct par WebSocket.</li>
       </ul>
       <p>Les impacts sont détectés par triangulation par un réseau de bénévoles : latence de quelques secondes et couverture variable selon la région.</p>
+
+      <h3>Conditions d'usage des données de foudre</h3>
+      <p><strong>Blitzortung.org</strong> n'est pas un service commercial mais un réseau de passionnés qui hébergent leurs propres détecteurs et partagent leurs mesures. Leurs données sont mises à disposition pour un <strong>usage privé et de loisir</strong> ; tout usage commercial, ainsi que la rediffusion large, demandent leur accord préalable. Elles ne doivent pas servir à la <strong>protection des personnes et des biens</strong>.</p>
+      <p>Cette application respecte cet esprit : usage personnel, aucune revente, sources citées. Si tu envisages de la diffuser largement ou de la publier sur un magasin d'applications, contacte-les au préalable — et vérifie le texte en vigueur sur <code>blitzortung.org</code>. Si le sujet te passionne, héberger une station est le meilleur moyen de soutenir le réseau.</p>
+      <p><button class="ctl" id="showDisclaimerBtn" style="width:100%;margin-top:6px;">Revoir l'avertissement</button></p>
       <p><strong>Historique local :</strong> les impacts reçus sont mémorisés sur l'appareil (1 h glissante) et restaurés à l'ouverture de l'app. Le flux Blitzortung étant un direct pur, l'app ne peut montrer que ce qu'elle a reçu pendant qu'elle était ouverte — la « Durée de persistance » des Réglages fixe la fenêtre affichée.</p>
 
       <h3>Position</h3>
@@ -735,6 +780,41 @@
     </div>
     <div class="modal-actions">
       <button class="ctl primary" data-close="helpModal">Compris</button>
+    </div>
+  </div>
+</div>
+
+<div class="credits">
+  <span class="cr-warn">⚠ Outil d'observation — ne pas utiliser pour la protection des personnes et des biens.</span>
+  <span class="cr-src">
+    Foudre © Blitzortung.org et les contributeurs du réseau ·
+    Pluie © RainViewer ·
+    Nuages &amp; vent © Open-Meteo ·
+    Feux © NASA FIRMS ·
+    Pollution lumineuse © D. Lorenz ·
+    Fond de carte © OpenStreetMap, © CARTO
+  </span>
+</div>
+
+<!-- ============ MODAL: first-run disclaimer ============ -->
+<div class="modal-backdrop" id="disclaimerModal">
+  <div class="modal">
+    <h2>À lire avant d'utiliser</h2>
+    <div class="disclaimer-body">
+      <span class="dz-key">Cette application sert à observer les orages, pas à assurer une sécurité.
+      Ne fonde aucune décision de mise à l'abri sur ce qu'elle affiche.</span>
+      <p>Les impacts de foudre proviennent de <strong>Blitzortung.org</strong>, un réseau de bénévoles qui hébergent
+      leurs propres détecteurs. La couverture varie selon les régions, la localisation a une marge d'erreur,
+      des impacts peuvent manquer et le flux peut s'interrompre. Ses données sont mises à disposition pour
+      un usage privé et de loisir, explicitement pas pour la protection des personnes et des biens.</p>
+      <p>En cas de risque réel, réfère-toi à <strong>Météo-France</strong> (vigilance orages) et aux consignes
+      des autorités locales.</p>
+      <span class="dz-src">Sources : Blitzortung.org (foudre) · RainViewer (précipitations) ·
+      Open-Meteo (nuages et vent) · NASA FIRMS (feux) · D. Lorenz (pollution lumineuse) ·
+      OpenStreetMap et CARTO (fond de carte). Merci aux bénévoles qui alimentent ces réseaux.</span>
+    </div>
+    <div class="modal-actions">
+      <button class="ctl primary" id="disclaimerOk">J'ai compris</button>
     </div>
   </div>
 </div>
@@ -787,6 +867,7 @@ const state = Object.assign({
   lightOpacity: 0.5,
   firesOn: false,
   firmsKey: '',
+  disclaimerSeen: false,
   animate: false,
   sound: true,
   vibrate: true,
@@ -2969,6 +3050,19 @@ $('#omBannerClose').onclick = () => {
   $('#omBanner').classList.remove('show');
 };
 
+/* --- Re-open the disclaimer from the help --- */
+$('#showDisclaimerBtn').onclick = () => {
+  closeModal('helpModal');
+  openModal('disclaimerModal');
+};
+
+/* --- First-run disclaimer --- */
+$('#disclaimerOk').onclick = () => {
+  state.disclaimerSeen = true;
+  saveState();
+  closeModal('disclaimerModal');
+};
+
 /* --- Legend toggle --- */
 $('#legendHead').onclick = () => {
   state.legendOpen = !state.legendOpen;
@@ -3028,6 +3122,7 @@ function init() {
   if (state.firesOn) buildFireLayer(true);
   if (state.viewMode === 'map') buildBaseLayer();
   if (state.animate) startAnim();
+  if (!state.disclaimerSeen) openModal('disclaimerModal');
   autoLocateNow();
   computeCells();
   connectWs(); // lightning feed live from the start
