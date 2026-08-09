@@ -211,6 +211,34 @@
   }
   .cell-banner.show { display: block; }
 
+  .om-banner {
+    display: none;
+    margin: 0 16px 10px;
+    background: rgba(229,87,78,0.12);
+    border: 1px solid var(--error);
+    color: var(--error);
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1.5;
+    padding: 10px 12px;
+    border-radius: 6px;
+    letter-spacing: 0.02em;
+    position: relative;
+    padding-right: 34px;
+  }
+  .om-banner.show { display: block; }
+  .om-banner .om-title { font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; font-size: 10px; display: block; margin-bottom: 3px; }
+  .om-banner .om-hint { color: var(--muted); display: block; margin-top: 4px; font-size: 10.5px; }
+  .om-banner .om-close {
+    position: absolute; top: 6px; right: 6px;
+    width: 24px; height: 24px;
+    background: transparent; border: none;
+    color: var(--error); font-size: 14px;
+    cursor: pointer; border-radius: 4px;
+    display: grid; place-items: center;
+  }
+  .om-banner .om-close:active { background: rgba(229,87,78,0.25); }
+
   /* ===== Legend ===== */
   .legend {
     margin: 2px 16px 10px;
@@ -366,7 +394,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v2.1.1 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v2.2 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -409,6 +437,12 @@
 
 <div class="alarm-banner" id="alarmBanner"></div>
 <div class="cell-banner" id="cellBanner"></div>
+<div class="om-banner" id="omBanner">
+  <span class="om-title">Données météo indisponibles</span>
+  <span id="omBannerMsg"></span>
+  <span class="om-hint" id="omBannerHint"></span>
+  <button class="om-close" id="omBannerClose" title="Masquer">✕</button>
+</div>
 
 <div class="scope-wrap" id="scopeWrap">
   <canvas id="scope"></canvas>
@@ -922,7 +956,7 @@ function mercPxToLatLon(px, py, z) {
 
 /* Shared Open-Meteo multi-point fetch: surfaces the API's own error reason
    so field failures are diagnosable, and reports once via toast. */
-let omToastShown = false;
+let omDismissed = false;
 async function fetchOpenMeteo(lats, lons, vars) {
   const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lats.join(',') +
               '&longitude=' + lons.join(',') + '&current=' + vars;
@@ -932,12 +966,21 @@ async function fetchOpenMeteo(lats, lons, vars) {
   if (!res.ok) throw new Error((j && j.reason) ? j.reason : ('HTTP ' + res.status));
   return Array.isArray(j) ? j : [j];
 }
+/* Persistent error banner: stays on screen until the data comes back
+   (or the user dismisses it), so a startup failure can actually be read. */
 function omFail(e) {
   console.warn('Open-Meteo error', e);
-  if (!omToastShown) {
-    omToastShown = true;
-    showToast('Open-Meteo : ' + (e && e.message ? e.message : 'indisponible'), true);
-  }
+  const raw = (e && e.message) ? String(e.message) : 'service indisponible';
+  const quota = /limit|quota|too many|exceed/i.test(raw);
+  $('#omBannerMsg').textContent = 'Open-Meteo : ' + raw;
+  $('#omBannerHint').textContent = quota
+    ? 'Quota d\'appels atteint. Nuages et vent reviennent tout seuls dès que le quota se réinitialise (limite par minute/heure : quelques minutes ; limite journalière : à minuit UTC, soit 2 h du matin en heure française d\'été). La pluie et la foudre continuent normalement.'
+    : 'Nuages et vent sont momentanément indisponibles. L\'app réessaie automatiquement. La pluie et la foudre continuent normalement.';
+  if (!omDismissed) $('#omBanner').classList.add('show');
+}
+function omOk() {
+  omDismissed = false;
+  $('#omBanner').classList.remove('show');
 }
 
 /* Cloud cover from Open-Meteo (free, no key, CORS-enabled): a 12x12 grid of
@@ -1046,6 +1089,7 @@ async function buildMeteoLayers() {
     windLayer = { points, lat, lon, range: state.range };
     windError = false;
     windFetchedAt = Date.now();
+    omOk();
     updateLogMeta();
   } catch (e) {
     omFail(e);
@@ -2362,6 +2406,12 @@ function autoLocateNow() {
 
 /* --- Help modal --- */
 $('#helpBtn').onclick = () => openModal('helpModal');
+
+/* --- Open-Meteo banner dismiss --- */
+$('#omBannerClose').onclick = () => {
+  omDismissed = true;
+  $('#omBanner').classList.remove('show');
+};
 
 /* --- Legend toggle --- */
 $('#legendHead').onclick = () => {
