@@ -315,7 +315,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v1.3.1 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v1.3.2 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -722,23 +722,52 @@ async function buildMosaic(urlFn, maxZ) {
   off.height = rows * 256;
   const octx = off.getContext('2d');
 
+  let tilesOk = 0;
   const jobs = [];
   for (let ty = yMin; ty <= yMax; ty++) {
     for (let tx = xMin; tx <= xMax; tx++) {
       const px = (tx - xMin) * 256, py = (ty - yMin) * 256;
       jobs.push(loadTile(urlFn(z, tx, ty)).then(img => {
-        if (img) octx.drawImage(img, px, py, 256, 256);
+        if (img) { octx.drawImage(img, px, py, 256, 256); tilesOk++; }
       }));
     }
   }
   await Promise.all(jobs);
 
   return {
-    canvas: off, z,
+    canvas: off, z, tilesOk,
     originPxX: xMin * 256,   // global mercator pixel of offscreen top-left
     originPxY: yMin * 256,
     lat, lon, range: state.range
   };
+}
+
+/* White IR clouds are invisible on the light basemap: recolor them into a
+   slate silhouette (alpha preserved). Falls back to the natural render if
+   the tiles turn out to be opaque or unreadable. */
+function tintedClouds(layer) {
+  if (layer.tinted !== undefined) return layer.tinted;
+  layer.tinted = null;
+  try {
+    const probe = document.createElement('canvas');
+    probe.width = 64; probe.height = 64;
+    const pctx = probe.getContext('2d', { willReadFrequently: true });
+    pctx.drawImage(layer.canvas, 0, 0, 64, 64);
+    const data = pctx.getImageData(0, 0, 64, 64).data;
+    let clear = 0;
+    for (let i = 3; i < data.length; i += 4) if (data[i] < 16) clear++;
+    if (clear / (data.length / 4) > 0.02) { // real per-pixel alpha -> safe to tint
+      const c = document.createElement('canvas');
+      c.width = layer.canvas.width; c.height = layer.canvas.height;
+      const t = c.getContext('2d');
+      t.drawImage(layer.canvas, 0, 0);
+      t.globalCompositeOperation = 'source-in';
+      t.fillStyle = '#54677F';
+      t.fillRect(0, 0, c.width, c.height);
+      layer.tinted = c;
+    }
+  } catch { layer.tinted = null; }
+  return layer.tinted;
 }
 
 function layerFits(l) {
@@ -753,7 +782,7 @@ async function buildPrecipLayer() {
     if (!frame) return;
     // RainViewer radar tiles also top out (placeholder tiles beyond z7)
     const layer = await buildMosaic((z, x, y) => tileUrl(frame, z, x, y), 7);
-    if (layer) precipLayer = layer;
+    if (layer) { precipLayer = layer; updateLogMeta(); }
   } catch (e) { console.warn('precip build error', e); }
   finally { precipBuilding = false; }
 }
@@ -767,7 +796,7 @@ async function buildCloudLayer() {
     // RainViewer satellite infrared tops out at low zooms — beyond that the
     // server returns "Zoom Level Not Supported" placeholder tiles.
     const layer = await buildMosaic((z, x, y) => satTileUrl(frame, z, x, y), 6);
-    if (layer) cloudLayer = layer;
+    if (layer) { cloudLayer = layer; updateLogMeta(); }
   } catch (e) { console.warn('clouds build error', e); }
   finally { cloudsBuilding = false; }
 }
@@ -1167,7 +1196,7 @@ function drawStrike(x, y, lifeFrac, fresh) {
   }
 }
 
-function drawGeoLayer(cx, cy, R, layer, alpha) {
+function drawGeoLayer(cx, cy, R, layer, alpha, canvasOverride) {
   const z = layer.z;
   // global mercator pixel of the scope center
   const centerPxX = lonToTileX(layer.lon, z) * 256;
@@ -1186,7 +1215,7 @@ function drawGeoLayer(cx, cy, R, layer, alpha) {
   ctx.translate(cx, cy);
   ctx.scale(scale, scale);
   ctx.translate(-offX, -offY);
-  ctx.drawImage(layer.canvas, 0, 0);
+  ctx.drawImage(canvasOverride || layer.canvas, 0, 0);
   ctx.restore();
 }
 
@@ -1222,9 +1251,12 @@ function drawMap() {
   ctx.fillStyle = light ? '#D9D4C8' : '#0B0F0C';
   ctx.fillRect(x0, y0, side, side);
 
-  // base map, then data layers
+  // base map, then data layers (clouds tinted slate on the light basemap,
+  // where white IR clouds would be invisible)
   if (layerFits(baseLayer)) drawGeoLayer(cx, cy, R, baseLayer, 1);
-  if (state.cloudsOn && layerFits(cloudLayer)) drawGeoLayer(cx, cy, R, cloudLayer, state.cloudsOpacity);
+  if (state.cloudsOn && layerFits(cloudLayer)) {
+    drawGeoLayer(cx, cy, R, cloudLayer, state.cloudsOpacity, light ? tintedClouds(cloudLayer) : null);
+  }
   if (state.precipOn && layerFits(precipLayer)) drawGeoLayer(cx, cy, R, precipLayer, state.precipOpacity);
 
   // faint distance rings for scale reading (contrast depends on basemap)
@@ -1332,15 +1364,21 @@ function ageStr(ms) {
   const m = Math.round(s / 60);
   return m + 'min';
 }
+function fmtFrameTime(unixSec) {
+  const d = new Date(unixSec * 1000);
+  return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
 function updateLogMeta() {
   const meta = $('#logMeta');
-  if (RV.frames.length && RV.idx >= 0) {
-    const f = RV.frames[RV.idx];
-    const d = new Date(f.time * 1000);
-    const hh = String(d.getHours()).padStart(2, '0');
-    const mm = String(d.getMinutes()).padStart(2, '0');
-    meta.textContent = `pluie ${hh}:${mm}`;
-  } else meta.textContent = '—';
+  const parts = [];
+  if (state.precipOn && RV.frames.length && RV.idx >= 0) {
+    parts.push('pluie ' + fmtFrameTime(RV.frames[RV.idx].time));
+  }
+  if (state.cloudsOn && RV.satFrames.length && RV.satIdx >= 0) {
+    if (cloudLayer && cloudLayer.tilesOk === 0) parts.push('sat ✗');
+    else parts.push('sat ' + fmtFrameTime(RV.satFrames[RV.satIdx].time));
+  }
+  meta.textContent = parts.length ? parts.join(' · ') : '—';
 }
 function renderLog() {
   const log = $('#log');
@@ -1414,12 +1452,14 @@ $('#precipBtn').onclick = () => {
   $('#precipBtn').classList.toggle('on', state.precipOn);
   saveState();
   if (state.precipOn) { if (!RV.host) loadRainviewerIndex(); else buildPrecipLayer(); }
+  updateLogMeta();
 };
 $('#cloudsBtn').onclick = () => {
   state.cloudsOn = !state.cloudsOn;
   $('#cloudsBtn').classList.toggle('on', state.cloudsOn);
   saveState();
   if (state.cloudsOn) { if (!RV.host) loadRainviewerIndex(); else buildCloudLayer(); }
+  updateLogMeta();
 };
 $('#strikesBtn').onclick = () => {
   state.strikesShow = !state.strikesShow;
