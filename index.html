@@ -283,6 +283,7 @@
   .leg-center { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px rgba(56,224,138,0.25); }
   .leg-cellico { width: 16px; height: 16px; border: 1.5px dashed var(--warn); border-radius: 50%; color: var(--warn); font-size: 10px; display: flex; align-items: center; justify-content: center; }
   .leg-windico { color: #78CDFF; font-size: 14px; font-weight: 600; }
+  .leg-fireico { width: 11px; height: 11px; border-radius: 50%; background: #FFA03C; box-shadow: 0 0 7px rgba(255,120,40,0.95), 0 0 0 2.5px rgba(255,225,180,0.35); }
   .leg-lightgrad { width: 30px; height: 9px; border-radius: 2px; background: linear-gradient(90deg, #14224E, #2C5BA8, #3E9A4E, #E8E84A, #E88A2A, #D8352A, #FFFFFF); }
   .leg-clouds { width: 26px; height: 11px; border-radius: 8px; background: radial-gradient(ellipse at 35% 45%, rgba(230,236,232,0.85), rgba(180,190,184,0.45) 65%, transparent); }
 
@@ -394,7 +395,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v2.2 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v2.3 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -425,6 +426,7 @@
   <button class="ctl on" id="precipBtn">Pluie</button>
   <button class="ctl" id="cloudsBtn">Nuages</button>
   <button class="ctl" id="lightBtn">Pollution</button>
+  <button class="ctl" id="firesBtn">Feux</button>
   <button class="ctl on" id="strikesBtn">Impacts</button>
   <button class="ctl" id="animBtn">Anim</button>
   <button class="ctl" id="settingsBtn">Réglages</button>
@@ -468,6 +470,7 @@
     <div class="leg-item"><span class="leg-ico"><span class="leg-cellico">↗</span></span><span>Cellule orageuse · flèche = trajectoire +30 min (rouge si elle vient vers toi)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-windico">→</span></span><span>Vent à 10 m (vue Carte) : flèche = sens du vent, longueur = vitesse</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-lightgrad"></span></span><span>Pollution lumineuse : ciel noir → très pollué (bouton Pollution)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-fireico"></span></span><span>Feu actif (3 derniers jours) · taille = puissance, éclat = fraîcheur</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-center"></span></span><span>Votre position (centre)</span></div>
   </div>
 </div>
@@ -579,6 +582,17 @@
       <input type="range" class="set-range" id="setLightOpacity" min="0.1" max="1" step="0.05">
     </div>
 
+    <div style="padding: 11px 0; border-bottom: 1px solid var(--border);">
+      <div class="sk" style="font-family:var(--mono);font-size:12px;">Clé NASA FIRMS
+        <small style="display:block;color:var(--muted-2);font-size:10px;margin-top:2px;text-transform:none;letter-spacing:0;">
+          nécessaire pour la couche « Feux ». Gratuite et immédiate sur
+          <span style="color:var(--accent);">firms.modaps.eosdis.nasa.gov/api/map_key</span> — elle reste sur ton appareil.
+        </small>
+      </div>
+      <input type="text" id="setFirmsKey" placeholder="colle ta clé ici" autocomplete="off"
+             autocapitalize="off" spellcheck="false" style="margin-top:8px;">
+    </div>
+
     <div class="set-row">
       <div class="sk">Notifications système<small>impact proche & cellule en approche</small></div>
       <label class="switch"><input type="checkbox" id="setNotify"><span class="slider"></span></label>
@@ -606,6 +620,7 @@
       <ul>
         <li><strong>Précipitations</strong> — couche radar <code>RainViewer</code> projetée dans le cadran (bouton <code>Pluie</code>).</li>
         <li><strong>Couverture nuageuse</strong> — modèle météo Open-Meteo, mise à jour horaire (bouton <code>Nuages</code>).</li>
+        <li><strong>Feux actifs</strong> — détections satellite des 3 derniers jours (bouton <code>Feux</code>), filtrées des sources industrielles.</li>
         <li><strong>Pollution lumineuse</strong> — atlas 2025, couche statique activable (bouton <code>Pollution</code>), opacité réglable dans Réglages.</li>
         <li><strong>Vent à 10 m</strong> — flèches sur la vue Carte, orientées dans le sens du vent, longueur et intensité selon la vitesse (Réglages → « Vent sur la carte »).</li>
         <li><strong>Impacts de foudre</strong> — rouges quand récents (moins de 2 minutes), puis ambre en s'estompant avec le temps (bouton <code>Impacts</code>).</li>
@@ -618,6 +633,7 @@
       <ul>
         <li><code>api.rainviewer.com</code> — mosaïque radar mondiale des précipitations (gratuite, sans clé).</li>
         <li><code>open-meteo.com</code> — couverture nuageuse et vent à 10 m (analyse du modèle météo, gratuite, sans clé).</li>
+        <li><code>firms.modaps.eosdis.nasa.gov</code> — feux actifs détectés par les satellites VIIRS/NOAA-20 (NASA FIRMS, gratuit avec une clé personnelle).</li>
         <li><code>djlorenz.github.io</code> — atlas mondial de pollution lumineuse 2025 (David Lorenz), utile pour préparer une session astro.</li>
         <li><code>ws*.blitzortung.org</code> — réseau communautaire de détection de foudre, diffusé en direct par WebSocket.</li>
       </ul>
@@ -629,6 +645,11 @@
 
       <h3>Alerte de proximité</h3>
       <p>Quand un impact tombe sous le <strong>seuil d'alerte</strong>, le cadran clignote en rouge, avec bip et vibration (si activés). Utile pour surveiller une cellule orageuse qui approche.</p>
+
+      <h3>Feux actifs</h3>
+      <p>Le bouton <code>Feux</code> affiche les détections des satellites VIIRS/NOAA-20 sur les 3 derniers jours. Il faut une <strong>clé NASA FIRMS</strong> (gratuite, immédiate, à coller dans les Réglages) : elle reste sur ton appareil et n'est envoyée qu'à la NASA.</p>
+      <p><strong>Ce que « feu » veut dire ici :</strong> les satellites mesurent des anomalies thermiques, pas des flammes. Torchères de raffineries, aciéries et autres sources de chaleur fixes seraient donc signalées comme des feux. L'app écarte ces fausses détections de deux façons : elle ne garde que les détections classées « feu de végétation » par la NASA (son champ <code>type</code> distingue volcans, sources fixes terrestres et torchères offshore), et elle élimine en plus les points qui reviennent au même endroit chaque jour de la fenêtre — signature d'une installation industrielle, alors qu'un vrai feu se déplace et s'éteint. Les détections de faible confiance sont également ignorées.</p>
+      <p>Malgré ce filtrage, une détection reste une indication, pas une confirmation : nuages, relief et heure de passage du satellite (2 à 4 survols par jour) limitent la couverture. En cas de doute, la référence reste les autorités locales.</p>
 
       <h3>Cellules orageuses &amp; trajectoire</h3>
       <p>L'app regroupe les impacts des 16 dernières minutes en <strong>cellules</strong> (cercles pointillés) et estime leur déplacement : la flèche montre la position prévue dans 30 minutes. Si une cellule se dirige vers ton rayon d'alerte, elle passe en rouge et un bandeau ambre annonce distance, vitesse et heure d'arrivée estimée. C'est une extrapolation simple : fiable pour des cellules bien actives, indicative sinon.</p>
@@ -698,6 +719,8 @@ const state = Object.assign({
   windOn: true,
   lightOn: false,
   lightOpacity: 0.5,
+  firesOn: false,
+  firmsKey: '',
   animate: false,
   sound: true,
   vibrate: true,
@@ -966,22 +989,38 @@ async function fetchOpenMeteo(lats, lons, vars) {
   if (!res.ok) throw new Error((j && j.reason) ? j.reason : ('HTTP ' + res.status));
   return Array.isArray(j) ? j : [j];
 }
-/* Persistent error banner: stays on screen until the data comes back
-   (or the user dismisses it), so a startup failure can actually be read. */
+/* Persistent error banner, shared by every data source: stays on screen
+   until the data comes back (or the user dismisses it), so a startup
+   failure can actually be read. */
+const dataErrors = {};
+function renderDataErrors() {
+  const keys = Object.keys(dataErrors);
+  const box = $('#omBanner');
+  if (!keys.length) { box.classList.remove('show'); return; }
+  $('#omBannerMsg').textContent = keys.map(k => dataErrors[k].msg).join(' · ');
+  $('#omBannerHint').textContent = keys.map(k => dataErrors[k].hint).join(' ');
+  if (!omDismissed) box.classList.add('show');
+}
+function setDataError(srcKey, msg, hint) {
+  dataErrors[srcKey] = { msg, hint };
+  renderDataErrors();
+}
+function clearDataError(srcKey) {
+  if (dataErrors[srcKey]) {
+    delete dataErrors[srcKey];
+    if (!Object.keys(dataErrors).length) omDismissed = false;
+    renderDataErrors();
+  }
+}
 function omFail(e) {
   console.warn('Open-Meteo error', e);
   const raw = (e && e.message) ? String(e.message) : 'service indisponible';
   const quota = /limit|quota|too many|exceed/i.test(raw);
-  $('#omBannerMsg').textContent = 'Open-Meteo : ' + raw;
-  $('#omBannerHint').textContent = quota
+  setDataError('om', 'Open-Meteo : ' + raw, quota
     ? 'Quota d\'appels atteint. Nuages et vent reviennent tout seuls dès que le quota se réinitialise (limite par minute/heure : quelques minutes ; limite journalière : à minuit UTC, soit 2 h du matin en heure française d\'été). La pluie et la foudre continuent normalement.'
-    : 'Nuages et vent sont momentanément indisponibles. L\'app réessaie automatiquement. La pluie et la foudre continuent normalement.';
-  if (!omDismissed) $('#omBanner').classList.add('show');
+    : 'Nuages et vent sont momentanément indisponibles. L\'app réessaie automatiquement. La pluie et la foudre continuent normalement.');
 }
-function omOk() {
-  omDismissed = false;
-  $('#omBanner').classList.remove('show');
-}
+function omOk() { clearDataError('om'); }
 
 /* Cloud cover from Open-Meteo (free, no key, CORS-enabled): a 12x12 grid of
    current cloud_cover percentages around the site, rendered as a smooth
@@ -1197,10 +1236,164 @@ async function buildLightLayer() {
   } catch (e) { console.warn('light build error', e); }
 }
 
+
+/* ============================================================
+   ACTIVE FIRES — NASA FIRMS (VIIRS/MODIS near-real-time)
+   Satellites detect thermal anomalies, not "fires": refinery flares,
+   steel works and other permanent industrial heat sources show up every
+   single day. FIRMS ships its own classification in the `type` column
+   (0 = vegetation fire, 1 = volcano, 2 = other STATIC LAND SOURCE i.e.
+   industry, 3 = offshore), so those are filtered out here. As a second
+   net, detections that repeat at the same spot on several distinct days
+   are treated as permanent sources too, since real wildfires move and
+   fade while a factory does not.
+   The CSV is parsed from its header row, so a change in column order or
+   an absent `type` column degrades gracefully instead of breaking.
+   ============================================================ */
+let fires = [];            // {lat, lon, t, frp, dist, brg, conf}
+let firesFetchedAt = 0;
+let firesBuildSeq = 0;
+let firesSite = null;      // {lat, lon, range} the current set was fetched for
+
+function parseCsv(text) {
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const head = lines[0].split(',').map(h => h.trim().toLowerCase());
+  const out = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(',');
+    if (cols.length < head.length) continue;
+    const row = {};
+    for (let c = 0; c < head.length; c++) row[head[c]] = (cols[c] || '').trim();
+    out.push(row);
+  }
+  return out;
+}
+
+function firmsTimestamp(row) {
+  // acq_date = YYYY-MM-DD, acq_time = HHMM (UTC)
+  const d = String(row.acq_date || '');
+  const t = String(row.acq_time || '0').padStart(4, '0');
+  const ms = Date.parse(d + 'T' + t.slice(0, 2) + ':' + t.slice(2, 4) + ':00Z');
+  return isNaN(ms) ? Date.now() : ms;
+}
+
+function confOk(row) {
+  const c = String(row.confidence || '').toLowerCase();
+  if (!c) return true;
+  if (c === 'l') return false;              // VIIRS low
+  if (c === 'n' || c === 'h') return true;  // VIIRS nominal / high
+  const n = parseFloat(c);                  // MODIS 0-100
+  return isNaN(n) ? true : n >= 30;
+}
+
+async function buildFireLayer(force) {
+  if (!state.firesOn) return;
+  const key = (state.firmsKey || '').trim();
+  if (!key) {
+    setDataError('fires', 'Feux : clé NASA FIRMS manquante',
+      'Ouvre Réglages → « Clé NASA FIRMS » et colle une clé (gratuite et immédiate sur firms.modaps.eosdis.nasa.gov/api/map_key). Elle reste sur ton appareil.');
+    return;
+  }
+  const sameView = firesSite && firesSite.lat === state.site.lat &&
+                   firesSite.lon === state.site.lon && firesSite.range === state.range;
+  if (!force && sameView && Date.now() - firesFetchedAt < 1800000) return; // FIRMS updates ~3 h
+
+  const seq = ++firesBuildSeq;
+  try {
+    const { lat, lon } = state.site;
+    const dLat = (state.range / 111.32) * 1.5;
+    const dLon = (state.range / (111.32 * Math.cos(rad(lat)))) * 1.5;
+    const bbox = [lon - dLon, lat - dLat, lon + dLon, lat + dLat]
+      .map(v => v.toFixed(3)).join(',');
+    // 3 days: enough freshness, and enough repetition to spot fixed sources
+    const url = `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${encodeURIComponent(key)}` +
+                `/VIIRS_NOAA20_NRT/${bbox}/3`;
+    const res = await fetch(url);
+    const txt = await res.text();
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (/invalid|error|unauthor/i.test(txt.slice(0, 200)) && !/latitude/i.test(txt.slice(0, 200))) {
+      throw new Error(txt.trim().split('\n')[0].slice(0, 120));
+    }
+    const rows = parseCsv(txt);
+    if (seq !== firesBuildSeq) return;
+
+    // pass 1: keep plausible vegetation fires
+    const kept = [];
+    for (const r of rows) {
+      const la = parseFloat(r.latitude), lo = parseFloat(r.longitude);
+      if (isNaN(la) || isNaN(lo)) continue;
+      if (r.type !== undefined && r.type !== '' && String(r.type) !== '0') continue; // industry/volcano/offshore
+      if (!confOk(r)) continue;
+      kept.push({ lat: la, lon: lo, t: firmsTimestamp(r),
+                  frp: parseFloat(r.frp) || 0, conf: r.confidence || '' });
+    }
+
+    // pass 2: drop spots burning on 3+ distinct days at the same place —
+    // a signature of permanent heat sources rather than wildfires
+    const byCell = new Map();
+    const CELL = 0.01; // ~1 km
+    for (const f of kept) {
+      const k = Math.round(f.lat / CELL) + '_' + Math.round(f.lon / CELL);
+      let a = byCell.get(k);
+      if (!a) { a = []; byCell.set(k, a); }
+      a.push(f);
+    }
+    const out = [];
+    for (const arr of byCell.values()) {
+      const days = new Set(arr.map(f => new Date(f.t).toISOString().slice(0, 10)));
+      if (days.size >= 3) continue; // present every day of the window -> fixed source
+      out.push(...arr);
+    }
+
+    for (const f of out) {
+      f.dist = haversine(state.site.lat, state.site.lon, f.lat, f.lon);
+      f.brg = bearing(state.site.lat, state.site.lon, f.lat, f.lon);
+    }
+    fires = out.filter(f => f.dist <= state.range * 1.2).sort((a, b) => a.t - b.t);
+    firesFetchedAt = Date.now();
+    firesSite = { lat: state.site.lat, lon: state.site.lon, range: state.range };
+    clearDataError('fires');
+    updateLogMeta();
+  } catch (e) {
+    console.warn('FIRMS error', e);
+    if (seq === firesBuildSeq) {
+      setDataError('fires', 'Feux : ' + (e && e.message ? e.message : 'indisponible'),
+        'Vérifie la clé NASA FIRMS dans les Réglages. Les autres couches continuent normalement.');
+    }
+  }
+}
+
+/* Fire markers: a small flame-like glyph, brighter when the detection is
+   recent and larger when the radiative power is high. */
+function drawFires(project) {
+  if (!state.firesOn || !fires.length) return;
+  const now = Date.now();
+  ctx.save();
+  for (const f of fires) {
+    const p = project(f.lat, f.lon);
+    if (!p) continue;
+    const ageH = (now - f.t) / 3600000;
+    const fresh = Math.max(0, 1 - ageH / 72);
+    const r = 3 + Math.min(5, Math.sqrt(Math.max(f.frp, 1)) * 0.7);
+    ctx.shadowColor = 'rgba(255,120,40,0.9)';
+    ctx.shadowBlur = 6 * fresh + 2;
+    ctx.fillStyle = ageH < 6 ? `rgba(255,160,60,${0.55 + 0.45 * fresh})`
+                             : `rgba(214,96,30,${0.4 + 0.4 * fresh})`;
+    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = `rgba(255,225,180,${0.5 * fresh + 0.2})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(p.x, p.y, r + 2.5, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
+}
+
 function rebuildLayers() {
   if (state.precipOn) buildPrecipLayer();
   if (state.cloudsOn || state.windOn) buildMeteoLayers();
   if (state.lightOn) buildLightLayer();
+  if (state.firesOn) buildFireLayer(true);
   if (state.viewMode === 'map') buildBaseLayer();
 }
 
@@ -1812,14 +2005,16 @@ function drawScope(ts) {
     }
   }
 
-  // storm cells + trajectories
-  drawCells((la, lo) => {
+  // active fires, then storm cells + trajectories
+  const scopeProject = (la, lo) => {
     const d = haversine(state.site.lat, state.site.lon, la, lo);
     if (d > state.range * 1.02) return null;
     const b = rad(bearing(state.site.lat, state.site.lon, la, lo));
     const rr = R * d / state.range;
     return { x: cx + Math.sin(b) * rr, y: cy - Math.cos(b) * rr };
-  });
+  };
+  drawFires(scopeProject);
+  drawCells(scopeProject);
 
   // center marker
   ctx.fillStyle = getCSS('--accent') || '#38E08A';
@@ -1956,12 +2151,14 @@ function drawMap() {
     }
   }
 
-  // storm cells + trajectories
-  drawCells((la, lo) => {
+  // active fires, then storm cells + trajectories
+  const mapProject = (la, lo) => {
     const p = projectPoint(la, lo, cx, cy, R);
     if (Math.abs(p.x - cx) > R || Math.abs(p.y - cy) > R) return null;
     return p;
-  });
+  };
+  drawFires(mapProject);
+  drawCells(mapProject);
 
   // center marker
   ctx.fillStyle = light ? '#0E7A42' : (getCSS('--accent') || '#38E08A');
@@ -2053,6 +2250,7 @@ function updateLogMeta() {
     if (windError) parts.push('vent ✗');
     else if (windFetchedAt) parts.push('vent ' + fmtFrameTime(windFetchedAt / 1000));
   }
+  if (state.firesOn && firesFetchedAt) parts.push(fires.length + ' feu' + (fires.length > 1 ? 'x' : ''));
   meta.textContent = parts.length ? parts.join(' · ') : '—';
 }
 function renderLog() {
@@ -2139,9 +2337,19 @@ $('#cloudsBtn').onclick = () => {
 $('#lightBtn').onclick = () => {
   state.lightOn = !state.lightOn;
   $('#lightBtn').classList.toggle('on', state.lightOn);
+  $('#firesBtn').classList.toggle('on', state.firesOn);
   saveState();
   updateAttrib();
   if (state.lightOn) buildLightLayer();
+};
+$('#firesBtn').onclick = () => {
+  state.firesOn = !state.firesOn;
+  $('#firesBtn').classList.toggle('on', state.firesOn);
+  saveState();
+  updateAttrib();
+  if (state.firesOn) buildFireLayer(true);
+  else { clearDataError('fires'); }
+  updateLogMeta();
 };
 $('#strikesBtn').onclick = () => {
   state.strikesShow = !state.strikesShow;
@@ -2150,7 +2358,8 @@ $('#strikesBtn').onclick = () => {
 };
 function updateAttrib() {
   $('#mapAttrib').textContent = 'fond de carte © OpenStreetMap · © CARTO' +
-    (state.lightOn ? ' · pollution lumineuse © D. Lorenz' : '');
+    (state.lightOn ? ' · pollution lumineuse © D. Lorenz' : '') +
+    (state.firesOn ? ' · feux © NASA FIRMS' : '');
 }
 $('#viewBtn').onclick = () => {
   state.viewMode = state.viewMode === 'map' ? 'ppi' : 'map';
@@ -2162,6 +2371,7 @@ $('#viewBtn').onclick = () => {
 $('#animBtn').onclick = () => {
   state.animate = !state.animate;
   $('#lightBtn').classList.toggle('on', state.lightOn);
+  $('#firesBtn').classList.toggle('on', state.firesOn);
   updateAttrib();
   $('#animBtn').classList.toggle('on', state.animate);
   saveState();
@@ -2297,6 +2507,7 @@ function syncSettingsInputs() {
   $('#setCellLabels').checked = state.cellLabels;
   $('#setWind').checked = state.windOn;
   $('#setLightOpacity').value = state.lightOpacity;
+  $('#setFirmsKey').value = state.firmsKey || '';
   $('#setNotify').checked = state.notify;
   $('#setAuto').checked = state.autoReconnect;
 }
@@ -2321,6 +2532,12 @@ $('#setAutoLoc').onchange = (e) => {
 };
 $('#setCellLabels').onchange = (e) => { state.cellLabels = e.target.checked; saveState(); };
 $('#setLightOpacity').oninput = (e) => { state.lightOpacity = parseFloat(e.target.value); saveState(); };
+$('#setFirmsKey').onchange = (e) => {
+  state.firmsKey = e.target.value.trim();
+  saveState();
+  clearDataError('fires');
+  if (state.firesOn && state.firmsKey) { buildFireLayer(true); showToast('Clé enregistrée · recherche des feux…'); }
+};
 $('#setWind').onchange = (e) => {
   state.windOn = e.target.checked;
   saveState();
@@ -2453,6 +2670,7 @@ function init() {
   $('#viewBtn').classList.toggle('on', state.viewMode === 'map');
   $('#mapAttrib').style.display = state.viewMode === 'map' ? 'block' : 'none';
   $('#lightBtn').classList.toggle('on', state.lightOn);
+  $('#firesBtn').classList.toggle('on', state.firesOn);
   updateAttrib();
   $('#animBtn').classList.toggle('on', state.animate);
   $('#legend').classList.toggle('open', state.legendOpen !== false);
@@ -2466,6 +2684,7 @@ function init() {
   if (state.precipOn) loadRainviewerIndex();
   if (state.cloudsOn || state.windOn) buildMeteoLayers();
   if (state.lightOn) buildLightLayer();
+  if (state.firesOn) buildFireLayer(true);
   if (state.viewMode === 'map') buildBaseLayer();
   if (state.animate) startAnim();
   autoLocateNow();
