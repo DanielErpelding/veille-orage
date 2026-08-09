@@ -366,7 +366,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v2.1 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v2.1.1 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -396,7 +396,7 @@
   <button class="ctl" id="viewBtn">Carte</button>
   <button class="ctl on" id="precipBtn">Pluie</button>
   <button class="ctl" id="cloudsBtn">Nuages</button>
-  <button class="ctl" id="lightBtn">Lumières</button>
+  <button class="ctl" id="lightBtn">Pollution</button>
   <button class="ctl on" id="strikesBtn">Impacts</button>
   <button class="ctl" id="animBtn">Anim</button>
   <button class="ctl" id="settingsBtn">Réglages</button>
@@ -433,7 +433,7 @@
     <div class="leg-item"><span class="leg-ico"><span class="leg-sweep"></span></span><span>Balayage (décoratif)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-cellico">↗</span></span><span>Cellule orageuse · flèche = trajectoire +30 min (rouge si elle vient vers toi)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-windico">→</span></span><span>Vent à 10 m (vue Carte) : flèche = sens du vent, longueur = vitesse</span></div>
-    <div class="leg-item"><span class="leg-ico"><span class="leg-lightgrad"></span></span><span>Pollution lumineuse : ciel noir → très pollué (bouton Lumières)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-lightgrad"></span></span><span>Pollution lumineuse : ciel noir → très pollué (bouton Pollution)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-center"></span></span><span>Votre position (centre)</span></div>
   </div>
 </div>
@@ -541,7 +541,7 @@
     </div>
 
     <div class="set-row">
-      <div class="sk">Opacité pollution lumineuse<small>couche « Lumières » (atlas 2022)</small></div>
+      <div class="sk">Opacité pollution lumineuse<small>couche « Pollution » (atlas 2025)</small></div>
       <input type="range" class="set-range" id="setLightOpacity" min="0.1" max="1" step="0.05">
     </div>
 
@@ -572,7 +572,7 @@
       <ul>
         <li><strong>Précipitations</strong> — couche radar <code>RainViewer</code> projetée dans le cadran (bouton <code>Pluie</code>).</li>
         <li><strong>Couverture nuageuse</strong> — modèle météo Open-Meteo, mise à jour horaire (bouton <code>Nuages</code>).</li>
-        <li><strong>Pollution lumineuse</strong> — atlas 2022, couche statique activable (bouton <code>Lumières</code>), opacité réglable dans Réglages.</li>
+        <li><strong>Pollution lumineuse</strong> — atlas 2025, couche statique activable (bouton <code>Pollution</code>), opacité réglable dans Réglages.</li>
         <li><strong>Vent à 10 m</strong> — flèches sur la vue Carte, orientées dans le sens du vent, longueur et intensité selon la vitesse (Réglages → « Vent sur la carte »).</li>
         <li><strong>Impacts de foudre</strong> — rouges quand récents (moins de 2 minutes), puis ambre en s'estompant avec le temps (bouton <code>Impacts</code>).</li>
         <li><strong>Balayage</strong> — la ligne verte tourne comme un vrai radar (esthétique).</li>
@@ -584,7 +584,7 @@
       <ul>
         <li><code>api.rainviewer.com</code> — mosaïque radar mondiale des précipitations (gratuite, sans clé).</li>
         <li><code>open-meteo.com</code> — couverture nuageuse et vent à 10 m (analyse du modèle météo, gratuite, sans clé).</li>
-        <li><code>djlorenz.github.io</code> — atlas mondial de pollution lumineuse 2022 (David Lorenz), utile pour préparer une session astro.</li>
+        <li><code>djlorenz.github.io</code> — atlas mondial de pollution lumineuse 2025 (David Lorenz), utile pour préparer une session astro.</li>
         <li><code>ws*.blitzortung.org</code> — réseau communautaire de détection de foudre, diffusé en direct par WebSocket.</li>
       </ul>
       <p>Les impacts sont détectés par triangulation par un réseau de bénévoles : latence de quelques secondes et couverture variable selon la région.</p>
@@ -1090,26 +1090,65 @@ function drawWind(project, light) {
   ctx.restore();
 }
 
-/* Light pollution overlay: World Atlas 2022 tiles by David Lorenz
-   (djlorenz.github.io, free, CORS-enabled, static data). */
+/* Light pollution overlay: World Atlas 2025 by David Lorenz
+   (djlorenz.github.io, free, CORS-enabled, static data).
+   Its tiles are 1024px with a -2 zoom offset: file tile_{zt}_{x}_{y}.png
+   covers the extent of standard slippy tile (zt,x,y) at 4x detail,
+   zt = 0..6. The mosaic is stored at effective zoom zt+2 so drawGeoLayer
+   projects it exactly like every other layer. */
 let lightLayer = null;
 let lightBuildSeq = 0;
 let lightToastShown = false;
-function lightTileUrl(z, x, y) {
-  return 'https://djlorenz.github.io/astronomy/lp2022/overlay/tiles/tile_' + z + '_' + x + '_' + y + '.png';
+function lightTileUrl(zt, x, y) {
+  return 'https://djlorenz.github.io/astronomy/image_tiles/tiles2025/tile_' + zt + '_' + x + '_' + y + '.png';
 }
 async function buildLightLayer() {
   if (!state.lightOn) return;
   if (layerFits(lightLayer)) return; // static atlas: same view never refetched
   const seq = ++lightBuildSeq;
   try {
-    const layer = await buildMosaic(lightTileUrl, 8);
-    if (layer && seq === lightBuildSeq) {
-      lightLayer = layer;
-      if (!layer.tilesOk && !lightToastShown) {
-        lightToastShown = true;
-        showToast('Pollution lumineuse indisponible', true);
+    const { lat, lon } = state.site;
+    const zt = Math.max(0, Math.min(6, zoomForRange(state.range) - 2)); // file zoom
+    const ze = zt + 2; // effective 256px zoom used for projection
+
+    const margin = 1.5;
+    const dLat = (state.range / 111.32) * margin;
+    const dLon = (state.range / (111.32 * Math.cos(rad(lat)))) * margin;
+    const n = 1 << zt;
+    const clampT = (v) => Math.max(0, Math.min(n - 1, v));
+    const xMin = clampT(Math.floor(lonToTileX(lon - dLon, zt)));
+    const xMax = clampT(Math.floor(lonToTileX(lon + dLon, zt)));
+    const yMin = clampT(Math.floor(latToTileY(lat + dLat, zt)));
+    const yMax = clampT(Math.floor(latToTileY(lat - dLat, zt)));
+    const cols = xMax - xMin + 1, rows = yMax - yMin + 1;
+    if (cols <= 0 || rows <= 0 || cols * rows > 16) return;
+
+    const off = document.createElement('canvas');
+    off.width = cols * 1024;
+    off.height = rows * 1024;
+    const octx = off.getContext('2d');
+    let tilesOk = 0;
+    const jobs = [];
+    for (let ty = yMin; ty <= yMax; ty++) {
+      for (let tx = xMin; tx <= xMax; tx++) {
+        const px = (tx - xMin) * 1024, py = (ty - yMin) * 1024;
+        jobs.push(loadTile(lightTileUrl(zt, tx, ty)).then(img => {
+          if (img) { octx.drawImage(img, px, py, 1024, 1024); tilesOk++; }
+        }));
       }
+    }
+    await Promise.all(jobs);
+    if (seq !== lightBuildSeq) return;
+
+    lightLayer = {
+      canvas: off, z: ze, tilesOk,
+      originPxX: xMin * 1024,  // 1 zt-tile = 1024 px at ze scale
+      originPxY: yMin * 1024,
+      lat, lon, range: state.range
+    };
+    if (!tilesOk && !lightToastShown) {
+      lightToastShown = true;
+      showToast('Pollution lumineuse indisponible', true);
     }
   } catch (e) { console.warn('light build error', e); }
 }
