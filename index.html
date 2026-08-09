@@ -315,7 +315,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v1.5.3 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v1.6 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -469,6 +469,11 @@
     </div>
 
     <div class="set-row">
+      <div class="sk">Position auto au démarrage<small>cale le cadran sur le GPS à l'ouverture</small></div>
+      <label class="switch"><input type="checkbox" id="setAutoLoc"><span class="slider"></span></label>
+    </div>
+
+    <div class="set-row">
       <div class="sk">Reconnexion auto<small>rouvre le flux si coupé</small></div>
       <label class="switch"><input type="checkbox" id="setAuto"><span class="slider"></span></label>
     </div>
@@ -504,6 +509,9 @@
       </ul>
       <p>Les impacts sont détectés par triangulation par un réseau de bénévoles : latence de quelques secondes et couverture variable selon la région.</p>
       <p><strong>Historique local :</strong> les impacts reçus sont mémorisés sur l'appareil (1 h glissante) et restaurés à l'ouverture de l'app. Le flux Blitzortung étant un direct pur, l'app ne peut montrer que ce qu'elle a reçu pendant qu'elle était ouverte — la « Durée de persistance » des Réglages fixe la fenêtre affichée.</p>
+
+      <h3>Position</h3>
+      <p>Par défaut, le cadran se cale automatiquement sur la position GPS à chaque ouverture (réglage « Position auto au démarrage »). Choisir un site manuel ou préréglé désactive ce suivi ; re-choisir « GPS » dans la fenêtre Site le réactive.</p>
 
       <h3>Alerte de proximité</h3>
       <p>Quand un impact tombe sous le <strong>seuil d'alerte</strong>, le cadran clignote en rouge, avec bip et vibration (si activés). Utile pour surveiller une cellule orageuse qui approche.</p>
@@ -559,6 +567,7 @@ const state = Object.assign({
   strikesShow: true,
   viewMode: 'ppi',
   mapStyle: 'clair',
+  autoLocate: true,
   animate: false,
   sound: true,
   vibrate: true,
@@ -1685,13 +1694,17 @@ $('#saveSiteBtn').onclick = () => {
   }
   state.site = newSite;
   pendingSite = null;
+  // a fixed site would be overridden at next launch by auto-locate:
+  // choosing manual/preset turns it off, choosing GPS turns it back on
+  if (siteMode === 'manual' || siteMode === 'preset') state.autoLocate = false;
+  else state.autoLocate = true;
   saveState();
   updateStatusBar();
   recomputeStrikeGeo();
   rebuildLayers();
   renderLog();
   closeModal('siteModal');
-  showToast('Site enregistré');
+  showToast(siteMode === 'auto' ? 'Site enregistré · suivi GPS au démarrage' : 'Site fixe enregistré (position auto désactivée)');
 };
 
 /* --- Settings modal --- */
@@ -1703,6 +1716,7 @@ function syncSettingsInputs() {
   $('#setOpacity').value = state.precipOpacity;
   $('#setCloudsOpacity').value = state.cloudsOpacity;
   $('#setMapLight').checked = state.mapStyle !== 'sombre';
+  $('#setAutoLoc').checked = state.autoLocate;
   $('#setAuto').checked = state.autoReconnect;
 }
 $('#settingsBtn').onclick = () => { syncSettingsInputs(); openModal('settingsModal'); };
@@ -1719,6 +1733,11 @@ $('#setMapLight').onchange = (e) => {
   if (state.viewMode === 'map') buildBaseLayer();
 };
 $('#setAuto').onchange = (e) => { state.autoReconnect = e.target.checked; saveState(); };
+$('#setAutoLoc').onchange = (e) => {
+  state.autoLocate = e.target.checked;
+  saveState();
+  if (state.autoLocate) autoLocateNow();
+};
 $('#simBtn').onclick = () => {
   ensureAudio();
   // random strike within ~1.2x alert radius, random bearing
@@ -1734,6 +1753,26 @@ function destPoint(lat, lon, brgDeg, distKm) {
   const la2 = Math.asin(Math.sin(la1) * Math.cos(dR) + Math.cos(la1) * Math.sin(dR) * Math.cos(b));
   const lo2 = lo1 + Math.atan2(Math.sin(b) * Math.sin(dR) * Math.cos(la1), Math.cos(dR) - Math.sin(la1) * Math.sin(la2));
   return { lat: deg(la2), lon: ((deg(lo2) + 540) % 360) - 180 };
+}
+
+/* --- Auto-locate at startup --- */
+function autoLocateNow() {
+  if (!state.autoLocate || !navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(pos => {
+    const lat = pos.coords.latitude, lon = pos.coords.longitude;
+    const moved = haversine(state.site.lat, state.site.lon, lat, lon);
+    // already there (well under a scope pixel): nothing to redo
+    if (moved < 0.5 && state.site.name === 'Position actuelle') return;
+    state.site = { name: 'Position actuelle', lat, lon, alt: pos.coords.altitude || 0 };
+    saveState();
+    updateStatusBar();
+    recomputeStrikeGeo();
+    rebuildLayers();
+    renderLog();
+    updateCounts();
+    if (moved >= 0.5) showToast('Cadran calé sur ta position');
+  }, () => { /* refus ou échec : on garde le site enregistré */ },
+  { enableHighAccuracy: false, timeout: 10000, maximumAge: 120000 });
 }
 
 /* --- Help modal --- */
@@ -1791,6 +1830,7 @@ function init() {
   if (state.cloudsOn) buildCloudLayer();
   if (state.viewMode === 'map') buildBaseLayer();
   if (state.animate) startAnim();
+  autoLocateNow();
 
   requestAnimationFrame(loop);
 
