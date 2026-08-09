@@ -195,9 +195,9 @@
   .leg-ico { width: 30px; height: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; }
   .leg-precip { width: 30px; height: 9px; border-radius: 2px; background: linear-gradient(90deg, #A5D8F0, #4A90D9, #1D4E9E, #F5E663, #F2A53E, #D94B3A); }
   .leg-dot { width: 9px; height: 9px; border-radius: 50%; }
-  .leg-dot.fresh  { background: #FFFCEB; box-shadow: 0 0 6px rgba(255,252,220,0.95), 0 0 0 2.5px rgba(255,255,235,0.35); }
-  .leg-dot.recent { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
-  .leg-dot.old    { background: var(--warn); opacity: 0.35; }
+  .leg-dot.fresh  { background: #FF5246; box-shadow: 0 0 6px rgba(255,120,105,0.95), 0 0 0 2.5px rgba(255,240,235,0.4); }
+  .leg-dot.recent { background: var(--error); box-shadow: 0 0 6px var(--error); }
+  .leg-dot.old    { background: var(--warn); opacity: 0.45; }
   .leg-rim-arc { width: 22px; height: 11px; border: 1.5px solid rgba(56,224,138,0.55); border-bottom: none; border-radius: 22px 22px 0 0; margin-top: 5px; }
   .leg-rim-dot { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 4px var(--warn); }
   .leg-ring-alert { width: 15px; height: 15px; border: 1.5px dashed var(--error); border-radius: 50%; }
@@ -315,7 +315,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v1.4 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v1.4.1 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -371,8 +371,8 @@
     <div class="leg-item"><span class="leg-ico"><span class="leg-precip"></span></span><span>Pluie : faible → intense</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-clouds"></span></span><span>Couverture nuageuse (modèle météo)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-dot fresh"></span></span><span>Éclair à l'instant (&lt;&nbsp;3&nbsp;s)</span></div>
-    <div class="leg-item"><span class="leg-ico"><span class="leg-dot recent"></span></span><span>Éclair récent</span></div>
-    <div class="leg-item"><span class="leg-ico"><span class="leg-dot old"></span></span><span>Éclair ancien (s'estompe)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-dot recent"></span></span><span>Éclair récent (&lt;&nbsp;2&nbsp;min)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-dot old"></span></span><span>Éclair ancien (ambre, s'estompe)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-rim-arc"></span><span class="leg-rim-dot"></span></span><span>Éclair proche mais au-delà de la portée (bord)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-ring-alert"></span></span><span>Seuil d'alerte (Réglages)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-ring-dist"></span></span><span>Anneaux de distance (km)</span></div>
@@ -490,7 +490,7 @@
       <ul>
         <li><strong>Précipitations</strong> — couche radar <code>RainViewer</code> projetée dans le cadran (bouton <code>Pluie</code>).</li>
         <li><strong>Couverture nuageuse</strong> — modèle météo Open-Meteo, mise à jour horaire (bouton <code>Nuages</code>).</li>
-        <li><strong>Impacts de foudre</strong> — éclairs jaunes, plus vifs quand récents, qui s'estompent avec le temps (bouton <code>Impacts</code>).</li>
+        <li><strong>Impacts de foudre</strong> — rouges quand récents (moins de 2 minutes), puis ambre en s'estompant avec le temps (bouton <code>Impacts</code>).</li>
         <li><strong>Balayage</strong> — la ligne verte tourne comme un vrai radar (esthétique).</li>
       </ul>
       <p>Chaque couche s'active ou se désactive indépendamment. Le bouton <code>Carte</code> bascule entre le cadran radar et une carte géographique (fond sombre, villes et côtes visibles) avec les mêmes couches superposées.</p>
@@ -1227,7 +1227,7 @@ function drawScope(ts) {
         const rr = R * s.dist / rangeM * 1000;
         const x = cx + Math.sin(ar) * rr;
         const y = cy - Math.cos(ar) * rr;
-        drawStrike(x, y, lifeFrac, age < 2500);
+        drawStrike(x, y, lifeFrac, age);
       } else if (s.dist <= state.range * 2) {
         // off-scope indicator on the rim — nearby storms only (< 2x range)
         const x = cx + Math.sin(ar) * (R - 2);
@@ -1245,21 +1245,27 @@ function drawScope(ts) {
   ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2); ctx.stroke();
 }
 
-function drawStrike(x, y, lifeFrac, fresh) {
+const STRIKE_RED_MS = 120000; // red phase: strikes younger than 2 min
+function drawStrike(x, y, lifeFrac, age) {
+  const fresh = age < 2500;
+  const recent = age < STRIKE_RED_MS;
   const a = 0.25 + 0.75 * lifeFrac;
-  // color shifts from white/yellow (fresh) to amber (old)
-  const col = fresh ? `rgba(255,255,235,${a})` : `rgba(242,193,78,${a})`;
+  // color: red flash (instant) -> red (recent) -> amber fading (old)
+  let col, glow;
+  if (fresh)       { col = `rgba(255,82,70,${a})`;  glow = 'rgba(255,120,105,0.95)'; }
+  else if (recent) { col = `rgba(229,70,60,${a})`;  glow = 'rgba(229,87,78,0.85)'; }
+  else             { col = `rgba(242,193,78,${a})`; glow = 'rgba(242,193,78,0.7)'; }
   ctx.save();
-  ctx.shadowColor = fresh ? 'rgba(255,255,220,0.9)' : 'rgba(242,193,78,0.7)';
+  ctx.shadowColor = glow;
   ctx.shadowBlur = 8 * lifeFrac + 2;
   ctx.fillStyle = col;
-  const r = fresh ? 3.2 : 2.2;
+  const r = fresh ? 3.4 : (recent ? 2.8 : 2.2);
   ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
   if (fresh) {
-    ctx.strokeStyle = `rgba(255,255,235,${a})`;
+    ctx.strokeStyle = `rgba(255,240,235,${a})`;
     ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, 6.5, 0, Math.PI * 2); ctx.stroke();
   }
 }
 
@@ -1355,7 +1361,7 @@ function drawMap() {
       const age = now - s.t;
       if (age > maxAge || s.dist > state.range * 1.5) continue;
       const p = projectPoint(s.lat, s.lon, cx, cy, R);
-      drawStrike(p.x, p.y, 1 - age / maxAge, age < 2500);
+      drawStrike(p.x, p.y, 1 - age / maxAge, age);
     }
   }
 
