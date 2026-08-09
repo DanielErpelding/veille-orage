@@ -163,6 +163,49 @@
   }
   .alarm-banner.show { display: block; }
 
+  /* ===== Legend ===== */
+  .legend {
+    margin: 2px 16px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--panel);
+    overflow: hidden;
+  }
+  .legend-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px;
+    font-family: var(--mono); font-size: 10px;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--muted-2); cursor: pointer; user-select: none;
+  }
+  .legend-head .chev { transition: transform 0.2s; font-size: 9px; }
+  .legend.open .legend-head .chev { transform: rotate(180deg); }
+  .legend-grid {
+    display: none;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+    padding: 2px 12px 12px;
+  }
+  .legend.open .legend-grid { display: grid; }
+  .leg-item {
+    display: flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 10.5px; color: var(--muted);
+    line-height: 1.3;
+  }
+  .leg-ico { width: 30px; height: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; }
+  .leg-precip { width: 30px; height: 9px; border-radius: 2px; background: linear-gradient(90deg, #A5D8F0, #4A90D9, #1D4E9E, #F5E663, #F2A53E, #D94B3A); }
+  .leg-dot { width: 9px; height: 9px; border-radius: 50%; }
+  .leg-dot.fresh  { background: #FFFCEB; box-shadow: 0 0 6px rgba(255,252,220,0.95), 0 0 0 2.5px rgba(255,255,235,0.35); }
+  .leg-dot.recent { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+  .leg-dot.old    { background: var(--warn); opacity: 0.35; }
+  .leg-rim-arc { width: 22px; height: 11px; border: 1.5px solid rgba(56,224,138,0.55); border-bottom: none; border-radius: 22px 22px 0 0; margin-top: 5px; }
+  .leg-rim-dot { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 4px var(--warn); }
+  .leg-ring-alert { width: 15px; height: 15px; border: 1.5px dashed var(--error); border-radius: 50%; }
+  .leg-ring-dist { width: 15px; height: 15px; border: 1.5px solid rgba(30,122,71,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  .leg-ring-dist::after { content: ''; width: 6px; height: 6px; border: 1px solid rgba(30,122,71,0.7); border-radius: 50%; }
+  .leg-sweep { width: 16px; height: 16px; border-radius: 50%; background: conic-gradient(from 0deg, rgba(56,224,138,0.55), rgba(56,224,138,0) 70deg, transparent 70deg); border: 1px solid rgba(30,122,71,0.4); }
+  .leg-center { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px rgba(56,224,138,0.25); }
+
   /* ===== Strike log ===== */
   .log-head {
     display: flex; align-items: center; justify-content: space-between;
@@ -261,7 +304,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v1.0 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v1.1 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -302,6 +345,24 @@
 
 <div class="scope-wrap" id="scopeWrap">
   <canvas id="scope"></canvas>
+</div>
+
+<div class="legend" id="legend">
+  <div class="legend-head" id="legendHead">
+    <span>Légende</span>
+    <span class="chev">▼</span>
+  </div>
+  <div class="legend-grid">
+    <div class="leg-item"><span class="leg-ico"><span class="leg-precip"></span></span><span>Pluie : faible → intense</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-dot fresh"></span></span><span>Éclair à l'instant (&lt;&nbsp;3&nbsp;s)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-dot recent"></span></span><span>Éclair récent</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-dot old"></span></span><span>Éclair ancien (s'estompe)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-rim-arc"></span><span class="leg-rim-dot"></span></span><span>Éclair au-delà de la portée (direction sur le bord)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-ring-alert"></span></span><span>Seuil d'alerte (Réglages)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-ring-dist"></span></span><span>Anneaux de distance (km)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-sweep"></span></span><span>Balayage (décoratif)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-center"></span></span><span>Votre position (centre)</span></div>
+  </div>
 </div>
 
 <div class="log-head">
@@ -465,7 +526,8 @@ const state = Object.assign({
   animate: false,
   sound: true,
   vibrate: true,
-  autoReconnect: true
+  autoReconnect: true,
+  legendOpen: true
 }, loadState() || {});
 
 /* runtime-only */
@@ -1283,6 +1345,13 @@ function destPoint(lat, lon, brgDeg, distKm) {
 /* --- Help modal --- */
 $('#helpBtn').onclick = () => openModal('helpModal');
 
+/* --- Legend toggle --- */
+$('#legendHead').onclick = () => {
+  state.legendOpen = !state.legendOpen;
+  $('#legend').classList.toggle('open', state.legendOpen);
+  saveState();
+};
+
 /* ============================================================
    VISIBILITY / LIFECYCLE
    ============================================================ */
@@ -1307,6 +1376,7 @@ function init() {
   syncSettingsInputs();
   $('#precipBtn').classList.toggle('on', state.precipOn);
   $('#animBtn').classList.toggle('on', state.animate);
+  $('#legend').classList.toggle('open', state.legendOpen !== false);
   updateConnectBtn();
   renderLog();
 
