@@ -331,7 +331,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v1.8 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v1.9 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -492,6 +492,11 @@
     </div>
 
     <div class="set-row">
+      <div class="sk">Infos cellules<small>étiquette distance/vitesse/ETA à côté de chaque cellule</small></div>
+      <label class="switch"><input type="checkbox" id="setCellLabels"><span class="slider"></span></label>
+    </div>
+
+    <div class="set-row">
       <div class="sk">Notifications système<small>impact proche & cellule en approche</small></div>
       <label class="switch"><input type="checkbox" id="setNotify"><span class="slider"></span></label>
     </div>
@@ -602,6 +607,7 @@ const state = Object.assign({
   autoLocate: true,
   notify: false,
   savedSites: [],
+  cellLabels: true,
   animate: false,
   sound: true,
   vibrate: true,
@@ -1304,7 +1310,36 @@ function drawCells(project) {
         ctx.stroke();
       }
     }
+    if (state.cellLabels) drawCellLabel(p, c);
   }
+}
+
+/* Info pill next to a cell: distance/bearing/strike count, speed + ETA.
+   Dark pill with light text: readable on the scope and on both basemaps. */
+function drawCellLabel(p, c) {
+  const l1 = `${c.dist.toFixed(0)} km ${compass(c.brg)} · ${c.count}⚡`;
+  const l2 = c.spd ? `${c.spd} km/h${c.etaMin != null ? ' → ~' + c.etaMin + ' min' : ''}` : 'statique';
+  ctx.save();
+  ctx.font = '9px ' + getCSS('--mono');
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  const w = Math.max(ctx.measureText(l1).width, ctx.measureText(l2).width) + 12;
+  const h = 30;
+  let x = p.x + 15, y = p.y - h / 2;
+  if (x + w > cssSize - 6) x = p.x - w - 15;  // flip left near the right edge
+  if (y < 6) y = 6;
+  if (y + h > cssSize - 6) y = cssSize - 6 - h;
+  ctx.fillStyle = 'rgba(4,18,10,0.82)';
+  ctx.strokeStyle = c.etaMin != null ? 'rgba(229,87,78,0.85)' : 'rgba(242,193,78,0.6)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(x, y, w, h, 4); else ctx.rect(x, y, w, h);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#E4EFE6';
+  ctx.fillText(l1, x + 6, y + 12);
+  ctx.fillStyle = c.etaMin != null ? '#F0A8A2' : '#D9C89B';
+  ctx.fillText(l2, x + 6, y + 24);
+  ctx.restore();
 }
 
 /* ============================================================
@@ -1982,6 +2017,7 @@ function syncSettingsInputs() {
   $('#setCloudsOpacity').value = state.cloudsOpacity;
   $('#setMapLight').checked = state.mapStyle !== 'sombre';
   $('#setAutoLoc').checked = state.autoLocate;
+  $('#setCellLabels').checked = state.cellLabels;
   $('#setNotify').checked = state.notify;
   $('#setAuto').checked = state.autoReconnect;
 }
@@ -2004,6 +2040,7 @@ $('#setAutoLoc').onchange = (e) => {
   saveState();
   if (state.autoLocate) autoLocateNow();
 };
+$('#setCellLabels').onchange = (e) => { state.cellLabels = e.target.checked; saveState(); };
 $('#setNotify').onchange = (e) => {
   state.notify = e.target.checked;
   saveState();
