@@ -254,6 +254,7 @@
   .leg-sweep { width: 16px; height: 16px; border-radius: 50%; background: conic-gradient(from 0deg, rgba(56,224,138,0.55), rgba(56,224,138,0) 70deg, transparent 70deg); border: 1px solid rgba(30,122,71,0.4); }
   .leg-center { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px rgba(56,224,138,0.25); }
   .leg-cellico { width: 16px; height: 16px; border: 1.5px dashed var(--warn); border-radius: 50%; color: var(--warn); font-size: 10px; display: flex; align-items: center; justify-content: center; }
+  .leg-windico { color: #78CDFF; font-size: 14px; font-weight: 600; }
   .leg-clouds { width: 26px; height: 11px; border-radius: 8px; background: radial-gradient(ellipse at 35% 45%, rgba(230,236,232,0.85), rgba(180,190,184,0.45) 65%, transparent); }
 
   .map-attrib {
@@ -364,7 +365,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v1.9.2 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v2.0 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -429,6 +430,7 @@
     <div class="leg-item"><span class="leg-ico"><span class="leg-ring-dist"></span></span><span>Anneaux de distance (km)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-sweep"></span></span><span>Balayage (décoratif)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-cellico">↗</span></span><span>Cellule orageuse · flèche = trajectoire +30 min (rouge si elle vient vers toi)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-windico">→</span></span><span>Vent à 10 m (vue Carte) : flèche = sens du vent, longueur = vitesse</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-center"></span></span><span>Votre position (centre)</span></div>
   </div>
 </div>
@@ -531,6 +533,11 @@
     </div>
 
     <div class="set-row">
+      <div class="sk">Vent sur la carte<small>flèches de direction à 10 m · Open-Meteo</small></div>
+      <label class="switch"><input type="checkbox" id="setWind"><span class="slider"></span></label>
+    </div>
+
+    <div class="set-row">
       <div class="sk">Notifications système<small>impact proche & cellule en approche</small></div>
       <label class="switch"><input type="checkbox" id="setNotify"><span class="slider"></span></label>
     </div>
@@ -557,6 +564,7 @@
       <ul>
         <li><strong>Précipitations</strong> — couche radar <code>RainViewer</code> projetée dans le cadran (bouton <code>Pluie</code>).</li>
         <li><strong>Couverture nuageuse</strong> — modèle météo Open-Meteo, mise à jour horaire (bouton <code>Nuages</code>).</li>
+        <li><strong>Vent à 10 m</strong> — flèches sur la vue Carte, orientées dans le sens du vent, longueur et intensité selon la vitesse (Réglages → « Vent sur la carte »).</li>
         <li><strong>Impacts de foudre</strong> — rouges quand récents (moins de 2 minutes), puis ambre en s'estompant avec le temps (bouton <code>Impacts</code>).</li>
         <li><strong>Balayage</strong> — la ligne verte tourne comme un vrai radar (esthétique).</li>
       </ul>
@@ -566,7 +574,7 @@
       <h3>Sources</h3>
       <ul>
         <li><code>api.rainviewer.com</code> — mosaïque radar mondiale des précipitations (gratuite, sans clé).</li>
-        <li><code>open-meteo.com</code> — couverture nuageuse (analyse du modèle météo, gratuite, sans clé).</li>
+        <li><code>open-meteo.com</code> — couverture nuageuse et vent à 10 m (analyse du modèle météo, gratuite, sans clé).</li>
         <li><code>ws*.blitzortung.org</code> — réseau communautaire de détection de foudre, diffusé en direct par WebSocket.</li>
       </ul>
       <p>Les impacts sont détectés par triangulation par un réseau de bénévoles : latence de quelques secondes et couverture variable selon la région.</p>
@@ -643,6 +651,7 @@ const state = Object.assign({
   notify: false,
   savedSites: [],
   cellLabels: true,
+  windOn: true,
   animate: false,
   sound: true,
   vibrate: true,
@@ -662,6 +671,7 @@ if (!state._migrPersist30) {
 state.precipOn = true;
 state.cloudsOn = true;
 state.strikesShow = true;
+state.windOn = state.windOn !== false; // respect an explicit off, else on
 state.range = 100;
 state.precipOpacity = 0.25;
 state.animate = false;
@@ -987,9 +997,75 @@ async function buildBaseLayer() {
   } catch (e) { console.warn('base map build error', e); }
 }
 
+/* Wind at 10 m from Open-Meteo: a 7x7 grid of speed/direction vectors,
+   drawn as arrows pointing DOWNWIND (the direction the wind blows toward). */
+let windLayer = null; // {points:[{lat,lon,spd,dir}], lat, lon, range}
+let windBuildSeq = 0;
+let windFetchedAt = 0;
+async function buildWindLayer() {
+  if (!state.windOn) return;
+  const seq = ++windBuildSeq;
+  try {
+    const { lat, lon } = state.site;
+    const margin = 1.4;
+    const dLat = (state.range / 111.32) * margin;
+    const dLon = (state.range / (111.32 * Math.cos(rad(lat)))) * margin;
+    const N = 7;
+    const lats = [], lons = [];
+    for (let j = 0; j < N; j++) {
+      for (let i = 0; i < N; i++) {
+        lats.push((lat - dLat + (j + 0.5) * 2 * dLat / N).toFixed(3));
+        lons.push((lon - dLon + (i + 0.5) * 2 * dLon / N).toFixed(3));
+      }
+    }
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lats.join(',') +
+                '&longitude=' + lons.join(',') + '&current=wind_speed_10m,wind_direction_10m';
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    let arr = await res.json();
+    if (!Array.isArray(arr)) arr = [arr];
+    if (seq !== windBuildSeq) return;
+    const points = [];
+    for (let k = 0; k < arr.length && k < lats.length; k++) {
+      const cur = arr[k] && arr[k].current;
+      if (!cur) continue;
+      points.push({ lat: +lats[k], lon: +lons[k],
+                    spd: cur.wind_speed_10m || 0, dir: cur.wind_direction_10m || 0 });
+    }
+    windLayer = { points, lat, lon, range: state.range };
+    windFetchedAt = Date.now();
+  } catch (e) { console.warn('wind build error', e); }
+}
+
+function drawWind(project, light) {
+  if (!state.windOn || !windLayer || !layerFits(windLayer)) return;
+  ctx.save();
+  ctx.lineWidth = 1.5;
+  ctx.lineCap = 'round';
+  for (const w of windLayer.points) {
+    const p = project(w.lat, w.lon);
+    if (!p) continue;
+    const toB = rad((w.dir + 180) % 360); // meteo dir = FROM; arrow points TO
+    const len = Math.min(9 + w.spd * 0.35, 24);
+    const dx = Math.sin(toB), dy = -Math.cos(toB);
+    const x1 = p.x - dx * len / 2, y1 = p.y - dy * len / 2;
+    const x2 = p.x + dx * len / 2, y2 = p.y + dy * len / 2;
+    const a = Math.min(0.35 + w.spd / 60, 0.85);
+    ctx.strokeStyle = light ? `rgba(25,60,120,${a})` : `rgba(120,205,255,${a})`;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+    const ang = Math.atan2(y2 - y1, x2 - x1);
+    ctx.moveTo(x2, y2); ctx.lineTo(x2 - 5 * Math.cos(ang - 0.45), y2 - 5 * Math.sin(ang - 0.45));
+    ctx.moveTo(x2, y2); ctx.lineTo(x2 - 5 * Math.cos(ang + 0.45), y2 - 5 * Math.sin(ang + 0.45));
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 function rebuildLayers() {
   if (state.precipOn) buildPrecipLayer();
   if (state.cloudsOn) buildCloudLayer();
+  if (state.windOn) buildWindLayer();
   if (state.viewMode === 'map') buildBaseLayer();
 }
 
@@ -1702,6 +1778,13 @@ function drawMap() {
   }
   if (state.precipOn && layerFits(precipLayer)) drawGeoLayer(cx, cy, R, precipLayer, state.precipOpacity);
 
+  // wind arrows (downwind direction, length & opacity scale with speed)
+  drawWind((la, lo) => {
+    const p = projectPoint(la, lo, cx, cy, R);
+    if (Math.abs(p.x - cx) > R - 8 || Math.abs(p.y - cy) > R - 8) return null;
+    return p;
+  }, light);
+
   // faint distance rings for scale reading (contrast depends on basemap)
   ctx.lineWidth = 1;
   ctx.font = '10px ' + getCSS('--mono');
@@ -2057,6 +2140,7 @@ function syncSettingsInputs() {
   $('#setMapLight').checked = state.mapStyle !== 'sombre';
   $('#setAutoLoc').checked = state.autoLocate;
   $('#setCellLabels').checked = state.cellLabels;
+  $('#setWind').checked = state.windOn;
   $('#setNotify').checked = state.notify;
   $('#setAuto').checked = state.autoReconnect;
 }
@@ -2080,6 +2164,11 @@ $('#setAutoLoc').onchange = (e) => {
   if (state.autoLocate) autoLocateNow();
 };
 $('#setCellLabels').onchange = (e) => { state.cellLabels = e.target.checked; saveState(); };
+$('#setWind').onchange = (e) => {
+  state.windOn = e.target.checked;
+  saveState();
+  if (state.windOn) buildWindLayer();
+};
 $('#setNotify').onchange = (e) => {
   state.notify = e.target.checked;
   saveState();
@@ -2176,6 +2265,7 @@ document.addEventListener('visibilitychange', () => {
     // refresh weather layers if stale (> 4 min)
     if (state.precipOn && (Date.now() - RV.fetchedAt > 240000)) loadRainviewerIndex();
     if (state.cloudsOn && (Date.now() - cloudsFetchedAt > 600000)) buildCloudLayer();
+    if (state.windOn && (Date.now() - windFetchedAt > 600000)) buildWindLayer();
     if (wsWanted && !ws) { wsBackoff = 1000; openWs(); }
   }
 });
@@ -2184,6 +2274,7 @@ setInterval(() => {
   if (document.visibilityState !== 'visible') return;
   if (state.precipOn) loadRainviewerIndex();
   if (state.cloudsOn) buildCloudLayer();
+  if (state.windOn) buildWindLayer();
 }, 300000);
 
 /* ============================================================
@@ -2211,6 +2302,7 @@ function init() {
 
   if (state.precipOn) loadRainviewerIndex();
   if (state.cloudsOn) buildCloudLayer();
+  if (state.windOn) buildWindLayer();
   if (state.viewMode === 'map') buildBaseLayer();
   if (state.animate) startAnim();
   autoLocateNow();
