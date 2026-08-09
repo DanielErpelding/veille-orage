@@ -138,6 +138,39 @@
     display: block;
     touch-action: none;
   }
+  .fs-btn {
+    position: absolute;
+    top: 22px; right: 20px;
+    z-index: 5;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(10,28,18,0.78);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    font-size: 16px;
+    display: grid; place-items: center;
+    cursor: pointer;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
+  .fs-btn:active { background: var(--accent); color: var(--bg); }
+
+  body.fullscreen .scope-wrap {
+    position: fixed; inset: 0;
+    z-index: 90;
+    background: var(--bg);
+    padding: 0;
+    display: grid; place-items: center;
+  }
+  body.fullscreen #scope {
+    width: min(100vw, 100vh);
+    max-width: min(100vw, 100vh);
+  }
+  body.fullscreen .fs-btn {
+    top: calc(14px + env(safe-area-inset-top));
+    right: calc(14px + env(safe-area-inset-right));
+  }
+
   .scope-wrap.alarm::after {
     content: '';
     position: absolute; inset: 6px;
@@ -331,7 +364,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v1.9 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v1.9.1 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -376,6 +409,7 @@
 
 <div class="scope-wrap" id="scopeWrap">
   <canvas id="scope"></canvas>
+  <button class="fs-btn" id="fsBtn" title="Plein écran">⛶</button>
 </div>
 <div class="map-attrib" id="mapAttrib">fond de carte © OpenStreetMap · © CARTO</div>
 
@@ -2073,6 +2107,31 @@ function destPoint(lat, lon, brgDeg, distKm) {
   const lo2 = lo1 + Math.atan2(Math.sin(b) * Math.sin(dR) * Math.cos(la1), Math.cos(dR) - Math.sin(la1) * Math.sin(la2));
   return { lat: deg(la2), lon: ((deg(lo2) + 540) % 360) - 180 };
 }
+
+/* --- Fullscreen toggle (CSS layout everywhere; native API as a bonus
+   where supported — iOS Safari has no Fullscreen API for pages) --- */
+let isFullscreen = false;
+function setFullscreen(on) {
+  isFullscreen = on;
+  document.body.classList.toggle('fullscreen', on);
+  $('#fsBtn').textContent = on ? '✕' : '⛶';
+  $('#fsBtn').title = on ? 'Quitter le plein écran' : 'Plein écran';
+  if (on) {
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+  } else if (document.fullscreenElement && document.exitFullscreen) {
+    document.exitFullscreen().catch(() => {});
+  }
+  setTimeout(resizeCanvas, 60);
+  setTimeout(resizeCanvas, 400); // after transition / orientation settles
+}
+$('#fsBtn').onclick = (e) => { e.stopPropagation(); setFullscreen(!isFullscreen); };
+document.addEventListener('fullscreenchange', () => {
+  // Escape or system gesture exited native fullscreen: sync the layout
+  if (!document.fullscreenElement && isFullscreen) setFullscreen(false);
+});
+window.addEventListener('orientationchange', () => { setTimeout(resizeCanvas, 300); });
 
 /* --- Auto-locate at startup --- */
 function autoLocateNow() {
