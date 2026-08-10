@@ -329,6 +329,7 @@
   .leg-center { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px rgba(56,224,138,0.25); }
   .leg-cellico { width: 16px; height: 16px; border: 1.5px dashed var(--warn); border-radius: 50%; color: var(--warn); font-size: 10px; display: flex; align-items: center; justify-content: center; }
   .leg-windico { color: #78CDFF; font-size: 14px; font-weight: 600; }
+  .leg-driftico { color: #78CDFF; font-size: 12px; font-weight: 600; letter-spacing: -1px; }
   .leg-fireico { width: 11px; height: 11px; border-radius: 50%; background: #FFA03C; box-shadow: 0 0 7px rgba(255,120,40,0.95), 0 0 0 2.5px rgba(255,225,180,0.35); }
   .leg-lightgrad { width: 30px; height: 9px; border-radius: 2px; background: linear-gradient(90deg, #14224E, #2C5BA8, #3E9A4E, #E8E84A, #E88A2A, #D8352A, #FFFFFF); }
   .leg-clouds { width: 26px; height: 11px; border-radius: 8px; background: radial-gradient(ellipse at 35% 45%, rgba(230,236,232,0.85), rgba(180,190,184,0.45) 65%, transparent); }
@@ -481,7 +482,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v2.5 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v2.6 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1>Cadran radar &amp; foudre</h1>
   <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
@@ -567,6 +568,7 @@
     <div class="leg-item"><span class="leg-ico"><span class="leg-sweep"></span></span><span>Balayage (décoratif)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-cellico">↗</span></span><span>Cellule orageuse · flèche = trajectoire +30 min (rouge si elle vient vers toi)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-windico">→</span></span><span>Vent à 10 m (vue Carte) : flèche = sens du vent, longueur = vitesse</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-driftico">⇢</span></span><span>Dérive des nuages (encart en bas à gauche) : sens et vitesse de déplacement de la couche dominante</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-lightgrad"></span></span><span>Pollution lumineuse : ciel noir → très pollué (bouton Pollution)</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-fireico"></span></span><span>Feu actif (3 derniers jours) · taille = puissance, éclat = fraîcheur</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-center"></span></span><span>Votre position (centre)</span></div>
@@ -720,6 +722,7 @@
         <li><strong>Couverture nuageuse</strong> — modèle météo Open-Meteo, mise à jour horaire (bouton <code>Nuages</code>).</li>
         <li><strong>Feux actifs</strong> — détections satellite des 3 derniers jours (bouton <code>Feux</code>), filtrées des sources industrielles.</li>
         <li><strong>Pollution lumineuse</strong> — atlas 2025, couche statique activable (bouton <code>Pollution</code>), opacité réglable dans Réglages.</li>
+        <li><strong>Dérive des nuages</strong> — encart en bas à gauche : direction et vitesse de déplacement de la couche nuageuse dominante (affiché avec la couche <code>Nuages</code>).</li>
         <li><strong>Vent à 10 m</strong> — flèches sur la vue Carte, orientées dans le sens du vent, longueur et intensité selon la vitesse (Réglages → « Vent sur la carte »).</li>
         <li><strong>Impacts de foudre</strong> — rouges quand récents (moins de 2 minutes), puis ambre en s'estompant avec le temps (bouton <code>Impacts</code>).</li>
         <li><strong>Balayage</strong> — la ligne verte tourne comme un vrai radar (esthétique).</li>
@@ -742,6 +745,10 @@
       <p>Cette application respecte cet esprit : usage personnel, aucune revente, sources citées. Si tu envisages de la diffuser largement ou de la publier sur un magasin d'applications, contacte-les au préalable — et vérifie le texte en vigueur sur <code>blitzortung.org</code>. Si le sujet te passionne, héberger une station est le meilleur moyen de soutenir le réseau.</p>
       <p><button class="ctl" id="showDisclaimerBtn" style="width:100%;margin-top:6px;">Revoir l'avertissement</button></p>
       <p><strong>Historique local :</strong> les impacts reçus sont mémorisés sur l'appareil (1 h glissante) et restaurés à l'ouverture de l'app. Le flux Blitzortung étant un direct pur, l'app ne peut montrer que ce qu'elle a reçu pendant qu'elle était ouverte — la « Durée de persistance » des Réglages fixe la fenêtre affichée.</p>
+
+      <h3>Dérive des nuages</h3>
+      <p>L'encart en bas à gauche indique <strong>où va la couche nuageuse et à quelle vitesse</strong>. Attention à ne pas le confondre avec les flèches de vent : celles-ci donnent le vent <em>à 10 m du sol</em>, alors que les nuages sont emportés par le flux <em>à leur propre altitude</em>, souvent bien plus rapide et parfois orienté tout autrement.</p>
+      <p>L'app détermine la couche dominante du moment (basse, moyenne ou élevée) et donne le vent au niveau correspondant — environ 1 500 m pour les nuages bas, 3 000 m pour les moyens, 9 000 m pour les élevés. Le pourcentage affiché est la couverture de cette couche. C'est ce flux qui explique le déplacement des systèmes nuageux, et il rejoint généralement la trajectoire calculée pour les cellules orageuses.</p>
 
       <h3>Position</h3>
       <p>Par défaut, le cadran se cale automatiquement sur la position GPS à chaque ouverture (réglage « Position auto au démarrage »). Choisir un site manuel ou préréglé désactive ce suivi ; re-choisir « GPS » dans la fenêtre Site le réactive.</p>
@@ -1293,6 +1300,7 @@ async function buildMeteoLayers() {
     windFetchedAt = Date.now();
     omOk();
     updateLogMeta();
+    buildCloudDrift();
   } catch (e) {
     omFail(e);
     if (seq === meteoBuildSeq) { cloudsError = true; windError = true; updateLogMeta(); }
@@ -1308,6 +1316,120 @@ async function buildBaseLayer() {
     const layer = await buildMosaic(baseTileUrl);
     if (layer && seq === baseBuildSeq) baseLayer = layer;
   } catch (e) { console.warn('base map build error', e); }
+}
+
+
+/* ============================================================
+   CLOUD DRIFT — where the cloud deck is actually heading
+   Clouds do not travel with the 10 m surface wind but with the flow at
+   their own altitude. Open-Meteo is queried once at the view centre for
+   the wind on three pressure levels and for the low/mid/high cloud
+   fractions; the level matching the dominant deck is the one reported.
+   A single point is enough: this steering flow varies little over the
+   couple of hundred kilometres shown on screen, and it keeps the API
+   cost to one extra location.
+   Pressure-level winds are read from the `hourly` block (they are not
+   part of the `current` set), taking the row for the current hour.
+   ============================================================ */
+let cloudDrift = null;   // {spd, dirFrom, toBrg, label, cover, at}
+let driftFetchedAt = 0;
+let driftSeq = 0;
+
+const DRIFT_LEVELS = [
+  { key: 'low',  hpa: '850hPa', label: 'nuages bas' },
+  { key: 'mid',  hpa: '700hPa', label: 'nuages moyens' },
+  { key: 'high', hpa: '300hPa', label: 'nuages élevés' }
+];
+
+async function buildCloudDrift() {
+  if (!state.cloudsOn) return;
+  if (Date.now() - driftFetchedAt < 600000 && cloudDrift) return;
+  const seq = ++driftSeq;
+  try {
+    const hourly = DRIFT_LEVELS.flatMap(l => ['wind_speed_' + l.hpa, 'wind_direction_' + l.hpa]).join(',');
+    const url = 'https://api.open-meteo.com/v1/forecast' +
+                '?latitude=' + view.lat.toFixed(3) + '&longitude=' + view.lon.toFixed(3) +
+                '&current=cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high' +
+                '&hourly=' + hourly + '&forecast_days=1&timezone=UTC';
+    const res = await fetch(url);
+    const j = await res.json();
+    if (!res.ok) throw new Error((j && j.reason) ? j.reason : 'HTTP ' + res.status);
+    if (seq !== driftSeq) return;
+
+    const cur = j.current || {};
+    const cover = {
+      low: cur.cloud_cover_low || 0,
+      mid: cur.cloud_cover_mid || 0,
+      high: cur.cloud_cover_high || 0
+    };
+    // dominant deck; ties resolve to the lower one, which drives local weather
+    let best = DRIFT_LEVELS[0];
+    for (const l of DRIFT_LEVELS) if (cover[l.key] > cover[best.key] + 5) best = l;
+    if (Math.max(cover.low, cover.mid, cover.high) < 5) { cloudDrift = null; driftFetchedAt = Date.now(); return; }
+
+    // row matching the current UTC hour
+    const times = (j.hourly && j.hourly.time) || [];
+    const stamp = new Date().toISOString().slice(0, 13);
+    let idx = times.findIndex(t => String(t).slice(0, 13) === stamp);
+    if (idx < 0) idx = 0;
+    const spd = (j.hourly['wind_speed_' + best.hpa] || [])[idx];
+    const dirFrom = (j.hourly['wind_direction_' + best.hpa] || [])[idx];
+    if (typeof spd !== 'number' || typeof dirFrom !== 'number') throw new Error('vent altitude indisponible');
+
+    cloudDrift = {
+      spd: Math.round(spd), dirFrom,
+      toBrg: (dirFrom + 180) % 360,
+      label: best.label, cover: cover[best.key],
+      at: Date.now()
+    };
+    driftFetchedAt = Date.now();
+    updateLogMeta();
+  } catch (e) {
+    console.warn('cloud drift error', e);
+    if (seq === driftSeq) { cloudDrift = null; driftFetchedAt = Date.now(); }
+  }
+}
+
+/* Compact readout pinned to the bottom-left of the view. */
+function drawCloudDrift(cx, cy, R, light) {
+  if (!state.cloudsOn || !cloudDrift) return;
+  const d = cloudDrift;
+  const txt = `${compass(d.toBrg)} · ${d.spd} km/h`;
+  const sub = `${d.label} ${d.cover}%`;
+  ctx.save();
+  ctx.font = '10px ' + getCSS('--mono');
+  const w = Math.max(ctx.measureText(txt).width, ctx.measureText(sub).width) + 44;
+  const h = 32;
+  const x = cx - R + 6, y = cy + R - h - 6;
+
+  ctx.fillStyle = light ? 'rgba(255,255,255,0.86)' : 'rgba(4,18,10,0.82)';
+  ctx.strokeStyle = light ? 'rgba(25,60,120,0.5)' : 'rgba(120,205,255,0.45)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(x, y, w, h, 5); else ctx.rect(x, y, w, h);
+  ctx.fill(); ctx.stroke();
+
+  // arrow pointing where the deck travels
+  const ax = x + 17, ay = y + h / 2;
+  const a = rad(d.toBrg);
+  const ux = Math.sin(a), uy = -Math.cos(a), L = 11;
+  ctx.strokeStyle = light ? '#1A3C78' : '#78CDFF';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(ax - ux * L / 2, ay - uy * L / 2);
+  ctx.lineTo(ax + ux * L / 2, ay + uy * L / 2);
+  const hx = ax + ux * L / 2, hy = ay + uy * L / 2, ang = Math.atan2(uy, ux);
+  ctx.moveTo(hx, hy); ctx.lineTo(hx - 6 * Math.cos(ang - 0.5), hy - 6 * Math.sin(ang - 0.5));
+  ctx.moveTo(hx, hy); ctx.lineTo(hx - 6 * Math.cos(ang + 0.5), hy - 6 * Math.sin(ang + 0.5));
+  ctx.stroke();
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = light ? '#14321F' : '#D6EAD9';
+  ctx.fillText(txt, x + 32, y + 14);
+  ctx.fillStyle = light ? 'rgba(20,50,31,0.65)' : 'rgba(127,154,136,0.9)';
+  ctx.fillText(sub, x + 32, y + 26);
+  ctx.restore();
 }
 
 /* Wind arrows point DOWNWIND (the direction the wind blows toward). */
@@ -2184,6 +2306,8 @@ function drawScope(ts) {
   ctx.beginPath(); ctx.arc(cx, cy, 3.5, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = 'rgba(56,224,138,0.5)';
   ctx.beginPath(); ctx.arc(cx, cy, 7, 0, Math.PI * 2); ctx.stroke();
+
+  drawCloudDrift(cx, cy, R, false);
 }
 
 const STRIKE_RED_MS = 120000; // red phase: strikes younger than 2 min
@@ -2342,6 +2466,8 @@ function drawMap() {
   ctx.strokeStyle = light ? 'rgba(14,122,66,0.8)' : 'rgba(56,224,138,0.6)';
   ctx.beginPath(); ctx.arc(sp.x, sp.y, 7, 0, Math.PI * 2); ctx.stroke();
 
+  drawCloudDrift(cx, cy, R, light);
+
   // point being picked
   if (pickPoint) {
     const p = projectPoint(pickPoint.lat, pickPoint.lon, cx, cy, R);
@@ -2486,6 +2612,7 @@ function updateLogMeta() {
     if (windError) parts.push('vent ✗');
     else if (windFetchedAt) parts.push('vent ' + fmtFrameTime(windFetchedAt / 1000));
   }
+  if (state.cloudsOn && cloudDrift) parts.push('dérive ' + compass(cloudDrift.toBrg) + ' ' + cloudDrift.spd + ' km/h');
   if (state.firesOn && firesFetchedAt) parts.push(fires.length + ' feu' + (fires.length > 1 ? 'x' : ''));
   meta.textContent = parts.length ? parts.join(' · ') : '—';
 }
@@ -2568,7 +2695,8 @@ $('#cloudsBtn').onclick = () => {
   state.cloudsOn = !state.cloudsOn;
   $('#cloudsBtn').classList.toggle('on', state.cloudsOn);
   saveState();
-  if (state.cloudsOn) buildMeteoLayers();
+  if (state.cloudsOn) { buildMeteoLayers(); buildCloudDrift(); }
+  else cloudDrift = null;
   updateLogMeta();
 };
 $('#lightBtn').onclick = () => {
