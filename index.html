@@ -482,46 +482,47 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v2.6 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v2.7 · RAINVIEWER + BLITZORTUNG</span>
   </div>
-  <h1>Cadran radar &amp; foudre</h1>
-  <div class="subtitle">précipitations · impacts temps réel · alerte proximité</div>
+  <h1 data-i18n="app.title">Cadran radar &amp; foudre</h1>
+  <div class="subtitle" data-i18n="app.sub">précipitations · impacts temps réel · alerte proximité</div>
 </header>
 
 <div class="status-strip">
   <div class="status-cell editable" id="siteCell">
-    <div class="status-label">Site</div>
+    <div class="status-label" data-i18n="st.site">Site</div>
     <div class="status-value" id="siteDisplay">--</div>
   </div>
   <div class="status-cell" id="wsCell">
-    <div class="status-label">Foudre</div>
+    <div class="status-label" data-i18n="st.lightning">Foudre</div>
     <div class="status-value" id="wsDisplay"><span class="dotstat"></span>hors ligne</div>
   </div>
   <div class="status-cell">
-    <div class="status-label">Impacts</div>
+    <div class="status-label" data-i18n="st.strikes">Impacts</div>
     <div class="status-value" id="countDisplay">0</div>
   </div>
   <div class="status-cell">
-    <div class="status-label">Plus proche</div>
+    <div class="status-label" data-i18n="st.nearest">Plus proche</div>
     <div class="status-value" id="nearDisplay">--</div>
   </div>
 </div>
 
 <div class="controls">
   <button class="ctl primary" id="connectBtn">▶ Connecter</button>
-  <button class="ctl" id="viewBtn">Carte</button>
-  <button class="ctl on" id="precipBtn">Pluie</button>
-  <button class="ctl" id="cloudsBtn">Nuages</button>
-  <button class="ctl" id="lightBtn">Pollution</button>
-  <button class="ctl" id="firesBtn">Feux</button>
-  <button class="ctl on" id="strikesBtn">Impacts</button>
-  <button class="ctl" id="animBtn">Anim</button>
-  <button class="ctl" id="settingsBtn">Réglages</button>
+  <button class="ctl" id="viewBtn" data-i18n="btn.map">Carte</button>
+  <button class="ctl on" id="precipBtn" data-i18n="btn.rain">Pluie</button>
+  <button class="ctl" id="cloudsBtn" data-i18n="btn.clouds">Nuages</button>
+  <button class="ctl" id="lightBtn" data-i18n="btn.light">Pollution</button>
+  <button class="ctl" id="firesBtn" data-i18n="btn.fires">Feux</button>
+  <button class="ctl on" id="strikesBtn" data-i18n="btn.strikes">Impacts</button>
+  <button class="ctl" id="animBtn" data-i18n="btn.anim">Anim</button>
+  <button class="ctl" id="settingsBtn" data-i18n="btn.settings">Réglages</button>
+  <button class="ctl" id="langBtn" title="Langue">FR</button>
   <button class="ctl" id="helpBtn">?</button>
 </div>
 
 <div class="rangebar" id="rangeBar">
-  <span class="lbl">Portée</span>
+  <span class="lbl" data-i18n="ui.range">Portée</span>
 </div>
 
 <div class="alarm-banner" id="alarmBanner"></div>
@@ -530,12 +531,12 @@
   <span id="pickMsg">Touche la carte à l'endroit du site à surveiller.</span>
   <span class="pick-coord" id="pickCoord"></span>
   <div class="pick-actions">
-    <button class="ctl" id="pickCancel">Annuler</button>
-    <button class="ctl primary" id="pickSave" disabled>Enregistrer</button>
+    <button class="ctl" id="pickCancel" data-i18n="ui.cancel">Annuler</button>
+    <button class="ctl primary" id="pickSave" disabled data-i18n="ui.save">Enregistrer</button>
   </div>
 </div>
 <div class="om-banner" id="omBanner">
-  <span class="om-title">Données météo indisponibles</span>
+  <span class="om-title" data-i18n="err.title">Données météo indisponibles</span>
   <span id="omBannerMsg"></span>
   <span class="om-hint" id="omBannerHint"></span>
   <button class="om-close" id="omBannerClose" title="Masquer">✕</button>
@@ -553,65 +554,65 @@
 
 <div class="legend" id="legend">
   <div class="legend-head" id="legendHead">
-    <span>Légende</span>
+    <span data-i18n="ui.legend">Légende</span>
     <span class="chev">▼</span>
   </div>
   <div class="legend-grid">
-    <div class="leg-item"><span class="leg-ico"><span class="leg-precip"></span></span><span>Pluie : faible → intense</span></div>
-    <div class="leg-item"><span class="leg-ico"><span class="leg-clouds"></span></span><span>Couverture nuageuse (modèle météo)</span></div>
-    <div class="leg-item"><span class="leg-ico"><span class="leg-dot fresh"></span></span><span>Éclair à l'instant (&lt;&nbsp;3&nbsp;s)</span></div>
-    <div class="leg-item"><span class="leg-ico"><span class="leg-dot recent"></span></span><span>Éclair récent (&lt;&nbsp;2&nbsp;min)</span></div>
-    <div class="leg-item"><span class="leg-ico"><span class="leg-dot old"></span></span><span>Éclair ancien (ambre, s'estompe)</span></div>
-    <div class="leg-item"><span class="leg-ico"><span class="leg-rim-arc"></span><span class="leg-rim-dot"></span></span><span>Éclair proche mais au-delà de la portée (bord)</span></div>
-    <div class="leg-item"><span class="leg-ico"><span class="leg-ring-alert"></span></span><span>Seuil d'alerte (Réglages)</span></div>
-    <div class="leg-item"><span class="leg-ico"><span class="leg-ring-dist"></span></span><span>Anneaux de distance (km)</span></div>
-    <div class="leg-item"><span class="leg-ico"><span class="leg-sweep"></span></span><span>Balayage (décoratif)</span></div>
-    <div class="leg-item"><span class="leg-ico"><span class="leg-cellico">↗</span></span><span>Cellule orageuse · flèche = trajectoire +30 min (rouge si elle vient vers toi)</span></div>
-    <div class="leg-item"><span class="leg-ico"><span class="leg-windico">→</span></span><span>Vent à 10 m (vue Carte) : flèche = sens du vent, longueur = vitesse</span></div>
-    <div class="leg-item"><span class="leg-ico"><span class="leg-driftico">⇢</span></span><span>Dérive des nuages (encart en bas à gauche) : sens et vitesse de déplacement de la couche dominante</span></div>
-    <div class="leg-item"><span class="leg-ico"><span class="leg-lightgrad"></span></span><span>Pollution lumineuse : ciel noir → très pollué (bouton Pollution)</span></div>
-    <div class="leg-item"><span class="leg-ico"><span class="leg-fireico"></span></span><span>Feu actif (3 derniers jours) · taille = puissance, éclat = fraîcheur</span></div>
-    <div class="leg-item"><span class="leg-ico"><span class="leg-center"></span></span><span>Votre position (centre)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-precip"></span></span><span data-i18n="leg.rain">Pluie : faible → intense</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-clouds"></span></span><span data-i18n="leg.clouds">Couverture nuageuse (modèle météo)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-dot fresh"></span></span><span data-i18n="leg.flashNow">Éclair à l'instant (&lt;&nbsp;3&nbsp;s)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-dot recent"></span></span><span data-i18n="leg.flashRecent">Éclair récent (&lt;&nbsp;2&nbsp;min)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-dot old"></span></span><span data-i18n="leg.flashOld">Éclair ancien (ambre, s'estompe)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-rim-arc"></span><span class="leg-rim-dot"></span></span><span data-i18n="leg.flashEdge">Éclair proche mais au-delà de la portée (bord)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-ring-alert"></span></span><span data-i18n="leg.alertRing">Seuil d'alerte (Réglages)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-ring-dist"></span></span><span data-i18n="leg.rings">Anneaux de distance (km)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-sweep"></span></span><span data-i18n="leg.sweep">Balayage (décoratif)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-cellico">↗</span></span><span data-i18n="leg.cell">Cellule orageuse · flèche = trajectoire +30 min (rouge si elle vient vers toi)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-windico">→</span></span><span data-i18n="leg.wind">Vent à 10 m (vue Carte) : flèche = sens du vent, longueur = vitesse</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-driftico">⇢</span></span><span data-i18n="leg.drift">Dérive des nuages (encart en bas à gauche) : sens et vitesse de déplacement de la couche dominante</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-lightgrad"></span></span><span data-i18n="leg.light">Pollution lumineuse : ciel noir → très pollué (bouton Pollution)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-fireico"></span></span><span data-i18n="leg.fire">Feu actif (3 derniers jours) · taille = puissance, éclat = fraîcheur</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-center"></span></span><span data-i18n="leg.you">Votre position (centre)</span></div>
   </div>
 </div>
 
 <div class="log-head">
-  <span>Journal des impacts</span>
+  <span data-i18n="ui.log">Journal des impacts</span>
   <span id="logMeta">—</span>
 </div>
 <div class="log" id="log">
-  <div class="log-empty" id="logEmpty">Aucun impact reçu. Touche <strong>Connecter</strong> pour ouvrir le flux Blitzortung.</div>
+  <div class="log-empty" id="logEmpty"><span data-i18n-html="ui.logEmpty">Aucun impact reçu. Touche <strong>Connecter</strong> pour ouvrir le flux Blitzortung.</span></div>
 </div>
 
 <!-- ============ MODAL: Site ============ -->
 <div class="modal-backdrop" id="siteModal">
   <div class="modal">
-    <h2>Position du cadran</h2>
+    <h2 data-i18n="site.title">Position du cadran</h2>
     <div class="tab-row">
-      <div class="tab active" data-mode="auto">GPS</div>
-      <div class="tab" data-mode="manual">Manuel</div>
-      <div class="tab" data-mode="preset">Préréglés</div>
+      <div class="tab active" data-mode="auto" data-i18n="site.gps">GPS</div>
+      <div class="tab" data-mode="manual" data-i18n="site.manual">Manuel</div>
+      <div class="tab" data-mode="preset" data-i18n="site.presets">Préréglés</div>
     </div>
     <div id="siteAuto">
-      <p class="help">Centre le cadran sur la position du téléphone.</p>
-      <button class="ctl primary" id="getLocBtn" style="width:100%">📍 Obtenir ma position</button>
+      <p class="help" data-i18n="site.gpsHint">Centre le cadran sur la position du téléphone.</p>
+      <button class="ctl primary" id="getLocBtn" style="width:100%">📍 <span data-i18n="site.getLoc">Obtenir ma position</span></button>
       <p class="help" id="locStatus" style="margin-top:8px;"></p>
     </div>
     <div id="siteManual" style="display:none;">
       <div class="row3">
-        <div><label>Latitude</label><input type="number" id="manualLat" step="0.0001" placeholder="43.5300"></div>
-        <div><label>Longitude</label><input type="number" id="manualLon" step="0.0001" placeholder="1.3500"></div>
-        <div><label>Alt (m)</label><input type="number" id="manualAlt" step="1" placeholder="150"></div>
+        <div><label data-i18n="site.lat">Latitude</label><input type="number" id="manualLat" step="0.0001" placeholder="43.5300"></div>
+        <div><label data-i18n="site.lon">Longitude</label><input type="number" id="manualLon" step="0.0001" placeholder="1.3500"></div>
+        <div><label data-i18n="site.alt">Alt (m)</label><input type="number" id="manualAlt" step="1" placeholder="150"></div>
       </div>
-      <p class="help">Longitude positive vers l'EST. L'altitude n'est pas utilisée par le cadran (informative).</p>
+      <p class="help" data-i18n="site.manualHint">Longitude positive vers l'EST. L'altitude n'est pas utilisée par le cadran (informative).</p>
     </div>
     <div id="sitePreset" style="display:none;">
-      <p class="help">Sites préenregistrés.</p>
+      <p class="help" data-i18n="site.presetHint">Sites préenregistrés.</p>
       <div class="preset-grid" id="sitePresetGrid"></div>
     </div>
     <div class="modal-actions">
-      <button class="ctl" data-close="siteModal">Annuler</button>
-      <button class="ctl primary" id="saveSiteBtn">Enregistrer</button>
+      <button class="ctl" data-close="siteModal" data-i18n="ui.cancel">Annuler</button>
+      <button class="ctl primary" id="saveSiteBtn" data-i18n="ui.save">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -619,10 +620,10 @@
 <!-- ============ MODAL: Settings ============ -->
 <div class="modal-backdrop" id="settingsModal">
   <div class="modal">
-    <h2>Réglages</h2>
+    <h2 data-i18n="set.title">Réglages</h2>
 
     <div class="set-row">
-      <div class="sk">Seuil d'alerte<small>déclenche l'alarme sous cette distance — repère d'observation, pas un dispositif de sécurité</small></div>
+      <div class="sk"><span data-i18n="set.alert.k">Seuil d'alerte</span><small data-i18n="set.alert.d">déclenche l'alarme sous cette distance — repère d'observation, pas un dispositif de sécurité</small></div>
       <div style="display:flex;align-items:center;gap:6px;">
         <input type="number" class="set-num" id="setAlertKm" min="1" max="500" step="1">
         <span style="font-family:var(--mono);font-size:11px;color:var(--muted-2)">km</span>
@@ -630,7 +631,7 @@
     </div>
 
     <div class="set-row">
-      <div class="sk">Durée de persistance<small>temps d'affichage d'un impact</small></div>
+      <div class="sk"><span data-i18n="set.persist.k">Durée de persistance</span><small data-i18n="set.persist.d">temps d'affichage d'un impact</small></div>
       <div style="display:flex;align-items:center;gap:6px;">
         <input type="number" class="set-num" id="setMaxAge" min="1" max="120" step="1">
         <span style="font-family:var(--mono);font-size:11px;color:var(--muted-2)">min</span>
@@ -638,74 +639,71 @@
     </div>
 
     <div class="set-row">
-      <div class="sk">Son de l'alerte<small>bip à chaque impact proche</small></div>
+      <div class="sk"><span data-i18n="set.sound.k">Son de l'alerte</span><small data-i18n="set.sound.d">bip à chaque impact proche</small></div>
       <label class="switch"><input type="checkbox" id="setSound"><span class="slider"></span></label>
     </div>
 
     <div class="set-row">
-      <div class="sk">Vibration<small>vibreur si supporté</small></div>
+      <div class="sk"><span data-i18n="set.vibrate.k">Vibration</span><small data-i18n="set.vibrate.d">vibreur si supporté</small></div>
       <label class="switch"><input type="checkbox" id="setVibrate"><span class="slider"></span></label>
     </div>
 
     <div class="set-row">
-      <div class="sk">Opacité précipitations<small>couche RainViewer sur le cadran</small></div>
+      <div class="sk"><span data-i18n="set.rainOpacity.k">Opacité précipitations</span><small data-i18n="set.rainOpacity.d">couche RainViewer sur le cadran</small></div>
       <input type="range" class="set-range" id="setOpacity" min="0.1" max="1" step="0.05">
     </div>
 
     <div class="set-row">
-      <div class="sk">Opacité nuages<small>modèle météo Open-Meteo</small></div>
+      <div class="sk"><span data-i18n="set.cloudOpacity.k">Opacité nuages</span><small data-i18n="set.cloudOpacity.d">modèle météo Open-Meteo</small></div>
       <input type="range" class="set-range" id="setCloudsOpacity" min="0.1" max="1" step="0.05">
     </div>
 
     <div class="set-row">
-      <div class="sk">Fond de carte clair<small>vue Carte : clair ou sombre</small></div>
+      <div class="sk"><span data-i18n="set.mapLight.k">Fond de carte clair</span><small data-i18n="set.mapLight.d">vue Carte : clair ou sombre</small></div>
       <label class="switch"><input type="checkbox" id="setMapLight"><span class="slider"></span></label>
     </div>
 
     <div class="set-row">
-      <div class="sk">Position auto au démarrage<small>cale le cadran sur le GPS à l'ouverture</small></div>
+      <div class="sk"><span data-i18n="set.autoLoc.k">Position auto au démarrage</span><small data-i18n="set.autoLoc.d">cale le cadran sur le GPS à l'ouverture</small></div>
       <label class="switch"><input type="checkbox" id="setAutoLoc"><span class="slider"></span></label>
     </div>
 
     <div class="set-row">
-      <div class="sk">Infos cellules<small>étiquette distance/vitesse/ETA à côté de chaque cellule</small></div>
+      <div class="sk"><span data-i18n="set.cellLabels.k">Infos cellules</span><small data-i18n="set.cellLabels.d">étiquette distance/vitesse/ETA à côté de chaque cellule</small></div>
       <label class="switch"><input type="checkbox" id="setCellLabels"><span class="slider"></span></label>
     </div>
 
     <div class="set-row">
-      <div class="sk">Vent sur la carte<small>flèches de direction à 10 m · Open-Meteo</small></div>
+      <div class="sk"><span data-i18n="set.wind.k">Vent sur la carte</span><small data-i18n="set.wind.d">flèches de direction à 10 m · Open-Meteo</small></div>
       <label class="switch"><input type="checkbox" id="setWind"><span class="slider"></span></label>
     </div>
 
     <div class="set-row">
-      <div class="sk">Opacité pollution lumineuse<small>couche « Pollution » (atlas 2025)</small></div>
+      <div class="sk"><span data-i18n="set.lightOpacity.k">Opacité pollution lumineuse</span><small data-i18n="set.lightOpacity.d">couche « Pollution » (atlas 2025)</small></div>
       <input type="range" class="set-range" id="setLightOpacity" min="0.1" max="1" step="0.05">
     </div>
 
     <div style="padding: 11px 0; border-bottom: 1px solid var(--border);">
-      <div class="sk" style="font-family:var(--mono);font-size:12px;">Clé NASA FIRMS
-        <small style="display:block;color:var(--muted-2);font-size:10px;margin-top:2px;text-transform:none;letter-spacing:0;">
-          nécessaire pour la couche « Feux ». Gratuite et immédiate sur
-          <span style="color:var(--accent);">firms.modaps.eosdis.nasa.gov/api/map_key</span> — elle reste sur ton appareil.
-        </small>
+      <div class="sk" style="font-family:var(--mono);font-size:12px;"><span id="firmsKeyLabel"></span>
+        <small id="firmsKeyHint" style="display:block;color:var(--muted-2);font-size:10px;margin-top:2px;text-transform:none;letter-spacing:0;"></small>
       </div>
-      <input type="text" id="setFirmsKey" placeholder="colle ta clé ici" autocomplete="off"
+      <input type="text" id="setFirmsKey" placeholder="" autocomplete="off"
              autocapitalize="off" spellcheck="false" style="margin-top:8px;">
     </div>
 
     <div class="set-row">
-      <div class="sk">Notifications système<small>impact proche & cellule en approche</small></div>
+      <div class="sk"><span data-i18n="set.notify.k">Notifications système</span><small data-i18n="set.notify.d">impact proche & cellule en approche</small></div>
       <label class="switch"><input type="checkbox" id="setNotify"><span class="slider"></span></label>
     </div>
 
     <div class="set-row">
-      <div class="sk">Reconnexion auto<small>rouvre le flux si coupé</small></div>
+      <div class="sk"><span data-i18n="set.reconnect.k">Reconnexion auto</span><small data-i18n="set.reconnect.d">rouvre le flux si coupé</small></div>
       <label class="switch"><input type="checkbox" id="setAuto"><span class="slider"></span></label>
     </div>
 
     <div class="modal-actions">
-      <button class="ctl" id="simBtn">Simuler un impact</button>
-      <button class="ctl primary" data-close="settingsModal">Fermer</button>
+      <button class="ctl" id="simBtn" data-i18n="set.simulate">Simuler un impact</button>
+      <button class="ctl primary" data-close="settingsModal" data-i18n="ui.close">Fermer</button>
     </div>
   </div>
 </div>
@@ -713,9 +711,208 @@
 <!-- ============ MODAL: Help ============ -->
 <div class="modal-backdrop" id="helpModal">
   <div class="modal">
-    <h2>Comment ça marche</h2>
-    <div class="help-block">
-      <h3>Le cadran PPI</h3>
+    <h2 data-i18n="help.title">Comment ça marche</h2>
+    <div class="help-block" id="helpBody"></div>
+    <div class="modal-actions">
+      <button class="ctl primary" data-close="helpModal" data-i18n="ui.gotIt">Compris</button>
+    </div>
+  </div>
+</div>
+
+<div class="credits">
+  <span class="cr-warn" id="creditsWarn"></span>
+  <span class="cr-src" id="creditsSrc"></span>
+</div>
+
+<!-- ============ MODAL: first-run disclaimer ============ -->
+<div class="modal-backdrop" id="disclaimerModal">
+  <div class="modal">
+    <h2 data-i18n="disc.title">À lire avant d'utiliser</h2>
+    <div class="disclaimer-body" id="discBody"></div>
+    <div class="modal-actions">
+      <button class="ctl primary" id="disclaimerOk" data-i18n="disc.ok">J'ai compris</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+/* ============================================================
+   STATE & PERSISTENCE
+   ============================================================ */
+const SITE_PRESETS = [
+  { name: 'Cugnaux (FR)',         lat: 43.5345, lon:  1.3445, alt: 165 },
+  { name: 'Toulouse',             lat: 43.6045, lon:  1.4442, alt: 146 },
+  { name: 'Paris',                lat: 48.8566, lon:  2.3522, alt: 35 },
+  { name: 'Lyon',                 lat: 45.7640, lon:  4.8357, alt: 170 },
+  { name: 'Bordeaux',             lat: 44.8378, lon: -0.5792, alt: 20 },
+  { name: 'Marseille',            lat: 43.2965, lon:  5.3698, alt: 12 }
+];
+
+const RANGES = [50, 100, 200, 400]; // km
+
+const STATE_KEY = 'jlp-radar-ppi-v1';
+
+function loadState() {
+  try { const raw = localStorage.getItem(STATE_KEY); return raw ? JSON.parse(raw) : null; }
+  catch { return null; }
+}
+function saveState() { try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch {} }
+
+const state = Object.assign({
+  site: { name: 'Cugnaux (FR)', lat: 43.5345, lon: 1.3445, alt: 165 },
+  range: 200,
+  alertKm: 30,
+  maxAgeMin: 30,
+  precipOn: true,
+  precipOpacity: 0.55,
+  cloudsOn: true,
+  cloudsOpacity: 0.5,
+  strikesShow: true,
+  viewMode: 'ppi',
+  mapStyle: 'clair',
+  autoLocate: true,
+  notify: false,
+  savedSites: [],
+  cellLabels: true,
+  windOn: true,
+  lightOn: false,
+  lightOpacity: 0.5,
+  firesOn: false,
+  firmsKey: '',
+  disclaimerSeen: false,
+  lang: null,
+  animate: false,
+  sound: true,
+  vibrate: true,
+  autoReconnect: true,
+  legendOpen: true
+}, loadState() || {});
+
+// one-time migration: old default persistence was 20 min, new default is 30
+if (!state._migrPersist30) {
+  if (state.maxAgeMin === 20) state.maxAgeMin = 30;
+  state._migrPersist30 = true;
+  saveState();
+}
+
+// fixed startup state (whatever the previous session left): all layers on,
+// 100 km range, rain at 25% opacity, live (no animation)
+state.precipOn = true;
+state.cloudsOn = true;
+state.strikesShow = true;
+state.windOn = state.windOn !== false; // respect an explicit off, else on
+state.range = 100;
+state.precipOpacity = 0.25;
+state.animate = false;
+saveState();
+
+/* runtime-only */
+let strikes = [];                 // {t(ms), lat, lon, dist(km), brg(deg)}
+let sweepAngle = 0;
+let alarmUntil = 0;
+let lastAlertAt = 0;
+
+
+/* ============================================================
+   I18N — the UI language is switchable at runtime.
+   Static text is tagged with data-i18n in the markup; dynamic strings
+   go through t(). Compass points and cardinal letters are localised
+   too (East is "E" in French but "O" in German, and so on).
+   ============================================================ */
+const LANGS = ['fr', 'en'];
+const LANG_LABEL = { fr: 'FR', en: 'EN' };
+const I18N = {
+fr: {
+  'app.title': 'Cadran radar & foudre',
+  'app.sub': 'précipitations · impacts temps réel · alerte proximité',
+  'st.site': 'Site', 'st.lightning': 'Foudre', 'st.strikes': 'Impacts', 'st.nearest': 'Plus proche',
+  'btn.map': 'Carte', 'btn.rain': 'Pluie', 'btn.clouds': 'Nuages', 'btn.light': 'Pollution',
+  'btn.fires': 'Feux', 'btn.strikes': 'Impacts', 'btn.anim': 'Anim', 'btn.settings': 'Réglages',
+  'btn.connect': '▶ Connecter', 'btn.disconnect': '■ Déconnecter',
+  'ui.range': 'Portée', 'ui.legend': 'Légende', 'ui.log': 'Journal des impacts',
+  'ui.logEmpty': 'Aucun impact reçu. Touche <strong>Connecter</strong> pour ouvrir le flux Blitzortung.',
+  'ui.cancel': 'Annuler', 'ui.save': 'Enregistrer', 'ui.close': 'Fermer', 'ui.gotIt': 'Compris',
+  'ws.offline': 'hors ligne', 'ws.connecting': 'connexion…', 'ws.live': 'en direct', 'ws.reconnecting': 'reconnexion…',
+  'leg.rain': 'Pluie : faible → intense', 'leg.clouds': 'Couverture nuageuse (modèle météo)',
+  'leg.flashNow': "Éclair à l'instant (&lt;&nbsp;3&nbsp;s)", 'leg.flashRecent': 'Éclair récent (&lt;&nbsp;2&nbsp;min)',
+  'leg.flashOld': "Éclair ancien (ambre, s'estompe)", 'leg.flashEdge': 'Éclair proche mais au-delà de la portée (bord)',
+  'leg.alertRing': "Seuil d'alerte (Réglages)", 'leg.rings': 'Anneaux de distance (km)', 'leg.sweep': 'Balayage (décoratif)',
+  'leg.cell': 'Cellule orageuse · flèche = trajectoire +30 min (rouge si elle vient vers toi)',
+  'leg.wind': 'Vent à 10 m (vue Carte) : flèche = sens du vent, longueur = vitesse',
+  'leg.drift': 'Dérive des nuages (encart en bas à gauche) : sens et vitesse de déplacement de la couche dominante',
+  'leg.light': 'Pollution lumineuse : ciel noir → très pollué (bouton Pollution)',
+  'leg.fire': 'Feu actif (3 derniers jours) · taille = puissance, éclat = fraîcheur',
+  'leg.you': 'Votre position (centre)',
+  'site.title': 'Position du cadran', 'site.gps': 'GPS', 'site.manual': 'Manuel', 'site.presets': 'Préréglés',
+  'site.gpsHint': 'Centre le cadran sur la position du téléphone.', 'site.getLoc': 'Obtenir ma position',
+  'site.lat': 'Latitude', 'site.lon': 'Longitude', 'site.alt': 'Alt (m)',
+  'site.manualHint': "Longitude positive vers l'EST. L'altitude n'est pas utilisée par le cadran (informative).",
+  'site.presetHint': 'Sites préenregistrés.',
+  'site.current': 'Position actuelle', 'site.custom': 'Site personnalisé',
+  'site.addBtn': '＋ Mémoriser le site affiché', 'site.addHint': 'alerte ⚡ si impact proche de ce site',
+  'site.namePrompt': 'Nom du site à surveiller :', 'site.defaultName': 'Maison',
+  'set.title': 'Réglages', 'set.simulate': 'Simuler un impact',
+  'set.alert.k': "Seuil d'alerte", 'set.alert.d': "déclenche l'alarme sous cette distance — repère d'observation, pas un dispositif de sécurité",
+  'set.persist.k': 'Durée de persistance', 'set.persist.d': "temps d'affichage d'un impact",
+  'set.sound.k': "Son de l'alerte", 'set.sound.d': 'bip à chaque impact proche',
+  'set.vibrate.k': 'Vibration', 'set.vibrate.d': 'vibreur si supporté',
+  'set.rainOpacity.k': 'Opacité précipitations', 'set.rainOpacity.d': 'couche RainViewer sur le cadran',
+  'set.cloudOpacity.k': 'Opacité nuages', 'set.cloudOpacity.d': 'modèle météo Open-Meteo',
+  'set.mapLight.k': 'Fond de carte clair', 'set.mapLight.d': 'vue Carte : clair ou sombre',
+  'set.autoLoc.k': 'Position auto au démarrage', 'set.autoLoc.d': "cale le cadran sur le GPS à l'ouverture",
+  'set.cellLabels.k': 'Infos cellules', 'set.cellLabels.d': 'étiquette distance/vitesse/ETA à côté de chaque cellule',
+  'set.wind.k': 'Vent sur la carte', 'set.wind.d': 'flèches de direction à 10 m · Open-Meteo',
+  'set.lightOpacity.k': 'Opacité pollution lumineuse', 'set.lightOpacity.d': 'couche « Pollution » (atlas 2025)',
+  'set.notify.k': 'Notifications système', 'set.notify.d': 'impact proche & cellule en approche',
+  'set.reconnect.k': 'Reconnexion auto', 'set.reconnect.d': 'rouvre le flux si coupé',
+  'set.firmsKey': 'Clé NASA FIRMS',
+  'set.firmsHint': 'nécessaire pour la couche « Feux ». Gratuite et immédiate sur firms.modaps.eosdis.nasa.gov/api/map_key — elle reste sur ton appareil.',
+  'set.firmsPlaceholder': 'colle ta clé ici',
+  'set.lang.k': 'Langue', 'set.lang.d': "langue de l'interface",
+  'help.title': 'Comment ça marche', 'disc.title': "À lire avant d'utiliser", 'disc.ok': "J'ai compris",
+  'err.title': 'Données météo indisponibles',
+  'err.quota': "Quota d'appels atteint. Nuages et vent reviennent tout seuls dès que le quota se réinitialise (limite par minute/heure : quelques minutes ; limite journalière : à minuit UTC, soit 2 h du matin en heure française d'été). La pluie et la foudre continuent normalement.",
+  'err.other': "Nuages et vent sont momentanément indisponibles. L'app réessaie automatiquement. La pluie et la foudre continuent normalement.",
+  'err.fireKey': 'Feux : clé NASA FIRMS manquante',
+  'err.fireKeyHint': 'Ouvre Réglages → « Clé NASA FIRMS » et colle une clé (gratuite et immédiate sur firms.modaps.eosdis.nasa.gov/api/map_key). Elle reste sur ton appareil.',
+  'err.fireHint': 'Vérifie la clé NASA FIRMS dans les Réglages. Les autres couches continuent normalement.',
+  'pick.tap': "Touche la carte à l'endroit du site à surveiller.",
+  'pick.hint': "Déplace la carte d'un doigt, zoome à deux doigts.",
+  'pick.selected': 'Site sélectionné — touche ailleurs pour corriger.',
+  'pick.from': 'de toi',
+  'meta.rain': 'pluie', 'meta.clouds': 'nuages', 'meta.wind': 'vent', 'meta.drift': 'dérive',
+  'meta.fire': 'feu', 'meta.fires': 'feux',
+  'cell.goes': 'va vers', 'cell.static': 'statique',
+  'cell.banner': 'CELLULE À {d} KM {pos}, VA VERS {hdg} · {spd} KM/H · ARRIVÉE ~{eta} MIN',
+  'alarm.banner': 'IMPACT À {d} KM · {dir} ({deg}°)',
+  'drift.low': 'nuages bas', 'drift.mid': 'nuages moyens', 'drift.high': 'nuages élevés',
+  'notif.near': '⚡ Impact proche', 'notif.nearBody': '{d} km {dir} de ta position',
+  'notif.site': '⚡ Impact près de « {name} »', 'notif.siteBody': '{d} km du site surveillé',
+  'notif.cell': 'Cellule orageuse en approche', 'notif.cellBody': 'À {d} km {dir}, arrivée estimée ~{eta} min',
+  'toast.restored': '{n} impact(s) restauré(s) (historique local)',
+  'toast.needLoc': "Acquiers d'abord la position", 'toast.badCoords': 'Coordonnées invalides',
+  'toast.pickSite': 'Sélectionne un site', 'toast.siteSavedGps': 'Site enregistré · suivi GPS au démarrage',
+  'toast.siteSavedFixed': 'Site fixe enregistré (position auto désactivée)',
+  'toast.centered': 'Cadran calé sur ta position', 'toast.recentered': 'Carte recentrée sur ta position',
+  'toast.connecting': 'Connexion au réseau foudre…', 'toast.feedLost': 'Flux foudre interrompu',
+  'toast.animOn': 'Animation pluie activée', 'toast.animOff': 'Animation arrêtée · retour au direct',
+  'toast.simInjected': 'Impact simulé injecté', 'toast.notifOn': 'Notifications activées',
+  'toast.notifDenied': 'Notifications refusées par le système',
+  'toast.rainUnavail': 'Radar pluie indisponible', 'toast.lightUnavail': 'Pollution lumineuse indisponible',
+  'toast.keySaved': 'Clé enregistrée · recherche des feux…', 'toast.siteRemoved': 'Site retiré de la surveillance',
+  'toast.tapMap': 'Touche la carte pour placer le site',
+  'toast.siteWatched': '« {name} » enregistré et surveillé',
+  'toast.strikeNearSite': '⚡ Impact à {d} km de « {name} »',
+  'age.sec': 's', 'age.min': 'min',
+  'compass': ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'],
+  'card': { n: 'N', s: 'S', e: 'E', w: 'O' },
+  'credits.warn': "⚠ Outil d'observation — ne pas utiliser pour la protection des personnes et des biens.",
+  'credits.src': 'Foudre © Blitzortung.org et les contributeurs du réseau · Pluie © RainViewer · Nuages &amp; vent © Open-Meteo · Feux © NASA FIRMS · Pollution lumineuse © D. Lorenz · Fond de carte © OpenStreetMap, © CARTO',
+  'help.html': `<h3>Le cadran PPI</h3>
       <p>Vue « Plan Position Indicator » centrée sur votre site. Le Nord est en haut. Les anneaux marquent la distance ; la portée totale est réglable via les pastilles.</p>
       <ul>
         <li><strong>Précipitations</strong> — couche radar <code>RainViewer</code> projetée dans le cadran (bouton <code>Pluie</code>).</li>
@@ -783,32 +980,8 @@
       <p>Dans Safari (iOS) ou Chrome (Android) : menu Partager → <strong>Sur l'écran d'accueil</strong>. Fonctionne hors-ligne pour l'interface (les données nécessitent le réseau).</p>
 
       <h3>Confidentialité</h3>
-      <p>Votre position ne quitte jamais l'appareil : tous les calculs (distance, cap) sont locaux. Seules les requêtes de tuiles RainViewer sont envoyées.</p>
-    </div>
-    <div class="modal-actions">
-      <button class="ctl primary" data-close="helpModal">Compris</button>
-    </div>
-  </div>
-</div>
-
-<div class="credits">
-  <span class="cr-warn">⚠ Outil d'observation — ne pas utiliser pour la protection des personnes et des biens.</span>
-  <span class="cr-src">
-    Foudre © Blitzortung.org et les contributeurs du réseau ·
-    Pluie © RainViewer ·
-    Nuages &amp; vent © Open-Meteo ·
-    Feux © NASA FIRMS ·
-    Pollution lumineuse © D. Lorenz ·
-    Fond de carte © OpenStreetMap, © CARTO
-  </span>
-</div>
-
-<!-- ============ MODAL: first-run disclaimer ============ -->
-<div class="modal-backdrop" id="disclaimerModal">
-  <div class="modal">
-    <h2>À lire avant d'utiliser</h2>
-    <div class="disclaimer-body">
-      <span class="dz-key">Cette application sert à observer les orages, pas à assurer une sécurité.
+      <p>Votre position ne quitte jamais l'appareil : tous les calculs (distance, cap) sont locaux. Seules les requêtes de tuiles RainViewer sont envoyées.</p>`,
+  'disc.html': `<span class="dz-key">Cette application sert à observer les orages, pas à assurer une sécurité.
       Ne fonde aucune décision de mise à l'abri sur ce qu'elle affiche.</span>
       <p>Les impacts de foudre proviennent de <strong>Blitzortung.org</strong>, un réseau de bénévoles qui hébergent
       leurs propres détecteurs. La couverture varie selon les régions, la localisation a une marge d'erreur,
@@ -818,93 +991,227 @@
       des autorités locales.</p>
       <span class="dz-src">Sources : Blitzortung.org (foudre) · RainViewer (précipitations) ·
       Open-Meteo (nuages et vent) · NASA FIRMS (feux) · D. Lorenz (pollution lumineuse) ·
-      OpenStreetMap et CARTO (fond de carte). Merci aux bénévoles qui alimentent ces réseaux.</span>
-    </div>
-    <div class="modal-actions">
-      <button class="ctl primary" id="disclaimerOk">J'ai compris</button>
-    </div>
-  </div>
-</div>
+      OpenStreetMap et CARTO (fond de carte). Merci aux bénévoles qui alimentent ces réseaux.</span>`
+},
+en: {
+  'app.title': 'Radar &amp; lightning scope',
+  'app.sub': 'precipitation · live strikes · proximity alert',
+  'st.site': 'Site', 'st.lightning': 'Lightning', 'st.strikes': 'Strikes', 'st.nearest': 'Nearest',
+  'btn.map': 'Map', 'btn.rain': 'Rain', 'btn.clouds': 'Clouds', 'btn.light': 'Light',
+  'btn.fires': 'Fires', 'btn.strikes': 'Strikes', 'btn.anim': 'Anim', 'btn.settings': 'Settings',
+  'btn.connect': '▶ Connect', 'btn.disconnect': '■ Disconnect',
+  'ui.range': 'Range', 'ui.legend': 'Legend', 'ui.log': 'Strike log',
+  'ui.logEmpty': 'No strikes received. Tap <strong>Connect</strong> to open the Blitzortung feed.',
+  'ui.cancel': 'Cancel', 'ui.save': 'Save', 'ui.close': 'Close', 'ui.gotIt': 'Got it',
+  'ws.offline': 'offline', 'ws.connecting': 'connecting…', 'ws.live': 'live', 'ws.reconnecting': 'reconnecting…',
+  'leg.rain': 'Rain: light → heavy', 'leg.clouds': 'Cloud cover (weather model)',
+  'leg.flashNow': 'Strike just now (&lt;&nbsp;3&nbsp;s)', 'leg.flashRecent': 'Recent strike (&lt;&nbsp;2&nbsp;min)',
+  'leg.flashOld': 'Older strike (amber, fading)', 'leg.flashEdge': 'Strike near but beyond range (rim)',
+  'leg.alertRing': 'Alert threshold (Settings)', 'leg.rings': 'Distance rings (km)', 'leg.sweep': 'Sweep (decorative)',
+  'leg.cell': 'Storm cell · arrow = track +30 min (red if heading your way)',
+  'leg.wind': 'Wind at 10 m (Map view): arrow = wind direction, length = speed',
+  'leg.drift': 'Cloud drift (bottom-left readout): heading and speed of the dominant deck',
+  'leg.light': 'Light pollution: dark sky → heavily polluted (Light button)',
+  'leg.fire': 'Active fire (last 3 days) · size = power, brightness = freshness',
+  'leg.you': 'Your position (centre)',
+  'site.title': 'Scope position', 'site.gps': 'GPS', 'site.manual': 'Manual', 'site.presets': 'Presets',
+  'site.gpsHint': "Centres the scope on the phone's position.", 'site.getLoc': 'Get my position',
+  'site.lat': 'Latitude', 'site.lon': 'Longitude', 'site.alt': 'Alt (m)',
+  'site.manualHint': 'Longitude positive towards the EAST. Altitude is not used by the scope (for reference only).',
+  'site.presetHint': 'Saved sites.',
+  'site.current': 'Current position', 'site.custom': 'Custom site',
+  'site.addBtn': '＋ Save the current site', 'site.addHint': 'raises ⚡ if a strike falls near this site',
+  'site.namePrompt': 'Name of the site to watch:', 'site.defaultName': 'Home',
+  'set.title': 'Settings', 'set.simulate': 'Simulate a strike',
+  'set.alert.k': 'Alert threshold', 'set.alert.d': 'raises the alarm below this distance — an observation cue, not a safety device',
+  'set.persist.k': 'Display duration', 'set.persist.d': 'how long a strike stays on screen',
+  'set.sound.k': 'Alert sound', 'set.sound.d': 'beep on every nearby strike',
+  'set.vibrate.k': 'Vibration', 'set.vibrate.d': 'vibrate if supported',
+  'set.rainOpacity.k': 'Precipitation opacity', 'set.rainOpacity.d': 'RainViewer layer on the scope',
+  'set.cloudOpacity.k': 'Cloud opacity', 'set.cloudOpacity.d': 'Open-Meteo weather model',
+  'set.mapLight.k': 'Light basemap', 'set.mapLight.d': 'Map view: light or dark',
+  'set.autoLoc.k': 'Auto-locate on start', 'set.autoLoc.d': 'locks the scope onto GPS when the app opens',
+  'set.cellLabels.k': 'Cell info', 'set.cellLabels.d': 'distance/speed/ETA label next to each cell',
+  'set.wind.k': 'Wind on the map', 'set.wind.d': 'wind direction arrows at 10 m · Open-Meteo',
+  'set.lightOpacity.k': 'Light pollution opacity', 'set.lightOpacity.d': '"Light" layer (2025 atlas)',
+  'set.notify.k': 'System notifications', 'set.notify.d': 'nearby strike & approaching cell',
+  'set.reconnect.k': 'Auto reconnect', 'set.reconnect.d': 'reopens the feed if it drops',
+  'set.firmsKey': 'NASA FIRMS key',
+  'set.firmsHint': 'required for the "Fires" layer. Free and instant at firms.modaps.eosdis.nasa.gov/api/map_key — it stays on your device.',
+  'set.firmsPlaceholder': 'paste your key here',
+  'set.lang.k': 'Language', 'set.lang.d': 'interface language',
+  'help.title': 'How it works', 'disc.title': 'Read before using', 'disc.ok': 'I understand',
+  'err.title': 'Weather data unavailable',
+  'err.quota': 'API call quota reached. Clouds and wind come back on their own once the quota resets (per-minute/hour limits: a few minutes; daily limit: at midnight UTC). Rain and lightning carry on normally.',
+  'err.other': 'Clouds and wind are momentarily unavailable. The app retries automatically. Rain and lightning carry on normally.',
+  'err.fireKey': 'Fires: NASA FIRMS key missing',
+  'err.fireKeyHint': 'Open Settings → "NASA FIRMS key" and paste a key (free and instant at firms.modaps.eosdis.nasa.gov/api/map_key). It stays on your device.',
+  'err.fireHint': 'Check the NASA FIRMS key in Settings. The other layers carry on normally.',
+  'pick.tap': 'Tap the map where the site to watch is.',
+  'pick.hint': 'Pan with one finger, zoom with two.',
+  'pick.selected': 'Site selected — tap elsewhere to adjust.',
+  'pick.from': 'from you',
+  'meta.rain': 'rain', 'meta.clouds': 'clouds', 'meta.wind': 'wind', 'meta.drift': 'drift',
+  'meta.fire': 'fire', 'meta.fires': 'fires',
+  'cell.goes': 'goes', 'cell.static': 'stationary',
+  'cell.banner': 'CELL {d} KM {pos}, GOING {hdg} · {spd} KM/H · ARRIVING ~{eta} MIN',
+  'alarm.banner': 'STRIKE {d} KM · {dir} ({deg}°)',
+  'drift.low': 'low cloud', 'drift.mid': 'mid cloud', 'drift.high': 'high cloud',
+  'notif.near': '⚡ Nearby strike', 'notif.nearBody': '{d} km {dir} of your position',
+  'notif.site': '⚡ Strike near "{name}"', 'notif.siteBody': '{d} km from the watched site',
+  'notif.cell': 'Storm cell approaching', 'notif.cellBody': '{d} km {dir}, estimated arrival ~{eta} min',
+  'toast.restored': '{n} strike(s) restored (local history)',
+  'toast.needLoc': 'Get your position first', 'toast.badCoords': 'Invalid coordinates',
+  'toast.pickSite': 'Select a site', 'toast.siteSavedGps': 'Site saved · GPS tracking on start',
+  'toast.siteSavedFixed': 'Fixed site saved (auto-locate turned off)',
+  'toast.centered': 'Scope locked onto your position', 'toast.recentered': 'Map recentred on your position',
+  'toast.connecting': 'Connecting to the lightning network…', 'toast.feedLost': 'Lightning feed interrupted',
+  'toast.animOn': 'Rain animation on', 'toast.animOff': 'Animation stopped · back to live',
+  'toast.simInjected': 'Simulated strike injected', 'toast.notifOn': 'Notifications enabled',
+  'toast.notifDenied': 'Notifications refused by the system',
+  'toast.rainUnavail': 'Rain radar unavailable', 'toast.lightUnavail': 'Light pollution unavailable',
+  'toast.keySaved': 'Key saved · looking for fires…', 'toast.siteRemoved': 'Site removed from watching',
+  'toast.tapMap': 'Tap the map to drop the site',
+  'toast.siteWatched': '"{name}" saved and watched',
+  'toast.strikeNearSite': '⚡ Strike {d} km from "{name}"',
+  'age.sec': 's', 'age.min': 'min',
+  'compass': ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'],
+  'card': { n: 'N', s: 'S', e: 'E', w: 'W' },
+  'credits.warn': '⚠ An observation tool — not to be used for the protection of life and property.',
+  'credits.src': 'Lightning © Blitzortung.org and the network contributors · Rain © RainViewer · Clouds &amp; wind © Open-Meteo · Fires © NASA FIRMS · Light pollution © D. Lorenz · Basemap © OpenStreetMap, © CARTO',
+  'help.html': `<h3>The PPI scope</h3>
+      <p>A "Plan Position Indicator" view centred on your site. North is up. The rings mark distance; the total range is set with the chips.</p>
+      <ul>
+        <li><strong>Precipitation</strong> — <code>RainViewer</code> radar layer projected into the scope (<code>Rain</code> button).</li>
+        <li><strong>Cloud cover</strong> — Open-Meteo weather model, updated hourly (<code>Clouds</code> button).</li>
+        <li><strong>Active fires</strong> — satellite detections from the last 3 days (<code>Fires</code> button), filtered to remove industrial sources.</li>
+        <li><strong>Light pollution</strong> — 2025 atlas, a static layer you can switch on (<code>Light</code> button), opacity adjustable in Settings.</li>
+        <li><strong>Cloud drift</strong> — bottom-left readout: heading and speed of the dominant cloud deck (shown with the <code>Clouds</code> layer).</li>
+        <li><strong>Wind at 10 m</strong> — arrows on the Map view, pointing downwind, length and intensity scaling with speed (Settings &rarr; "Wind on the map").</li>
+        <li><strong>Lightning strikes</strong> — red while recent (under 2 minutes), then amber, fading with age (<code>Strikes</code> button).</li>
+        <li><strong>Sweep</strong> — the green line rotates like a real radar (decorative).</li>
+      </ul>
+      <p>Every layer toggles independently. The <code>Map</code> button switches between the radar scope and a geographic map (with towns and coastlines) carrying the same layers.</p>
+      <p>The log and the counter only show strikes <strong>within the displayed range</strong>; strikes out to twice the range appear as small dots on the rim of the scope.</p>
 
-<div class="toast" id="toast"></div>
+      <h3>Sources</h3>
+      <ul>
+        <li><code>api.rainviewer.com</code> — worldwide precipitation radar mosaic (free, no key).</li>
+        <li><code>open-meteo.com</code> — cloud cover and wind at 10 m (weather model analysis, free, no key).</li>
+        <li><code>firms.modaps.eosdis.nasa.gov</code> — active fires detected by the VIIRS/NOAA-20 satellites (NASA FIRMS, free with a personal key).</li>
+        <li><code>djlorenz.github.io</code> — world light pollution atlas 2025 (David Lorenz), handy when planning an observing session.</li>
+        <li><code>ws*.blitzortung.org</code> — community lightning detection network, streamed live over WebSocket.</li>
+      </ul>
+      <p>Strikes are located by triangulation across a network of volunteers: a few seconds of latency, and coverage that varies by region.</p>
 
-<script>
-'use strict';
+      <h3>Terms of use for the lightning data</h3>
+      <p><strong>Blitzortung.org</strong> is not a commercial service but a network of enthusiasts who host their own detectors and share their measurements. Their data is made available for <strong>private and recreational use</strong>; commercial use, as well as wide redistribution, require their prior agreement. It must not be used for the <strong>protection of life and property</strong>.</p>
+      <p>This app follows that spirit: personal use, nothing resold, sources credited. If you plan to distribute it widely or publish it on an app store, contact them first — and check the current text on <code>blitzortung.org</code>. If the subject fascinates you, hosting a station is the best way to support the network.</p>
+      <p><button class="ctl" id="showDisclaimerBtn" style="width:100%;margin-top:6px;">Show the warning again</button></p>
+      <p><strong>Local history:</strong> received strikes are stored on the device (a rolling hour) and restored when the app opens. Since the Blitzortung feed is live-only, the app can only show what it received while it was open — the "Display duration" setting fixes the window shown.</p>
 
-/* ============================================================
-   STATE & PERSISTENCE
-   ============================================================ */
-const SITE_PRESETS = [
-  { name: 'Cugnaux (FR)',         lat: 43.5345, lon:  1.3445, alt: 165 },
-  { name: 'Toulouse',             lat: 43.6045, lon:  1.4442, alt: 146 },
-  { name: 'Paris',                lat: 48.8566, lon:  2.3522, alt: 35 },
-  { name: 'Lyon',                 lat: 45.7640, lon:  4.8357, alt: 170 },
-  { name: 'Bordeaux',             lat: 44.8378, lon: -0.5792, alt: 20 },
-  { name: 'Marseille',            lat: 43.2965, lon:  5.3698, alt: 12 }
-];
+      <h3>Cloud drift</h3>
+      <p>The bottom-left readout tells you <strong>where the cloud deck is heading and how fast</strong>. Do not confuse it with the wind arrows: those give the wind <em>10 m above ground</em>, whereas clouds are carried by the flow <em>at their own altitude</em>, often much faster and sometimes in a completely different direction.</p>
+      <p>The app works out the dominant deck at that moment (low, mid or high) and reports the wind at the matching level — around 1,500 m for low clouds, 3,000 m for mid, 9,000 m for high. The percentage shown is that deck's cover. This is the flow that explains how cloud systems move, and it usually agrees with the track computed for storm cells.</p>
 
-const RANGES = [50, 100, 200, 400]; // km
+      <h3>Position</h3>
+      <p>By default the scope locks onto your GPS position each time the app opens ("Auto-locate on start" setting). Choosing a manual or preset site turns that off; picking "GPS" again in the Site window turns it back on.</p>
 
-const STATE_KEY = 'jlp-radar-ppi-v1';
+      <h3>Proximity alert</h3>
+      <p>When a strike falls inside the <strong>alert threshold</strong>, the scope flashes red, with a beep and vibration if enabled. Useful for keeping an eye on an approaching storm cell.</p>
 
-function loadState() {
-  try { const raw = localStorage.getItem(STATE_KEY); return raw ? JSON.parse(raw) : null; }
-  catch { return null; }
+      <h3>Active fires</h3>
+      <p>The <code>Fires</code> button shows VIIRS/NOAA-20 satellite detections from the last 3 days. It needs a <strong>NASA FIRMS key</strong> (free, instant, pasted into Settings): it stays on your device and is only ever sent to NASA.</p>
+      <p><strong>What "fire" means here:</strong> satellites measure thermal anomalies, not flames. Refinery flares, steelworks and other fixed heat sources would therefore be reported as fires. The app discards these false detections in two ways: it keeps only detections NASA classifies as vegetation fires (its <code>type</code> field separates volcanoes, static land sources and offshore flares), and it further removes points that come back at the same spot every day of the window — the signature of an industrial site, whereas a real fire moves and dies out. Low-confidence detections are ignored as well.</p>
+      <p>Even with that filtering, a detection is an indication, not a confirmation: cloud, terrain and satellite overpass times (2 to 4 per day) limit coverage. When in doubt, local authorities remain the reference.</p>
+
+      <h3>Storm cells &amp; track</h3>
+      <p>The app groups strikes from the last 16 minutes into <strong>cells</strong> (dashed circles) and estimates their motion: the arrow shows the position expected in 30 minutes. If a cell is heading for your alert radius it turns red and an amber banner gives distance, speed and estimated arrival. This is a simple extrapolation: reliable for well-established cells, indicative otherwise.</p>
+      <p>Reading the label: the 1st line gives the cell's <strong>position</strong> (distance and direction from you), the 2nd its <strong>heading</strong> ("goes NE") and speed.</p>
+
+      <h3>Watched sites</h3>
+      <p>Two ways to save a place to watch (home, cabin, plot of land…):</p>
+      <ul>
+        <li><strong>On the map</strong> — switch to <code>Map</code> view, tap the <span style="color:var(--warn)">📍</span> button top-left, move to the place you want, then tap the map: a pin drops, you name it and it is saved.</li>
+        <li><strong>From the current site</strong> — Site window &rarr; Presets &rarr; <strong>"＋ Save the current site"</strong>.</li>
+      </ul>
+      <p>Saved sites appear as yellow pins on the map. Any strike falling inside the alert threshold around one of them raises a named alert, wherever the scope is centred. The ✕ in the presets list removes a site.</p>
+
+      <h3>Panning and zooming the map</h3>
+      <p>In <code>Map</code> view: one finger to pan, two fingers to zoom (mouse wheel on a computer). The <strong>reference site does not move</strong> — distances, bearings and alerts are still computed from your position, and the alert ring and distance circles stay attached to it even when it leaves the screen. The <span style="color:var(--accent)">⌖</span> button recentres the map; changing range or going back to the scope recentres it too.</p>
+
+      <h3>System notifications</h3>
+      <p>Switchable in Settings: a nearby strike and an approaching cell raise a notification (with the system's permission). One limit to know: with no server, the app can only notify <strong>while it is running</strong> — on iPhone the system suspends it in the background after a few tens of seconds; on a computer or on Android, notifications also work in the background.</p>
+
+      <h3>Install as an app</h3>
+      <p>In Safari (iOS) or Chrome (Android): Share menu &rarr; <strong>Add to Home Screen</strong>. The interface works offline (the data needs a network).</p>
+
+      <h3>Privacy</h3>
+      <p>Your position never leaves the device: every calculation (distance, bearing) is local. Only RainViewer tile requests are sent.</p>`,
+  'disc.html': `<span class="dz-key">This app is for watching storms, not for keeping you safe.
+      Do not base any decision to take shelter on what it shows.</span>
+      <p>Lightning strikes come from <strong>Blitzortung.org</strong>, a network of volunteers hosting their own
+      detectors. Coverage varies by region, locations carry a margin of error, strikes can be missed and the
+      feed can drop. Their data is made available for private and recreational use, explicitly not for the
+      protection of life and property.</p>
+      <p>If there is a real risk, refer to your <strong>national weather service</strong> and to the instructions
+      of local authorities.</p>
+      <span class="dz-src">Sources: Blitzortung.org (lightning) · RainViewer (precipitation) ·
+      Open-Meteo (cloud and wind) · NASA FIRMS (fires) · D. Lorenz (light pollution) ·
+      OpenStreetMap and CARTO (basemap). Thanks to the volunteers who feed these networks.</span>`
 }
-function saveState() { try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch {} }
+};
 
-const state = Object.assign({
-  site: { name: 'Cugnaux (FR)', lat: 43.5345, lon: 1.3445, alt: 165 },
-  range: 200,
-  alertKm: 30,
-  maxAgeMin: 30,
-  precipOn: true,
-  precipOpacity: 0.55,
-  cloudsOn: true,
-  cloudsOpacity: 0.5,
-  strikesShow: true,
-  viewMode: 'ppi',
-  mapStyle: 'clair',
-  autoLocate: true,
-  notify: false,
-  savedSites: [],
-  cellLabels: true,
-  windOn: true,
-  lightOn: false,
-  lightOpacity: 0.5,
-  firesOn: false,
-  firmsKey: '',
-  disclaimerSeen: false,
-  animate: false,
-  sound: true,
-  vibrate: true,
-  autoReconnect: true,
-  legendOpen: true
-}, loadState() || {});
-
-// one-time migration: old default persistence was 20 min, new default is 30
-if (!state._migrPersist30) {
-  if (state.maxAgeMin === 20) state.maxAgeMin = 30;
-  state._migrPersist30 = true;
+let lang = 'fr';
+function detectLang() {
+  const nav = (navigator.languages || [navigator.language || 'fr']);
+  for (const l of nav) {
+    const code = String(l).slice(0, 2).toLowerCase();
+    if (LANGS.includes(code)) return code;
+  }
+  return 'en';
+}
+function t(key, params) {
+  const dict = I18N[lang] || I18N.fr;
+  let s = dict[key];
+  if (s === undefined) s = (I18N.fr[key] !== undefined ? I18N.fr[key] : key);
+  if (params && typeof s === 'string') {
+    for (const k in params) s = s.split('{' + k + '}').join(params[k]);
+  }
+  return s;
+}
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.innerHTML = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    el.innerHTML = t(el.dataset.i18nHtml);
+  });
+  const hb = $('#helpBody'); if (hb) hb.innerHTML = t('help.html');
+  const db = $('#discBody'); if (db) db.innerHTML = t('disc.html');
+  const cw = $('#creditsWarn'); if (cw) cw.textContent = t('credits.warn');
+  const cs = $('#creditsSrc'); if (cs) cs.innerHTML = t('credits.src');
+  const fk = $('#setFirmsKey'); if (fk) fk.placeholder = t('set.firmsPlaceholder');
+  const fkl = $('#firmsKeyLabel'); if (fkl) fkl.textContent = t('set.firmsKey');
+  const fkh = $('#firmsKeyHint'); if (fkh) fkh.textContent = t('set.firmsHint');
+  const lb = $('#langBtn'); if (lb) lb.textContent = LANG_LABEL[lang];
+  updateConnectBtn();
+  updateStatusBar();
+  renderSitePresets();
+  renderLog();
+  updateLogMeta();
+  updatePickBar();
+  renderDataErrors();
+  if (!wsWanted) setWsStatus('', t('ws.offline'));
+}
+function setLang(code) {
+  if (!LANGS.includes(code)) return;
+  lang = code;
+  state.lang = code;
   saveState();
+  applyLang();
 }
-
-// fixed startup state (whatever the previous session left): all layers on,
-// 100 km range, rain at 25% opacity, live (no animation)
-state.precipOn = true;
-state.cloudsOn = true;
-state.strikesShow = true;
-state.windOn = state.windOn !== false; // respect an explicit off, else on
-state.range = 100;
-state.precipOpacity = 0.25;
-state.animate = false;
-saveState();
-
-/* runtime-only */
-let strikes = [];                 // {t(ms), lat, lon, dist(km), brg(deg)}
-let sweepAngle = 0;
-let alarmUntil = 0;
-let lastAlertAt = 0;
 
 /* ============================================================
    DOM HELPERS
@@ -939,8 +1246,7 @@ function bearing(lat1, lon1, lat2, lon2) {
   return (deg(Math.atan2(y, x)) + 360) % 360;
 }
 function compass(b) {
-  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
-  return dirs[Math.round(b / 22.5) % 16];
+  return t('compass')[Math.round(b / 22.5) % 16];
 }
 
 /* Web-mercator tile projection (fractional tile units) */
@@ -995,7 +1301,7 @@ async function loadRainviewerIndex() {
     schedulePrecip();
   } catch (e) {
     console.warn('RainViewer index error', e);
-    showToast('Radar pluie indisponible', true);
+    showToast(t('toast.rainUnavail'), true);
   }
 }
 
@@ -1186,9 +1492,7 @@ function omFail(e) {
   console.warn('Open-Meteo error', e);
   const raw = (e && e.message) ? String(e.message) : 'service indisponible';
   const quota = /limit|quota|too many|exceed/i.test(raw);
-  setDataError('om', 'Open-Meteo : ' + raw, quota
-    ? 'Quota d\'appels atteint. Nuages et vent reviennent tout seuls dès que le quota se réinitialise (limite par minute/heure : quelques minutes ; limite journalière : à minuit UTC, soit 2 h du matin en heure française d\'été). La pluie et la foudre continuent normalement.'
-    : 'Nuages et vent sont momentanément indisponibles. L\'app réessaie automatiquement. La pluie et la foudre continuent normalement.');
+  setDataError('om', 'Open-Meteo : ' + raw, t(quota ? 'err.quota' : 'err.other'));
 }
 function omOk() { clearDataError('om'); }
 
@@ -1336,9 +1640,9 @@ let driftFetchedAt = 0;
 let driftSeq = 0;
 
 const DRIFT_LEVELS = [
-  { key: 'low',  hpa: '850hPa', label: 'nuages bas' },
-  { key: 'mid',  hpa: '700hPa', label: 'nuages moyens' },
-  { key: 'high', hpa: '300hPa', label: 'nuages élevés' }
+  { key: 'low',  hpa: '850hPa', label: 'drift.low' },
+  { key: 'mid',  hpa: '700hPa', label: 'drift.mid' },
+  { key: 'high', hpa: '300hPa', label: 'drift.high' }
 ];
 
 async function buildCloudDrift() {
@@ -1395,7 +1699,7 @@ function drawCloudDrift(cx, cy, R, light) {
   if (!state.cloudsOn || !cloudDrift) return;
   const d = cloudDrift;
   const txt = `${compass(d.toBrg)} · ${d.spd} km/h`;
-  const sub = `${d.label} ${d.cover}%`;
+  const sub = `${t(d.label)} ${d.cover}%`;
   ctx.save();
   ctx.font = '10px ' + getCSS('--mono');
   const w = Math.max(ctx.measureText(txt).width, ctx.measureText(sub).width) + 44;
@@ -1516,7 +1820,7 @@ async function buildLightLayer() {
     };
     if (!tilesOk && !lightToastShown) {
       lightToastShown = true;
-      showToast('Pollution lumineuse indisponible', true);
+      showToast(t('toast.lightUnavail'), true);
     }
   } catch (e) { console.warn('light build error', e); }
 }
@@ -1576,8 +1880,7 @@ async function buildFireLayer(force) {
   if (!state.firesOn) return;
   const key = (state.firmsKey || '').trim();
   if (!key) {
-    setDataError('fires', 'Feux : clé NASA FIRMS manquante',
-      'Ouvre Réglages → « Clé NASA FIRMS » et colle une clé (gratuite et immédiate sur firms.modaps.eosdis.nasa.gov/api/map_key). Elle reste sur ton appareil.');
+    setDataError('fires', t('err.fireKey'), t('err.fireKeyHint'));
     return;
   }
   const sameView = firesSite && firesSite.lat === view.lat &&
@@ -1643,8 +1946,7 @@ async function buildFireLayer(force) {
   } catch (e) {
     console.warn('FIRMS error', e);
     if (seq === firesBuildSeq) {
-      setDataError('fires', 'Feux : ' + (e && e.message ? e.message : 'indisponible'),
-        'Vérifie la clé NASA FIRMS dans les Réglages. Les autres couches continuent normalement.');
+      setDataError('fires', t('btn.fires') + ' : ' + (e && e.message ? e.message : '—'), t('err.fireHint'));
     }
   }
 }
@@ -1744,14 +2046,14 @@ function disconnectWs() {
   clearTimeout(wsWatchdog);
   clearInterval(wsHeartbeat); wsHeartbeat = null;
   if (ws) { try { ws.onclose = null; ws.close(); } catch {} ws = null; }
-  setWsStatus('', 'hors ligne');
+  setWsStatus('', t('ws.offline'));
   updateConnectBtn();
 }
 
 function openWs() {
   if (!wsWanted) return;
   const url = WS_SERVERS[wsServerIdx % WS_SERVERS.length];
-  setWsStatus('conn', 'connexion…');
+  setWsStatus('conn', t('ws.connecting'));
   updateConnectBtn();
   let sock;
   try { sock = new WebSocket(url); }
@@ -1763,7 +2065,7 @@ function openWs() {
     lastMsgAt = Date.now();
     // Subscription handshake expected by the live feed.
     try { sock.send('{"a":111}'); } catch {}
-    setWsStatus('live', 'en direct');
+    setWsStatus('live', t('ws.live'));
     updateConnectBtn();
     armWatchdog();
   };
@@ -1784,8 +2086,8 @@ function openWs() {
     if (ws === sock) ws = null;
     clearInterval(wsHeartbeat); wsHeartbeat = null;
     if (!wsWanted) return;
-    if (!state.autoReconnect) { disconnectWs(); showToast('Flux foudre interrompu', true); return; }
-    setWsStatus('err', 'reconnexion…');
+    if (!state.autoReconnect) { disconnectWs(); showToast(t('toast.feedLost'), true); return; }
+    setWsStatus('err', t('ws.reconnecting'));
     updateConnectBtn();
     wsServerIdx++; // rotate server
     scheduleReconnect();
@@ -1996,13 +2298,12 @@ function updateCellBanner() {
   const el = $('#cellBanner');
   const c = cells.find(c => c.etaMin != null && c.dist > state.alertKm);
   if (!c) { el.classList.remove('show'); return; }
-  el.textContent = `⚠ CELLULE À ${c.dist.toFixed(0)} KM ${compass(c.brg)}, VA VERS ${compass(c.hdg)} · ${c.spd} KM/H · ARRIVÉE ~${c.etaMin} MIN`;
+  el.textContent = '⚠ ' + t('cell.banner', { d: c.dist.toFixed(0), pos: compass(c.brg), hdg: compass(c.hdg), spd: c.spd, eta: c.etaMin });
   el.classList.add('show');
   const now = Date.now();
   if (c.etaMin <= 45 && now - lastCellNotifyAt > 600000) {
     lastCellNotifyAt = now;
-    notifySystem('Cellule orageuse en approche',
-      `À ${c.dist.toFixed(0)} km ${compass(c.brg)}, arrivée estimée ~${c.etaMin} min`);
+    notifySystem(t('notif.cell'), t('notif.cellBody', { d: c.dist.toFixed(0), dir: compass(c.brg), eta: c.etaMin }));
   }
 }
 
@@ -2045,8 +2346,8 @@ function drawCellLabel(p, c) {
   // line 1 = where the cell is (bearing from the site); line 2 = where it goes
   const l1 = `${c.dist.toFixed(0)} km ${compass(c.brg)} · ${c.count}⚡`;
   const l2 = c.spd
-    ? `va vers ${compass(c.hdg)} · ${c.spd} km/h${c.etaMin != null ? ' · ~' + c.etaMin + ' min' : ''}`
-    : 'statique';
+    ? `${t('cell.goes')} ${compass(c.hdg)} · ${c.spd} km/h${c.etaMin != null ? ' · ~' + c.etaMin + ' ' + t('age.min') : ''}`
+    : t('cell.static');
   ctx.save();
   ctx.font = '9px ' + getCSS('--mono');
   ctx.textAlign = 'left';
@@ -2118,7 +2419,7 @@ function triggerAlert(s) {
   $('#scopeWrap').classList.add('alarm');
   const banner = $('#alarmBanner');
   banner.classList.add('show');
-  banner.textContent = `⚡ IMPACT À ${s.dist.toFixed(1)} KM · ${compass(s.brg)} (${Math.round(s.brg)}°)`;
+  banner.textContent = '⚡ ' + t('alarm.banner', { d: s.dist.toFixed(1), dir: compass(s.brg), deg: Math.round(s.brg) });
   // rate-limit sound/vibration to avoid spamming during a storm
   const now = Date.now();
   if (now - lastAlertAt > 4000) {
@@ -2128,7 +2429,7 @@ function triggerAlert(s) {
   }
   if (now - lastNotifAt > 60000) {
     lastNotifAt = now;
-    notifySystem('⚡ Impact proche', `${s.dist.toFixed(1)} km ${compass(s.brg)} de ta position`);
+    notifySystem(t('notif.near'), t('notif.nearBody', { d: s.dist.toFixed(1), dir: compass(s.brg) }));
   }
 }
 
@@ -2142,8 +2443,8 @@ function checkWatchedSites(lat, lon) {
     const now = Date.now();
     if (now - (lastRemoteAlertAt[w.name] || 0) < 60000) continue;
     lastRemoteAlertAt[w.name] = now;
-    showToast(`⚡ Impact à ${dw.toFixed(1)} km de « ${w.name} »`, true);
-    notifySystem(`⚡ Impact près de « ${w.name} »`, `${dw.toFixed(1)} km du site surveillé`);
+    showToast(t('toast.strikeNearSite', { d: dw.toFixed(1), name: w.name }), true);
+    notifySystem(t('notif.site', { name: w.name }), t('notif.siteBody', { d: dw.toFixed(1) }));
   }
 }
 function updateAlarm() {
@@ -2231,10 +2532,11 @@ function drawScope(ts) {
   ctx.fillStyle = 'rgba(56,224,138,0.85)';
   ctx.font = 'bold 12px ' + getCSS('--mono');
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('N', cx, cy - R + 11);
-  ctx.fillText('S', cx, cy + R - 11);
-  ctx.fillText('E', cx + R - 11, cy);
-  ctx.fillText('O', cx - R + 11, cy);
+  const card = t('card');
+  ctx.fillText(card.n, cx, cy - R + 11);
+  ctx.fillText(card.s, cx, cy + R - 11);
+  ctx.fillText(card.e, cx + R - 11, cy);
+  ctx.fillText(card.w, cx - R + 11, cy);
   ctx.textBaseline = 'alphabetic';
 
   // alert-radius ring
@@ -2590,9 +2892,9 @@ function updateCounts() {
 }
 function ageStr(ms) {
   const s = Math.round(ms / 1000);
-  if (s < 60) return s + 's';
+  if (s < 60) return s + t('age.sec');
   const m = Math.round(s / 60);
-  return m + 'min';
+  return m + t('age.min');
 }
 function fmtFrameTime(unixSec) {
   const d = new Date(unixSec * 1000);
@@ -2602,18 +2904,18 @@ function updateLogMeta() {
   const meta = $('#logMeta');
   const parts = [];
   if (state.precipOn && RV.frames.length && RV.idx >= 0) {
-    parts.push('pluie ' + fmtFrameTime(RV.frames[RV.idx].time));
+    parts.push(t('meta.rain') + ' ' + fmtFrameTime(RV.frames[RV.idx].time));
   }
   if (state.cloudsOn) {
-    if (cloudsError) parts.push('nuages ✗');
-    else if (cloudsFetchedAt) parts.push('nuages ' + fmtFrameTime(cloudsFetchedAt / 1000));
+    if (cloudsError) parts.push(t('meta.clouds') + ' ✗');
+    else if (cloudsFetchedAt) parts.push(t('meta.clouds') + ' ' + fmtFrameTime(cloudsFetchedAt / 1000));
   }
   if (state.windOn) {
-    if (windError) parts.push('vent ✗');
-    else if (windFetchedAt) parts.push('vent ' + fmtFrameTime(windFetchedAt / 1000));
+    if (windError) parts.push(t('meta.wind') + ' ✗');
+    else if (windFetchedAt) parts.push(t('meta.wind') + ' ' + fmtFrameTime(windFetchedAt / 1000));
   }
-  if (state.cloudsOn && cloudDrift) parts.push('dérive ' + compass(cloudDrift.toBrg) + ' ' + cloudDrift.spd + ' km/h');
-  if (state.firesOn && firesFetchedAt) parts.push(fires.length + ' feu' + (fires.length > 1 ? 'x' : ''));
+  if (state.cloudsOn && cloudDrift) parts.push(t('meta.drift') + ' ' + compass(cloudDrift.toBrg) + ' ' + cloudDrift.spd + ' km/h');
+  if (state.firesOn && firesFetchedAt) parts.push(fires.length + ' ' + t(fires.length > 1 ? 'meta.fires' : 'meta.fire'));
   meta.textContent = parts.length ? parts.join(' · ') : '—';
 }
 function renderLog() {
@@ -2648,13 +2950,13 @@ setInterval(renderLog, 10000);
    ============================================================ */
 function updateConnectBtn() {
   const btn = $('#connectBtn');
-  if (wsWanted) { btn.textContent = '■ Déconnecter'; btn.classList.remove('primary'); }
-  else { btn.textContent = '▶ Connecter'; btn.classList.add('primary'); }
+  if (wsWanted) { btn.textContent = t('btn.disconnect'); btn.classList.remove('primary'); }
+  else { btn.textContent = t('btn.connect'); btn.classList.add('primary'); }
 }
 $('#connectBtn').onclick = () => {
   ensureAudio();
   if (wsWanted) disconnectWs();
-  else { connectWs(); showToast('Connexion au réseau foudre…'); }
+  else { connectWs(); showToast(t('toast.connecting')); }
   saveState();
 };
 
@@ -2744,7 +3046,7 @@ $('#animBtn').onclick = () => {
   updateAttrib();
   $('#animBtn').classList.toggle('on', state.animate);
   saveState();
-  if (state.animate) { if (!RV.host) loadRainviewerIndex(); startAnim(); showToast('Animation pluie activée'); }
+  if (state.animate) { if (!RV.host) loadRainviewerIndex(); startAnim(); showToast(t('toast.animOn')); }
   else {
     stopAnim();
     // back to live: jump to the latest observed frame right away,
@@ -2753,7 +3055,7 @@ $('#animBtn').onclick = () => {
     buildPrecipLayer();
     updateLogMeta();
     loadRainviewerIndex();
-    showToast('Animation arrêtée · retour au direct');
+    showToast(t('toast.animOff'));
   }
 };
 
@@ -2789,7 +3091,7 @@ $('#getLocBtn').onclick = () => {
   if (!navigator.geolocation) { $('#locStatus').textContent = 'Géolocalisation indisponible'; return; }
   $('#locStatus').textContent = 'Acquisition…';
   navigator.geolocation.getCurrentPosition(pos => {
-    pendingSite = { name: 'Position actuelle', lat: pos.coords.latitude, lon: pos.coords.longitude, alt: pos.coords.altitude || 0 };
+    pendingSite = { name: t('site.current'), lat: pos.coords.latitude, lon: pos.coords.longitude, alt: pos.coords.altitude || 0 };
     $('#locStatus').textContent = `OK · ${pendingSite.lat.toFixed(4)}, ${pendingSite.lon.toFixed(4)} (±${Math.round(pos.coords.accuracy)}m)`;
   }, err => { $('#locStatus').textContent = 'Erreur : ' + err.message; }, { enableHighAccuracy: true, timeout: 10000 });
 };
@@ -2807,7 +3109,7 @@ function renderSitePresets() {
         state.savedSites.splice(removableIdx, 1);
         saveState();
         renderSitePresets();
-        showToast('Site retiré de la surveillance');
+        showToast(t('toast.siteRemoved'));
         return;
       }
       pendingSite = { ...p };
@@ -2822,30 +3124,30 @@ function renderSitePresets() {
   const add = document.createElement('button');
   add.className = 'preset-btn';
   add.style.borderStyle = 'dashed';
-  add.innerHTML = `<span style="color:var(--accent);">＋ Mémoriser le site affiché</span><br><span style="color:var(--muted-2);font-size:10px;">alerte ⚡ si impact proche de ce site</span>`;
+  add.innerHTML = `<span style="color:var(--accent);">${t('site.addBtn')}</span><br><span style="color:var(--muted-2);font-size:10px;">${t('site.addHint')}</span>`;
   add.onclick = () => {
-    const def = state.site.name === 'Position actuelle' ? 'Maison' : state.site.name;
-    const name = prompt('Nom du site à surveiller :', def);
+    const def = state.site.name === t('site.current') ? t('site.defaultName') : state.site.name;
+    const name = prompt(t('site.namePrompt'), def);
     if (!name || !name.trim()) return;
     state.savedSites = state.savedSites || [];
     state.savedSites.push({ name: name.trim(), lat: state.site.lat, lon: state.site.lon, alt: state.site.alt || 0 });
     saveState();
     renderSitePresets();
-    showToast(`« ${name.trim()} » mémorisé et surveillé`);
+    showToast(t('toast.siteWatched', { name: name.trim() }));
   };
   grid.appendChild(add);
 }
 $('#saveSiteBtn').onclick = () => {
   let newSite = null;
   if (siteMode === 'auto') {
-    if (!pendingSite) { showToast('Acquiers d\'abord la position', true); return; }
+    if (!pendingSite) { showToast(t('toast.needLoc'), true); return; }
     newSite = pendingSite;
   } else if (siteMode === 'manual') {
     const lat = parseFloat($('#manualLat').value), lon = parseFloat($('#manualLon').value), alt = parseFloat($('#manualAlt').value) || 0;
-    if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) { showToast('Coordonnées invalides', true); return; }
-    newSite = { name: 'Site personnalisé', lat, lon, alt };
+    if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) { showToast(t('toast.badCoords'), true); return; }
+    newSite = { name: t('site.custom'), lat, lon, alt };
   } else {
-    if (!pendingSite) { showToast('Sélectionne un site', true); return; }
+    if (!pendingSite) { showToast(t('toast.pickSite'), true); return; }
     newSite = pendingSite;
   }
   state.site = newSite;
@@ -2861,7 +3163,7 @@ $('#saveSiteBtn').onclick = () => {
   rebuildLayers();
   renderLog();
   closeModal('siteModal');
-  showToast(siteMode === 'auto' ? 'Site enregistré · suivi GPS au démarrage' : 'Site fixe enregistré (position auto désactivée)');
+  showToast(t(siteMode === 'auto' ? 'toast.siteSavedGps' : 'toast.siteSavedFixed'));
 };
 
 /* --- Settings modal --- */
@@ -2906,7 +3208,7 @@ $('#setFirmsKey').onchange = (e) => {
   state.firmsKey = e.target.value.trim();
   saveState();
   clearDataError('fires');
-  if (state.firesOn && state.firmsKey) { buildFireLayer(true); showToast('Clé enregistrée · recherche des feux…'); }
+  if (state.firesOn && state.firmsKey) { buildFireLayer(true); showToast(t('toast.keySaved')); }
 };
 $('#setWind').onchange = (e) => {
   state.windOn = e.target.checked;
@@ -2922,9 +3224,9 @@ $('#setNotify').onchange = (e) => {
         state.notify = false;
         saveState();
         $('#setNotify').checked = false;
-        showToast('Notifications refusées par le système', true);
+        showToast(t('toast.notifDenied'), true);
       } else {
-        showToast('Notifications activées');
+        showToast(t('toast.notifOn'));
       }
     });
   }
@@ -2936,7 +3238,7 @@ $('#simBtn').onclick = () => {
   const b = Math.random() * 360;
   const dest = destPoint(state.site.lat, state.site.lon, b, d);
   addStrike(dest.lat, dest.lon, Date.now());
-  showToast('Impact simulé injecté');
+  showToast(t('toast.simInjected'));
 };
 function destPoint(lat, lon, brgDeg, distKm) {
   const dR = distKm / R_EARTH;
@@ -3105,13 +3407,13 @@ function updatePickBar() {
   bar.classList.add('show');
   if (pickPoint) {
     const d = haversine(state.site.lat, state.site.lon, pickPoint.lat, pickPoint.lon);
-    $('#pickMsg').textContent = 'Site sélectionné — touche ailleurs pour corriger.';
+    $('#pickMsg').textContent = t('pick.selected');
     $('#pickCoord').textContent =
-      `${pickPoint.lat.toFixed(4)}°, ${pickPoint.lon.toFixed(4)}° · à ${d.toFixed(1)} km de toi`;
+      `${pickPoint.lat.toFixed(4)}°, ${pickPoint.lon.toFixed(4)}° · ${d.toFixed(1)} km ${t('pick.from')}`;
     $('#pickSave').disabled = false;
   } else {
-    $('#pickMsg').textContent = 'Touche la carte à l\'endroit du site à surveiller.';
-    $('#pickCoord').textContent = 'Déplace la carte d\'un doigt, zoome à deux doigts.';
+    $('#pickMsg').textContent = t('pick.tap');
+    $('#pickCoord').textContent = t('pick.hint');
     $('#pickSave').disabled = true;
   }
 }
@@ -3127,25 +3429,25 @@ $('#pickBtn').onclick = (e) => {
   e.stopPropagation();
   if (state.viewMode !== 'map') return;
   setPickMode(!pickMode);
-  if (pickMode) showToast('Touche la carte pour placer le site');
+  if (pickMode) showToast(t('toast.tapMap'));
 };
 $('#pickCancel').onclick = () => setPickMode(false);
 $('#pickSave').onclick = () => {
   if (!pickPoint) return;
-  const name = prompt('Nom du site à surveiller :', 'Site ' + ((state.savedSites || []).length + 1));
+  const name = prompt(t('site.namePrompt'), t('site.defaultName') + ' ' + ((state.savedSites || []).length + 1));
   if (!name || !name.trim()) return;
   state.savedSites = state.savedSites || [];
   state.savedSites.push({ name: name.trim(), lat: pickPoint.lat, lon: pickPoint.lon, alt: 0 });
   saveState();
   renderSitePresets();
   setPickMode(false);
-  showToast(`« ${name.trim()} » enregistré et surveillé`);
+  showToast(t('toast.siteWatched', { name: name.trim() }));
 };
 $('#recenterBtn').onclick = (e) => {
   e.stopPropagation();
   syncView();
   rebuildLayers();
-  showToast('Carte recentrée sur ta position');
+  showToast(t('toast.recentered'));
 };
 
 /* --- Auto-locate at startup --- */
@@ -3155,8 +3457,8 @@ function autoLocateNow() {
     const lat = pos.coords.latitude, lon = pos.coords.longitude;
     const moved = haversine(state.site.lat, state.site.lon, lat, lon);
     // already there (well under a scope pixel): nothing to redo
-    if (moved < 0.5 && state.site.name === 'Position actuelle') return;
-    state.site = { name: 'Position actuelle', lat, lon, alt: pos.coords.altitude || 0 };
+    if (moved < 0.5 && state.site.name === t('site.current')) return;
+    state.site = { name: t('site.current'), lat, lon, alt: pos.coords.altitude || 0 };
     saveState();
     updateStatusBar();
     recomputeStrikeGeo();
@@ -3164,7 +3466,7 @@ function autoLocateNow() {
     rebuildLayers();
     renderLog();
     updateCounts();
-    if (moved >= 0.5) showToast('Cadran calé sur ta position');
+    if (moved >= 0.5) showToast(t('toast.centered'));
   }, () => { /* refus ou échec : on garde le site enregistré */ },
   { enableHighAccuracy: false, timeout: 10000, maximumAge: 120000 });
 }
@@ -3179,16 +3481,23 @@ $('#omBannerClose').onclick = () => {
 };
 
 /* --- Re-open the disclaimer from the help --- */
-$('#showDisclaimerBtn').onclick = () => {
-  closeModal('helpModal');
-  openModal('disclaimerModal');
-};
+document.addEventListener('click', (e) => {
+  if (e.target && e.target.id === 'showDisclaimerBtn') {
+    closeModal('helpModal');
+    openModal('disclaimerModal');
+  }
+});
 
 /* --- First-run disclaimer --- */
 $('#disclaimerOk').onclick = () => {
   state.disclaimerSeen = true;
   saveState();
   closeModal('disclaimerModal');
+};
+
+/* --- Language switch --- */
+$('#langBtn').onclick = () => {
+  setLang(LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length]);
 };
 
 /* --- Legend toggle --- */
@@ -3220,6 +3529,7 @@ setInterval(() => {
    STARTUP
    ============================================================ */
 function init() {
+  lang = state.lang || detectLang();
   resizeCanvas();
   renderRangeBar();
   renderSitePresets();
@@ -3237,12 +3547,12 @@ function init() {
   updateAttrib();
   $('#animBtn').classList.toggle('on', state.animate);
   $('#legend').classList.toggle('open', state.legendOpen !== false);
-  updateConnectBtn();
+  applyLang();
 
   const restored = restoreStrikes();
   renderLog();
   updateCounts();
-  if (restored > 0) showToast(`${restored} impact${restored > 1 ? 's' : ''} restauré${restored > 1 ? 's' : ''} (historique local)`);
+  if (restored > 0) showToast(t('toast.restored', { n: restored }));
 
   if (state.precipOn) loadRainviewerIndex();
   if (state.cloudsOn || state.windOn) buildMeteoLayers();
