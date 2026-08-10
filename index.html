@@ -482,7 +482,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v2.7 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v2.8 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1 data-i18n="app.title">Cadran radar &amp; foudre</h1>
   <div class="subtitle" data-i18n="app.sub">précipitations · impacts temps réel · alerte proximité</div>
@@ -823,8 +823,8 @@ let lastAlertAt = 0;
    go through t(). Compass points and cardinal letters are localised
    too (East is "E" in French but "O" in German, and so on).
    ============================================================ */
-const LANGS = ['fr', 'en'];
-const LANG_LABEL = { fr: 'FR', en: 'EN' };
+const LANGS = ['fr', 'en', 'es', 'de', 'it'];
+const LANG_LABEL = { fr: 'FR', en: 'EN', es: 'ES', de: 'DE', it: 'IT' };
 const I18N = {
 fr: {
   'app.title': 'Cadran radar & foudre',
@@ -992,6 +992,507 @@ fr: {
       <span class="dz-src">Sources : Blitzortung.org (foudre) · RainViewer (précipitations) ·
       Open-Meteo (nuages et vent) · NASA FIRMS (feux) · D. Lorenz (pollution lumineuse) ·
       OpenStreetMap et CARTO (fond de carte). Merci aux bénévoles qui alimentent ces réseaux.</span>`
+},
+es: {
+  'app.title': 'Radar y rayos',
+  'app.sub': 'precipitación · impactos en directo · alerta de proximidad',
+  'st.site': 'Sitio', 'st.lightning': 'Rayos', 'st.strikes': 'Impactos', 'st.nearest': 'Más cercano',
+  'btn.map': 'Mapa', 'btn.rain': 'Lluvia', 'btn.clouds': 'Nubes', 'btn.light': 'Contaminación',
+  'btn.fires': 'Incendios', 'btn.strikes': 'Impactos', 'btn.anim': 'Anim', 'btn.settings': 'Ajustes',
+  'btn.connect': '▶ Conectar', 'btn.disconnect': '■ Desconectar',
+  'ui.range': 'Alcance', 'ui.legend': 'Leyenda', 'ui.log': 'Registro de impactos',
+  'ui.logEmpty': 'Ningún impacto recibido. Toca <strong>Conectar</strong> para abrir el flujo Blitzortung.',
+  'ui.cancel': 'Cancelar', 'ui.save': 'Guardar', 'ui.close': 'Cerrar', 'ui.gotIt': 'Entendido',
+  'ws.offline': 'desconectado', 'ws.connecting': 'conectando…', 'ws.live': 'en directo', 'ws.reconnecting': 'reconectando…',
+  'leg.rain': 'Lluvia: débil → intensa', 'leg.clouds': 'Nubosidad (modelo meteorológico)',
+  'leg.flashNow': 'Rayo ahora mismo (&lt;&nbsp;3&nbsp;s)', 'leg.flashRecent': 'Rayo reciente (&lt;&nbsp;2&nbsp;min)',
+  'leg.flashOld': 'Rayo antiguo (ámbar, se desvanece)', 'leg.flashEdge': 'Rayo cercano pero fuera de alcance (borde)',
+  'leg.alertRing': 'Umbral de alerta (Ajustes)', 'leg.rings': 'Anillos de distancia (km)', 'leg.sweep': 'Barrido (decorativo)',
+  'leg.cell': 'Célula tormentosa · flecha = trayectoria +30 min (roja si viene hacia ti)',
+  'leg.wind': 'Viento a 10 m (vista Mapa): flecha = sentido del viento, longitud = velocidad',
+  'leg.drift': 'Deriva de las nubes (recuadro abajo a la izquierda): rumbo y velocidad de la capa dominante',
+  'leg.light': 'Contaminación lumínica: cielo oscuro → muy contaminado (botón Contaminación)',
+  'leg.fire': 'Incendio activo (últimos 3 días) · tamaño = potencia, brillo = frescura',
+  'leg.you': 'Tu posición (centro)',
+  'site.title': 'Posición del radar', 'site.gps': 'GPS', 'site.manual': 'Manual', 'site.presets': 'Guardados',
+  'site.gpsHint': 'Centra el radar en la posición del teléfono.', 'site.getLoc': 'Obtener mi posición',
+  'site.lat': 'Latitud', 'site.lon': 'Longitud', 'site.alt': 'Alt (m)',
+  'site.manualHint': 'Longitud positiva hacia el ESTE. La altitud no la usa el radar (informativa).',
+  'site.presetHint': 'Sitios guardados.',
+  'site.current': 'Posición actual', 'site.custom': 'Sitio personalizado',
+  'site.addBtn': '＋ Guardar el sitio actual', 'site.addHint': 'alerta ⚡ si cae un rayo cerca de este sitio',
+  'site.namePrompt': 'Nombre del sitio a vigilar:', 'site.defaultName': 'Casa',
+  'set.title': 'Ajustes', 'set.simulate': 'Simular un impacto',
+  'set.alert.k': 'Umbral de alerta', 'set.alert.d': 'activa la alarma por debajo de esta distancia — referencia de observación, no un dispositivo de seguridad',
+  'set.persist.k': 'Duración en pantalla', 'set.persist.d': 'tiempo que se muestra un impacto',
+  'set.sound.k': 'Sonido de alerta', 'set.sound.d': 'pitido en cada impacto cercano',
+  'set.vibrate.k': 'Vibración', 'set.vibrate.d': 'vibrador si está disponible',
+  'set.rainOpacity.k': 'Opacidad de la lluvia', 'set.rainOpacity.d': 'capa RainViewer sobre el radar',
+  'set.cloudOpacity.k': 'Opacidad de las nubes', 'set.cloudOpacity.d': 'modelo meteorológico Open-Meteo',
+  'set.mapLight.k': 'Mapa base claro', 'set.mapLight.d': 'vista Mapa: claro u oscuro',
+  'set.autoLoc.k': 'Posición automática al abrir', 'set.autoLoc.d': 'centra el radar en el GPS al iniciar',
+  'set.cellLabels.k': 'Información de células', 'set.cellLabels.d': 'etiqueta distancia/velocidad/ETA junto a cada célula',
+  'set.wind.k': 'Viento en el mapa', 'set.wind.d': 'flechas de dirección a 10 m · Open-Meteo',
+  'set.lightOpacity.k': 'Opacidad contaminación lumínica', 'set.lightOpacity.d': 'capa «Contaminación» (atlas 2025)',
+  'set.notify.k': 'Notificaciones del sistema', 'set.notify.d': 'impacto cercano y célula aproximándose',
+  'set.reconnect.k': 'Reconexión automática', 'set.reconnect.d': 'reabre el flujo si se corta',
+  'set.firmsKey': 'Clave NASA FIRMS',
+  'set.firmsHint': 'necesaria para la capa «Incendios». Gratuita e inmediata en firms.modaps.eosdis.nasa.gov/api/map_key — se queda en tu dispositivo.',
+  'set.firmsPlaceholder': 'pega aquí tu clave',
+  'set.lang.k': 'Idioma', 'set.lang.d': 'idioma de la interfaz',
+  'help.title': 'Cómo funciona', 'disc.title': 'Léelo antes de usar', 'disc.ok': 'Entendido',
+  'err.title': 'Datos meteorológicos no disponibles',
+  'err.quota': 'Cuota de llamadas alcanzada. Nubes y viento vuelven solos en cuanto se reinicia la cuota (límites por minuto/hora: unos minutos; límite diario: a medianoche UTC). La lluvia y los rayos siguen funcionando.',
+  'err.other': 'Nubes y viento no están disponibles momentáneamente. La app reintenta automáticamente. La lluvia y los rayos siguen funcionando.',
+  'err.fireKey': 'Incendios: falta la clave NASA FIRMS',
+  'err.fireKeyHint': 'Abre Ajustes → «Clave NASA FIRMS» y pega una clave (gratuita e inmediata en firms.modaps.eosdis.nasa.gov/api/map_key). Se queda en tu dispositivo.',
+  'err.fireHint': 'Comprueba la clave NASA FIRMS en los Ajustes. Las demás capas siguen funcionando.',
+  'pick.tap': 'Toca el mapa donde está el sitio a vigilar.',
+  'pick.hint': 'Desplaza con un dedo, haz zoom con dos.',
+  'pick.selected': 'Sitio seleccionado — toca en otro punto para corregir.',
+  'pick.from': 'de ti',
+  'meta.rain': 'lluvia', 'meta.clouds': 'nubes', 'meta.wind': 'viento', 'meta.drift': 'deriva',
+  'meta.fire': 'incendio', 'meta.fires': 'incendios',
+  'cell.goes': 'va hacia', 'cell.static': 'estacionaria',
+  'cell.banner': 'CÉLULA A {d} KM {pos}, VA HACIA {hdg} · {spd} KM/H · LLEGADA ~{eta} MIN',
+  'alarm.banner': 'IMPACTO A {d} KM · {dir} ({deg}°)',
+  'drift.low': 'nubes bajas', 'drift.mid': 'nubes medias', 'drift.high': 'nubes altas',
+  'notif.near': '⚡ Impacto cercano', 'notif.nearBody': '{d} km {dir} de tu posición',
+  'notif.site': '⚡ Impacto cerca de «{name}»', 'notif.siteBody': '{d} km del sitio vigilado',
+  'notif.cell': 'Célula tormentosa aproximándose', 'notif.cellBody': 'A {d} km {dir}, llegada estimada ~{eta} min',
+  'toast.restored': '{n} impacto(s) restaurado(s) (historial local)',
+  'toast.needLoc': 'Obtén primero la posición', 'toast.badCoords': 'Coordenadas inválidas',
+  'toast.pickSite': 'Selecciona un sitio', 'toast.siteSavedGps': 'Sitio guardado · seguimiento GPS al abrir',
+  'toast.siteSavedFixed': 'Sitio fijo guardado (posición automática desactivada)',
+  'toast.centered': 'Radar centrado en tu posición', 'toast.recentered': 'Mapa recentrado en tu posición',
+  'toast.connecting': 'Conectando a la red de rayos…', 'toast.feedLost': 'Flujo de rayos interrumpido',
+  'toast.animOn': 'Animación de lluvia activada', 'toast.animOff': 'Animación detenida · vuelta al directo',
+  'toast.simInjected': 'Impacto simulado inyectado', 'toast.notifOn': 'Notificaciones activadas',
+  'toast.notifDenied': 'Notificaciones rechazadas por el sistema',
+  'toast.rainUnavail': 'Radar de lluvia no disponible', 'toast.lightUnavail': 'Contaminación lumínica no disponible',
+  'toast.keySaved': 'Clave guardada · buscando incendios…', 'toast.siteRemoved': 'Sitio retirado de la vigilancia',
+  'toast.tapMap': 'Toca el mapa para colocar el sitio',
+  'toast.siteWatched': '«{name}» guardado y vigilado',
+  'toast.strikeNearSite': '⚡ Impacto a {d} km de «{name}»',
+  'age.sec': 's', 'age.min': 'min',
+  'compass': ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'],
+  'card': { n: 'N', s: 'S', e: 'E', w: 'O' },
+  'credits.warn': '⚠ Herramienta de observación — no usar para la protección de personas y bienes.',
+  'credits.src': 'Rayos © Blitzortung.org y los colaboradores de la red · Lluvia © RainViewer · Nubes y viento © Open-Meteo · Incendios © NASA FIRMS · Contaminación lumínica © D. Lorenz · Mapa base © OpenStreetMap, © CARTO',
+  'help.html': `<h3>El radar PPI</h3>
+      <p>Vista «Plan Position Indicator» centrada en tu sitio. El norte está arriba. Los anillos marcan la distancia; el alcance total se ajusta con las pastillas.</p>
+      <ul>
+        <li><strong>Precipitación</strong> — capa de radar <code>RainViewer</code> proyectada en el radar (botón <code>Lluvia</code>).</li>
+        <li><strong>Nubosidad</strong> — modelo meteorológico Open-Meteo, actualizado cada hora (botón <code>Nubes</code>).</li>
+        <li><strong>Incendios activos</strong> — detecciones por satélite de los últimos 3 días (botón <code>Incendios</code>), filtradas de fuentes industriales.</li>
+        <li><strong>Contaminación lumínica</strong> — atlas 2025, capa estática activable (botón <code>Contaminación</code>), opacidad ajustable en Ajustes.</li>
+        <li><strong>Deriva de las nubes</strong> — recuadro abajo a la izquierda: rumbo y velocidad de la capa nubosa dominante (se muestra con la capa <code>Nubes</code>).</li>
+        <li><strong>Viento a 10 m</strong> — flechas en la vista Mapa, orientadas en el sentido del viento, con longitud e intensidad según la velocidad (Ajustes &rarr; «Viento en el mapa»).</li>
+        <li><strong>Impactos de rayo</strong> — rojos cuando son recientes (menos de 2 minutos), luego ámbar, desvaneciéndose con el tiempo (botón <code>Impactos</code>).</li>
+        <li><strong>Barrido</strong> — la línea verde gira como un radar real (decorativo).</li>
+      </ul>
+      <p>Cada capa se activa o desactiva por separado. El botón <code>Mapa</code> alterna entre el radar y un mapa geográfico (con ciudades y costas) con las mismas capas superpuestas.</p>
+      <p>El registro y el contador solo muestran los impactos <strong>dentro del alcance mostrado</strong>; los impactos hasta el doble del alcance aparecen como puntos pequeños en el borde.</p>
+
+      <h3>Fuentes</h3>
+      <ul>
+        <li><code>api.rainviewer.com</code> — mosaico mundial de radar de precipitación (gratuito, sin clave).</li>
+        <li><code>open-meteo.com</code> — nubosidad y viento a 10 m (análisis del modelo meteorológico, gratuito, sin clave).</li>
+        <li><code>firms.modaps.eosdis.nasa.gov</code> — incendios activos detectados por los satélites VIIRS/NOAA-20 (NASA FIRMS, gratuito con una clave personal).</li>
+        <li><code>djlorenz.github.io</code> — atlas mundial de contaminación lumínica 2025 (David Lorenz), útil para preparar una sesión astronómica.</li>
+        <li><code>ws*.blitzortung.org</code> — red comunitaria de detección de rayos, difundida en directo por WebSocket.</li>
+      </ul>
+      <p>Los impactos se localizan por triangulación mediante una red de voluntarios: unos segundos de latencia y cobertura variable según la región.</p>
+
+      <h3>Condiciones de uso de los datos de rayos</h3>
+      <p><strong>Blitzortung.org</strong> no es un servicio comercial sino una red de aficionados que alojan sus propios detectores y comparten sus mediciones. Sus datos se ponen a disposición para un <strong>uso privado y de ocio</strong>; cualquier uso comercial, así como la redifusión amplia, requieren su acuerdo previo. No deben usarse para la <strong>protección de personas y bienes</strong>.</p>
+      <p>Esta aplicación respeta ese espíritu: uso personal, nada de reventa, fuentes citadas. Si piensas difundirla ampliamente o publicarla en una tienda de aplicaciones, contáctalos antes — y comprueba el texto vigente en <code>blitzortung.org</code>. Si el tema te apasiona, alojar una estación es la mejor forma de apoyar la red.</p>
+      <p><button class="ctl" id="showDisclaimerBtn" style="width:100%;margin-top:6px;">Ver de nuevo la advertencia</button></p>
+      <p><strong>Historial local:</strong> los impactos recibidos se guardan en el dispositivo (1 h deslizante) y se restauran al abrir la app. Como el flujo Blitzortung es puramente en directo, la app solo puede mostrar lo que recibió mientras estaba abierta — la «Duración en pantalla» de los Ajustes fija la ventana mostrada.</p>
+
+      <h3>Deriva de las nubes</h3>
+      <p>El recuadro de abajo a la izquierda indica <strong>hacia dónde va la capa nubosa y a qué velocidad</strong>. No lo confundas con las flechas de viento: estas dan el viento <em>a 10 m del suelo</em>, mientras que las nubes son arrastradas por el flujo <em>a su propia altitud</em>, a menudo mucho más rápido y a veces en dirección muy distinta.</p>
+      <p>La app determina la capa dominante del momento (baja, media o alta) y da el viento al nivel correspondiente — unos 1 500 m para las nubes bajas, 3 000 m para las medias, 9 000 m para las altas. El porcentaje mostrado es la cobertura de esa capa. Es este flujo el que explica el desplazamiento de los sistemas nubosos, y suele coincidir con la trayectoria calculada para las células tormentosas.</p>
+
+      <h3>Posición</h3>
+      <p>Por defecto el radar se centra automáticamente en la posición GPS cada vez que se abre la app (ajuste «Posición automática al abrir»). Elegir un sitio manual o guardado desactiva este seguimiento; volver a elegir «GPS» en la ventana Sitio lo reactiva.</p>
+
+      <h3>Alerta de proximidad</h3>
+      <p>Cuando un impacto cae por debajo del <strong>umbral de alerta</strong>, el radar parpadea en rojo, con pitido y vibración (si están activados). Útil para vigilar una célula tormentosa que se acerca.</p>
+
+      <h3>Incendios activos</h3>
+      <p>El botón <code>Incendios</code> muestra las detecciones de los satélites VIIRS/NOAA-20 de los últimos 3 días. Hace falta una <strong>clave NASA FIRMS</strong> (gratuita, inmediata, que se pega en los Ajustes): se queda en tu dispositivo y solo se envía a la NASA.</p>
+      <p><strong>Qué significa «incendio» aquí:</strong> los satélites miden anomalías térmicas, no llamas. Antorchas de refinerías, acerías y otras fuentes de calor fijas se señalarían por tanto como incendios. La app descarta estas falsas detecciones de dos formas: solo conserva las detecciones clasificadas como incendio de vegetación por la NASA (su campo <code>type</code> distingue volcanes, fuentes fijas terrestres y antorchas marinas), y además elimina los puntos que vuelven al mismo lugar cada día de la ventana — firma de una instalación industrial, mientras que un incendio real se desplaza y se apaga. Las detecciones de baja confianza también se ignoran.</p>
+      <p>Pese a este filtrado, una detección es una indicación, no una confirmación: nubes, relieve y horas de paso del satélite (2 a 4 al día) limitan la cobertura. En caso de duda, la referencia siguen siendo las autoridades locales.</p>
+
+      <h3>Células tormentosas y trayectoria</h3>
+      <p>La app agrupa los impactos de los últimos 16 minutos en <strong>células</strong> (círculos punteados) y estima su desplazamiento: la flecha muestra la posición prevista dentro de 30 minutos. Si una célula se dirige hacia tu radio de alerta, pasa a rojo y un banner ámbar anuncia distancia, velocidad y hora estimada de llegada. Es una extrapolación simple: fiable para células bien activas, indicativa en los demás casos.</p>
+      <p>Lectura de la etiqueta: la 1.ª línea da la <strong>posición</strong> de la célula (distancia y dirección desde ti), la 2.ª su <strong>rumbo</strong> («va hacia NE») y su velocidad.</p>
+
+      <h3>Sitios vigilados</h3>
+      <p>Dos formas de guardar un lugar a vigilar (casa, cabaña, terreno…):</p>
+      <ul>
+        <li><strong>En el mapa</strong> — pasa a la vista <code>Mapa</code>, toca el botón <span style="color:var(--warn)">📍</span> arriba a la izquierda, colócate sobre el lugar deseado y toca el mapa: se coloca una chincheta, le pones nombre y queda guardada.</li>
+        <li><strong>Desde el sitio actual</strong> — ventana Sitio &rarr; Guardados &rarr; <strong>«＋ Guardar el sitio actual»</strong>.</li>
+      </ul>
+      <p>Los sitios guardados aparecen como chinchetas amarillas en el mapa. Cualquier impacto que caiga bajo el umbral de alerta alrededor de uno de ellos lanza una alerta con su nombre, esté donde esté centrado el radar. La ✕ de la lista de guardados elimina un sitio.</p>
+
+      <h3>Desplazar y ampliar el mapa</h3>
+      <p>En la vista <code>Mapa</code>: un dedo para desplazar, dos dedos para hacer zoom (rueda en el ordenador). El <strong>sitio de referencia no cambia</strong> — distancias, rumbos y alertas se siguen calculando desde tu posición, y el anillo de alerta y los círculos de distancia permanecen solidarios con ella aunque salga de la pantalla. El botón <span style="color:var(--accent)">⌖</span> recentra el mapa; cambiar de alcance o volver al radar también lo recentra.</p>
+
+      <h3>Notificaciones del sistema</h3>
+      <p>Activables en Ajustes: un impacto cercano y una célula que se acerca generan una notificación (con el permiso del sistema). Un límite a conocer: sin servidor, la app solo puede notificar <strong>mientras se está ejecutando</strong> — en el iPhone el sistema la suspende en segundo plano tras unas decenas de segundos; en ordenador o Android las notificaciones también funcionan en segundo plano.</p>
+
+      <h3>Instalar como app</h3>
+      <p>En Safari (iOS) o Chrome (Android): menú Compartir &rarr; <strong>Añadir a pantalla de inicio</strong>. La interfaz funciona sin conexión (los datos necesitan red).</p>
+
+      <h3>Privacidad</h3>
+      <p>Tu posición nunca sale del dispositivo: todos los cálculos (distancia, rumbo) son locales. Solo se envían las peticiones de teselas de RainViewer.</p>`,
+  'disc.html': `<span class="dz-key">Esta aplicación sirve para observar tormentas, no para garantizar tu seguridad.
+      No bases ninguna decisión de resguardo en lo que muestra.</span>
+      <p>Los impactos de rayo provienen de <strong>Blitzortung.org</strong>, una red de voluntarios que alojan sus
+      propios detectores. La cobertura varía según las regiones, la localización tiene un margen de error,
+      pueden faltar impactos y el flujo puede interrumpirse. Sus datos se ponen a disposición para un uso
+      privado y de ocio, explícitamente no para la protección de personas y bienes.</p>
+      <p>En caso de riesgo real, consulta a tu <strong>servicio meteorológico nacional</strong> y las
+      instrucciones de las autoridades locales.</p>
+      <span class="dz-src">Fuentes: Blitzortung.org (rayos) · RainViewer (precipitación) ·
+      Open-Meteo (nubes y viento) · NASA FIRMS (incendios) · D. Lorenz (contaminación lumínica) ·
+      OpenStreetMap y CARTO (mapa base). Gracias a los voluntarios que alimentan estas redes.</span>`
+},
+de: {
+  'app.title': 'Radar &amp; Blitzortung',
+  'app.sub': 'Niederschlag · Blitze in Echtzeit · Näherungsalarm',
+  'st.site': 'Standort', 'st.lightning': 'Blitze', 'st.strikes': 'Einschläge', 'st.nearest': 'Nächster',
+  'btn.map': 'Karte', 'btn.rain': 'Regen', 'btn.clouds': 'Wolken', 'btn.light': 'Lichtsmog',
+  'btn.fires': 'Brände', 'btn.strikes': 'Blitze', 'btn.anim': 'Anim', 'btn.settings': 'Einstellungen',
+  'btn.connect': '▶ Verbinden', 'btn.disconnect': '■ Trennen',
+  'ui.range': 'Reichweite', 'ui.legend': 'Legende', 'ui.log': 'Blitzprotokoll',
+  'ui.logEmpty': 'Keine Einschläge empfangen. Tippe auf <strong>Verbinden</strong>, um den Blitzortung-Datenstrom zu öffnen.',
+  'ui.cancel': 'Abbrechen', 'ui.save': 'Speichern', 'ui.close': 'Schließen', 'ui.gotIt': 'Verstanden',
+  'ws.offline': 'offline', 'ws.connecting': 'verbinde…', 'ws.live': 'live', 'ws.reconnecting': 'neu verbinden…',
+  'leg.rain': 'Regen: leicht → stark', 'leg.clouds': 'Bewölkung (Wettermodell)',
+  'leg.flashNow': 'Blitz soeben (&lt;&nbsp;3&nbsp;s)', 'leg.flashRecent': 'Frischer Blitz (&lt;&nbsp;2&nbsp;Min.)',
+  'leg.flashOld': 'Älterer Blitz (bernstein, verblasst)', 'leg.flashEdge': 'Blitz nah, aber außer Reichweite (Rand)',
+  'leg.alertRing': 'Alarmschwelle (Einstellungen)', 'leg.rings': 'Entfernungsringe (km)', 'leg.sweep': 'Suchstrahl (dekorativ)',
+  'leg.cell': 'Gewitterzelle · Pfeil = Zugbahn +30 Min. (rot, wenn sie auf dich zukommt)',
+  'leg.wind': 'Wind in 10 m (Kartenansicht): Pfeil = Windrichtung, Länge = Geschwindigkeit',
+  'leg.drift': 'Wolkenzug (Feld unten links): Richtung und Geschwindigkeit der dominierenden Schicht',
+  'leg.light': 'Lichtverschmutzung: dunkler Himmel → stark aufgehellt (Schaltfläche Lichtsmog)',
+  'leg.fire': 'Aktiver Brand (letzte 3 Tage) · Größe = Leistung, Helligkeit = Aktualität',
+  'leg.you': 'Deine Position (Mitte)',
+  'site.title': 'Standort des Radars', 'site.gps': 'GPS', 'site.manual': 'Manuell', 'site.presets': 'Gespeichert',
+  'site.gpsHint': 'Zentriert das Radar auf die Position des Telefons.', 'site.getLoc': 'Meine Position ermitteln',
+  'site.lat': 'Breite', 'site.lon': 'Länge', 'site.alt': 'Höhe (m)',
+  'site.manualHint': 'Länge positiv nach OSTEN. Die Höhe wird vom Radar nicht verwendet (nur zur Information).',
+  'site.presetHint': 'Gespeicherte Standorte.',
+  'site.current': 'Aktuelle Position', 'site.custom': 'Eigener Standort',
+  'site.addBtn': '＋ Aktuellen Standort speichern', 'site.addHint': '⚡-Alarm bei Einschlag nahe diesem Standort',
+  'site.namePrompt': 'Name des zu überwachenden Standorts:', 'site.defaultName': 'Zuhause',
+  'set.title': 'Einstellungen', 'set.simulate': 'Einschlag simulieren',
+  'set.alert.k': 'Alarmschwelle', 'set.alert.d': 'löst den Alarm unterhalb dieser Entfernung aus — Beobachtungshilfe, kein Sicherheitssystem',
+  'set.persist.k': 'Anzeigedauer', 'set.persist.d': 'wie lange ein Einschlag sichtbar bleibt',
+  'set.sound.k': 'Alarmton', 'set.sound.d': 'Piepton bei jedem nahen Einschlag',
+  'set.vibrate.k': 'Vibration', 'set.vibrate.d': 'Vibration, falls unterstützt',
+  'set.rainOpacity.k': 'Deckkraft Niederschlag', 'set.rainOpacity.d': 'RainViewer-Ebene auf dem Radar',
+  'set.cloudOpacity.k': 'Deckkraft Wolken', 'set.cloudOpacity.d': 'Wettermodell Open-Meteo',
+  'set.mapLight.k': 'Helle Grundkarte', 'set.mapLight.d': 'Kartenansicht: hell oder dunkel',
+  'set.autoLoc.k': 'Position beim Start', 'set.autoLoc.d': 'richtet das Radar beim Öffnen nach dem GPS aus',
+  'set.cellLabels.k': 'Zellen-Infos', 'set.cellLabels.d': 'Beschriftung Entfernung/Geschwindigkeit/Ankunft an jeder Zelle',
+  'set.wind.k': 'Wind auf der Karte', 'set.wind.d': 'Richtungspfeile in 10 m · Open-Meteo',
+  'set.lightOpacity.k': 'Deckkraft Lichtverschmutzung', 'set.lightOpacity.d': 'Ebene „Lichtsmog“ (Atlas 2025)',
+  'set.notify.k': 'Systembenachrichtigungen', 'set.notify.d': 'naher Einschlag & herannahende Zelle',
+  'set.reconnect.k': 'Automatisch neu verbinden', 'set.reconnect.d': 'öffnet den Datenstrom nach Abbruch erneut',
+  'set.firmsKey': 'NASA-FIRMS-Schlüssel',
+  'set.firmsHint': 'für die Ebene „Brände“ nötig. Kostenlos und sofort unter firms.modaps.eosdis.nasa.gov/api/map_key — er bleibt auf deinem Gerät.',
+  'set.firmsPlaceholder': 'Schlüssel hier einfügen',
+  'set.lang.k': 'Sprache', 'set.lang.d': 'Sprache der Oberfläche',
+  'help.title': 'So funktioniert es', 'disc.title': 'Vor der Nutzung lesen', 'disc.ok': 'Verstanden',
+  'err.title': 'Wetterdaten nicht verfügbar',
+  'err.quota': 'Abrufkontingent erschöpft. Wolken und Wind kommen von selbst zurück, sobald das Kontingent zurückgesetzt wird (Minuten-/Stundengrenze: wenige Minuten; Tagesgrenze: um Mitternacht UTC). Regen und Blitze laufen normal weiter.',
+  'err.other': 'Wolken und Wind sind vorübergehend nicht verfügbar. Die App versucht es automatisch erneut. Regen und Blitze laufen normal weiter.',
+  'err.fireKey': 'Brände: NASA-FIRMS-Schlüssel fehlt',
+  'err.fireKeyHint': 'Öffne Einstellungen → „NASA-FIRMS-Schlüssel“ und füge einen Schlüssel ein (kostenlos und sofort unter firms.modaps.eosdis.nasa.gov/api/map_key). Er bleibt auf deinem Gerät.',
+  'err.fireHint': 'Prüfe den NASA-FIRMS-Schlüssel in den Einstellungen. Die übrigen Ebenen laufen normal weiter.',
+  'pick.tap': 'Tippe auf die Karte an die Stelle des zu überwachenden Standorts.',
+  'pick.hint': 'Mit einem Finger verschieben, mit zwei Fingern zoomen.',
+  'pick.selected': 'Standort gewählt — tippe woanders hin, um ihn zu korrigieren.',
+  'pick.from': 'von dir',
+  'meta.rain': 'Regen', 'meta.clouds': 'Wolken', 'meta.wind': 'Wind', 'meta.drift': 'Zug',
+  'meta.fire': 'Brand', 'meta.fires': 'Brände',
+  'cell.goes': 'zieht nach', 'cell.static': 'stationär',
+  'cell.banner': 'ZELLE {d} KM {pos}, ZIEHT NACH {hdg} · {spd} KM/H · ANKUNFT ~{eta} MIN',
+  'alarm.banner': 'EINSCHLAG {d} KM · {dir} ({deg}°)',
+  'drift.low': 'tiefe Wolken', 'drift.mid': 'mittelhohe Wolken', 'drift.high': 'hohe Wolken',
+  'notif.near': '⚡ Naher Einschlag', 'notif.nearBody': '{d} km {dir} von deiner Position',
+  'notif.site': '⚡ Einschlag nahe „{name}“', 'notif.siteBody': '{d} km vom überwachten Standort',
+  'notif.cell': 'Gewitterzelle nähert sich', 'notif.cellBody': '{d} km {dir}, voraussichtliche Ankunft ~{eta} Min.',
+  'toast.restored': '{n} Einschlag/Einschläge wiederhergestellt (lokaler Verlauf)',
+  'toast.needLoc': 'Ermittle zuerst die Position', 'toast.badCoords': 'Ungültige Koordinaten',
+  'toast.pickSite': 'Wähle einen Standort', 'toast.siteSavedGps': 'Standort gespeichert · GPS-Ausrichtung beim Start',
+  'toast.siteSavedFixed': 'Fester Standort gespeichert (automatische Position aus)',
+  'toast.centered': 'Radar auf deine Position ausgerichtet', 'toast.recentered': 'Karte auf deine Position zentriert',
+  'toast.connecting': 'Verbindung zum Blitznetz…', 'toast.feedLost': 'Blitz-Datenstrom unterbrochen',
+  'toast.animOn': 'Regenanimation aktiviert', 'toast.animOff': 'Animation gestoppt · zurück zum Livebild',
+  'toast.simInjected': 'Simulierter Einschlag eingespeist', 'toast.notifOn': 'Benachrichtigungen aktiviert',
+  'toast.notifDenied': 'Benachrichtigungen vom System abgelehnt',
+  'toast.rainUnavail': 'Regenradar nicht verfügbar', 'toast.lightUnavail': 'Lichtverschmutzung nicht verfügbar',
+  'toast.keySaved': 'Schlüssel gespeichert · suche Brände…', 'toast.siteRemoved': 'Standort aus der Überwachung entfernt',
+  'toast.tapMap': 'Tippe auf die Karte, um den Standort zu setzen',
+  'toast.siteWatched': '„{name}“ gespeichert und überwacht',
+  'toast.strikeNearSite': '⚡ Einschlag {d} km von „{name}“',
+  'age.sec': 's', 'age.min': 'Min.',
+  'compass': ['N','NNO','NO','ONO','O','OSO','SO','SSO','S','SSW','SW','WSW','W','WNW','NW','NNW'],
+  'card': { n: 'N', s: 'S', e: 'O', w: 'W' },
+  'credits.warn': '⚠ Beobachtungswerkzeug — nicht zum Schutz von Leben und Sachwerten verwenden.',
+  'credits.src': 'Blitze © Blitzortung.org und die Mitwirkenden des Netzes · Regen © RainViewer · Wolken &amp; Wind © Open-Meteo · Brände © NASA FIRMS · Lichtverschmutzung © D. Lorenz · Grundkarte © OpenStreetMap, © CARTO',
+  'help.html': `<h3>Das PPI-Radar</h3>
+      <p>Eine „Plan Position Indicator“-Ansicht, zentriert auf deinen Standort. Norden ist oben. Die Ringe zeigen die Entfernung; die Gesamtreichweite stellst du mit den Schaltflächen ein.</p>
+      <ul>
+        <li><strong>Niederschlag</strong> — <code>RainViewer</code>-Radarebene, ins Radar projiziert (Schaltfläche <code>Regen</code>).</li>
+        <li><strong>Bewölkung</strong> — Wettermodell Open-Meteo, stündlich aktualisiert (Schaltfläche <code>Wolken</code>).</li>
+        <li><strong>Aktive Brände</strong> — Satellitenerkennungen der letzten 3 Tage (Schaltfläche <code>Brände</code>), um Industriequellen bereinigt.</li>
+        <li><strong>Lichtverschmutzung</strong> — Atlas 2025, statische zuschaltbare Ebene (Schaltfläche <code>Lichtsmog</code>), Deckkraft in den Einstellungen regelbar.</li>
+        <li><strong>Wolkenzug</strong> — Feld unten links: Richtung und Geschwindigkeit der dominierenden Wolkenschicht (wird mit der Ebene <code>Wolken</code> angezeigt).</li>
+        <li><strong>Wind in 10 m</strong> — Pfeile in der Kartenansicht, in Windrichtung ausgerichtet, Länge und Intensität nach Geschwindigkeit (Einstellungen &rarr; „Wind auf der Karte“).</li>
+        <li><strong>Blitzeinschläge</strong> — rot, solange sie frisch sind (unter 2 Minuten), danach bernsteinfarben und mit der Zeit verblassend (Schaltfläche <code>Blitze</code>).</li>
+        <li><strong>Suchstrahl</strong> — die grüne Linie dreht sich wie bei einem echten Radar (dekorativ).</li>
+      </ul>
+      <p>Jede Ebene lässt sich einzeln ein- und ausschalten. Die Schaltfläche <code>Karte</code> wechselt zwischen dem Radar und einer geografischen Karte (mit Städten und Küsten) mit denselben Ebenen.</p>
+      <p>Protokoll und Zähler zeigen nur Einschläge <strong>innerhalb der angezeigten Reichweite</strong>; Einschläge bis zur doppelten Reichweite erscheinen als kleine Punkte am Rand.</p>
+
+      <h3>Quellen</h3>
+      <ul>
+        <li><code>api.rainviewer.com</code> — weltweites Niederschlagsradar-Mosaik (kostenlos, ohne Schlüssel).</li>
+        <li><code>open-meteo.com</code> — Bewölkung und Wind in 10 m (Wettermodell-Analyse, kostenlos, ohne Schlüssel).</li>
+        <li><code>firms.modaps.eosdis.nasa.gov</code> — aktive Brände, erkannt von den Satelliten VIIRS/NOAA-20 (NASA FIRMS, kostenlos mit persönlichem Schlüssel).</li>
+        <li><code>djlorenz.github.io</code> — Weltatlas der Lichtverschmutzung 2025 (David Lorenz), nützlich zur Vorbereitung einer Beobachtungsnacht.</li>
+        <li><code>ws*.blitzortung.org</code> — gemeinschaftliches Blitzortungsnetz, live über WebSocket übertragen.</li>
+      </ul>
+      <p>Die Einschläge werden von einem Netz Freiwilliger durch Triangulation geortet: einige Sekunden Verzögerung und je nach Region unterschiedliche Abdeckung.</p>
+
+      <h3>Nutzungsbedingungen der Blitzdaten</h3>
+      <p><strong>Blitzortung.org</strong> ist kein kommerzieller Dienst, sondern ein Netz von Enthusiasten, die eigene Detektoren betreiben und ihre Messungen teilen. Die Daten stehen für den <strong>privaten Gebrauch und zur Freizeitnutzung</strong> zur Verfügung; jede kommerzielle Nutzung sowie eine breite Weiterverbreitung bedürfen ihrer vorherigen Zustimmung. Sie dürfen nicht zum <strong>Schutz von Leben und Sachwerten</strong> verwendet werden.</p>
+      <p>Diese App folgt diesem Geist: private Nutzung, kein Weiterverkauf, Quellen genannt. Wenn du sie breit verteilen oder in einem App-Store veröffentlichen willst, nimm vorher Kontakt auf — und prüfe den geltenden Text auf <code>blitzortung.org</code>. Wenn dich das Thema begeistert, ist der Betrieb einer eigenen Station die beste Unterstützung für das Netz.</p>
+      <p><button class="ctl" id="showDisclaimerBtn" style="width:100%;margin-top:6px;">Hinweis erneut anzeigen</button></p>
+      <p><strong>Lokaler Verlauf:</strong> empfangene Einschläge werden auf dem Gerät gespeichert (gleitende Stunde) und beim Öffnen der App wiederhergestellt. Da der Blitzortung-Datenstrom rein live ist, kann die App nur zeigen, was sie im geöffneten Zustand empfangen hat — die „Anzeigedauer“ in den Einstellungen legt das gezeigte Zeitfenster fest.</p>
+
+      <h3>Wolkenzug</h3>
+      <p>Das Feld unten links zeigt, <strong>wohin die Wolkenschicht zieht und wie schnell</strong>. Nicht mit den Windpfeilen verwechseln: Diese geben den Wind <em>10 m über Grund</em>, während Wolken vom Strom <em>in ihrer eigenen Höhe</em> getragen werden — oft deutlich schneller und mitunter in ganz anderer Richtung.</p>
+      <p>Die App bestimmt die momentan dominierende Schicht (tief, mittelhoch oder hoch) und gibt den Wind auf der zugehörigen Ebene an — rund 1 500 m für tiefe Wolken, 3 000 m für mittelhohe, 9 000 m für hohe. Der angezeigte Prozentwert ist der Bedeckungsgrad dieser Schicht. Dieser Strom erklärt die Verlagerung der Wolkensysteme und stimmt meist mit der berechneten Zugbahn der Gewitterzellen überein.</p>
+
+      <h3>Standort</h3>
+      <p>Standardmäßig richtet sich das Radar bei jedem Öffnen automatisch nach der GPS-Position aus (Einstellung „Position beim Start“). Die Wahl eines manuellen oder gespeicherten Standorts schaltet dies ab; die erneute Wahl von „GPS“ im Standort-Fenster aktiviert es wieder.</p>
+
+      <h3>Näherungsalarm</h3>
+      <p>Fällt ein Einschlag unter die <strong>Alarmschwelle</strong>, blinkt das Radar rot, mit Piepton und Vibration (falls aktiviert). Praktisch, um eine herannahende Gewitterzelle im Auge zu behalten.</p>
+
+      <h3>Aktive Brände</h3>
+      <p>Die Schaltfläche <code>Brände</code> zeigt Erkennungen der Satelliten VIIRS/NOAA-20 aus den letzten 3 Tagen. Dafür ist ein <strong>NASA-FIRMS-Schlüssel</strong> nötig (kostenlos, sofort, in den Einstellungen einzufügen): Er bleibt auf deinem Gerät und wird nur an die NASA gesendet.</p>
+      <p><strong>Was „Brand“ hier bedeutet:</strong> Satelliten messen Wärmeanomalien, keine Flammen. Abfackelanlagen von Raffinerien, Stahlwerke und andere ortsfeste Wärmequellen würden daher als Brände gemeldet. Die App verwirft diese Fehlerkennungen doppelt: Sie behält nur Erkennungen, die die NASA als Vegetationsbrand einstuft (ihr Feld <code>type</code> unterscheidet Vulkane, ortsfeste Landquellen und Offshore-Fackeln), und entfernt zusätzlich Punkte, die an jedem Tag des Zeitfensters am selben Ort wiederkehren — die Signatur einer Industrieanlage, während ein echtes Feuer wandert und erlischt. Erkennungen geringer Zuverlässigkeit werden ebenfalls ignoriert.</p>
+      <p>Trotz dieser Filterung bleibt eine Erkennung ein Hinweis, keine Bestätigung: Bewölkung, Gelände und Überflugzeiten (2 bis 4 pro Tag) begrenzen die Abdeckung. Im Zweifel bleiben die örtlichen Behörden maßgeblich.</p>
+
+      <h3>Gewitterzellen &amp; Zugbahn</h3>
+      <p>Die App fasst die Einschläge der letzten 16 Minuten zu <strong>Zellen</strong> zusammen (gestrichelte Kreise) und schätzt ihre Verlagerung: Der Pfeil zeigt die in 30 Minuten erwartete Position. Steuert eine Zelle auf deinen Alarmradius zu, wird sie rot und ein bernsteinfarbenes Band nennt Entfernung, Geschwindigkeit und voraussichtliche Ankunft. Das ist eine einfache Extrapolation: verlässlich bei gut ausgeprägten Zellen, sonst nur ein Anhaltspunkt.</p>
+      <p>So liest sich die Beschriftung: Die 1. Zeile gibt die <strong>Position</strong> der Zelle (Entfernung und Richtung von dir aus), die 2. ihre <strong>Zugrichtung</strong> („zieht nach NO“) und ihre Geschwindigkeit.</p>
+
+      <h3>Überwachte Standorte</h3>
+      <p>Zwei Wege, einen Ort zur Überwachung zu speichern (Zuhause, Hütte, Grundstück …):</p>
+      <ul>
+        <li><strong>Auf der Karte</strong> — wechsle zur Ansicht <code>Karte</code>, tippe oben links auf <span style="color:var(--warn)">📍</span>, navigiere zum gewünschten Ort und tippe auf die Karte: Eine Nadel wird gesetzt, du benennst sie und sie ist gespeichert.</li>
+        <li><strong>Vom aktuellen Standort</strong> — Fenster Standort &rarr; Gespeichert &rarr; <strong>„＋ Aktuellen Standort speichern“</strong>.</li>
+      </ul>
+      <p>Gespeicherte Standorte erscheinen als gelbe Nadeln auf der Karte. Jeder Einschlag, der unter die Alarmschwelle um einen von ihnen fällt, löst einen benannten Alarm aus — unabhängig davon, worauf das Radar zentriert ist. Das ✕ in der Liste entfernt einen Standort.</p>
+
+      <h3>Karte verschieben und zoomen</h3>
+      <p>In der Ansicht <code>Karte</code>: mit einem Finger verschieben, mit zwei Fingern zoomen (am Rechner mit dem Mausrad). Der <strong>Bezugsstandort bleibt unverändert</strong> — Entfernungen, Peilungen und Alarme werden weiterhin von deiner Position aus berechnet, und Alarmring wie Entfernungskreise bleiben mit ihr verbunden, auch wenn sie den Bildschirm verlässt. Die Schaltfläche <span style="color:var(--accent)">⌖</span> zentriert die Karte neu; ein Wechsel der Reichweite oder die Rückkehr zum Radar tut dies ebenfalls.</p>
+
+      <h3>Systembenachrichtigungen</h3>
+      <p>In den Einstellungen zuschaltbar: Ein naher Einschlag und eine herannahende Zelle erzeugen eine Benachrichtigung (mit Erlaubnis des Systems). Eine Grenze, die man kennen sollte: Ohne Server kann die App nur benachrichtigen, <strong>solange sie läuft</strong> — auf dem iPhone wird sie im Hintergrund nach einigen Dutzend Sekunden angehalten; auf Rechner oder Android funktionieren Benachrichtigungen auch im Hintergrund.</p>
+
+      <h3>Als App installieren</h3>
+      <p>In Safari (iOS) oder Chrome (Android): Teilen-Menü &rarr; <strong>Zum Home-Bildschirm</strong>. Die Oberfläche funktioniert offline (die Daten brauchen Netz).</p>
+
+      <h3>Datenschutz</h3>
+      <p>Deine Position verlässt das Gerät nie: Alle Berechnungen (Entfernung, Peilung) laufen lokal. Nur die Kachelanfragen an RainViewer werden gesendet.</p>`,
+  'disc.html': `<span class="dz-key">Diese App dient dem Beobachten von Gewittern, nicht deiner Sicherheit.
+      Triff keine Entscheidung über das Aufsuchen von Schutz auf Grundlage dessen, was sie anzeigt.</span>
+      <p>Die Blitzeinschläge stammen von <strong>Blitzortung.org</strong>, einem Netz Freiwilliger, die eigene
+      Detektoren betreiben. Die Abdeckung ist je nach Region unterschiedlich, die Ortung hat eine Fehlermarge,
+      Einschläge können fehlen und der Datenstrom kann abbrechen. Die Daten stehen für den privaten Gebrauch
+      und zur Freizeitnutzung zur Verfügung, ausdrücklich nicht zum Schutz von Leben und Sachwerten.</p>
+      <p>Bei tatsächlicher Gefahr richte dich nach deinem <strong>nationalen Wetterdienst</strong> und nach den
+      Anweisungen der örtlichen Behörden.</p>
+      <span class="dz-src">Quellen: Blitzortung.org (Blitze) · RainViewer (Niederschlag) ·
+      Open-Meteo (Wolken und Wind) · NASA FIRMS (Brände) · D. Lorenz (Lichtverschmutzung) ·
+      OpenStreetMap und CARTO (Grundkarte). Dank an die Freiwilligen, die diese Netze speisen.</span>`
+},
+it: {
+  'app.title': 'Radar e fulmini',
+  'app.sub': 'precipitazioni · fulmini in tempo reale · allerta di prossimità',
+  'st.site': 'Sito', 'st.lightning': 'Fulmini', 'st.strikes': 'Impatti', 'st.nearest': 'Più vicino',
+  'btn.map': 'Mappa', 'btn.rain': 'Pioggia', 'btn.clouds': 'Nuvole', 'btn.light': 'Inquinamento',
+  'btn.fires': 'Incendi', 'btn.strikes': 'Fulmini', 'btn.anim': 'Anim', 'btn.settings': 'Impostazioni',
+  'btn.connect': '▶ Connetti', 'btn.disconnect': '■ Disconnetti',
+  'ui.range': 'Portata', 'ui.legend': 'Legenda', 'ui.log': 'Registro dei fulmini',
+  'ui.logEmpty': 'Nessun fulmine ricevuto. Tocca <strong>Connetti</strong> per aprire il flusso Blitzortung.',
+  'ui.cancel': 'Annulla', 'ui.save': 'Salva', 'ui.close': 'Chiudi', 'ui.gotIt': 'Ho capito',
+  'ws.offline': 'offline', 'ws.connecting': 'connessione…', 'ws.live': 'in diretta', 'ws.reconnecting': 'riconnessione…',
+  'leg.rain': 'Pioggia: debole → intensa', 'leg.clouds': 'Nuvolosità (modello meteo)',
+  'leg.flashNow': 'Fulmine adesso (&lt;&nbsp;3&nbsp;s)', 'leg.flashRecent': 'Fulmine recente (&lt;&nbsp;2&nbsp;min)',
+  'leg.flashOld': 'Fulmine vecchio (ambra, sbiadisce)', 'leg.flashEdge': 'Fulmine vicino ma fuori portata (bordo)',
+  'leg.alertRing': 'Soglia di allerta (Impostazioni)', 'leg.rings': 'Anelli di distanza (km)', 'leg.sweep': 'Scansione (decorativa)',
+  'leg.cell': 'Cella temporalesca · freccia = traiettoria +30 min (rossa se viene verso di te)',
+  'leg.wind': 'Vento a 10 m (vista Mappa): freccia = verso del vento, lunghezza = velocità',
+  'leg.drift': 'Deriva delle nuvole (riquadro in basso a sinistra): direzione e velocità dello strato dominante',
+  'leg.light': 'Inquinamento luminoso: cielo buio → molto inquinato (pulsante Inquinamento)',
+  'leg.fire': 'Incendio attivo (ultimi 3 giorni) · dimensione = potenza, luminosità = freschezza',
+  'leg.you': 'La tua posizione (centro)',
+  'site.title': 'Posizione del radar', 'site.gps': 'GPS', 'site.manual': 'Manuale', 'site.presets': 'Salvati',
+  'site.gpsHint': 'Centra il radar sulla posizione del telefono.', 'site.getLoc': 'Ottieni la mia posizione',
+  'site.lat': 'Latitudine', 'site.lon': 'Longitudine', 'site.alt': 'Alt (m)',
+  'site.manualHint': "Longitudine positiva verso EST. L'altitudine non è usata dal radar (informativa).",
+  'site.presetHint': 'Siti salvati.',
+  'site.current': 'Posizione attuale', 'site.custom': 'Sito personalizzato',
+  'site.addBtn': '＋ Salva il sito attuale', 'site.addHint': 'allerta ⚡ se un fulmine cade vicino a questo sito',
+  'site.namePrompt': 'Nome del sito da sorvegliare:', 'site.defaultName': 'Casa',
+  'set.title': 'Impostazioni', 'set.simulate': 'Simula un fulmine',
+  'set.alert.k': 'Soglia di allerta', 'set.alert.d': "fa scattare l'allarme sotto questa distanza — riferimento di osservazione, non un dispositivo di sicurezza",
+  'set.persist.k': 'Durata di visualizzazione', 'set.persist.d': 'per quanto tempo resta visibile un fulmine',
+  'set.sound.k': 'Suono di allerta', 'set.sound.d': 'bip a ogni fulmine vicino',
+  'set.vibrate.k': 'Vibrazione', 'set.vibrate.d': 'vibrazione se supportata',
+  'set.rainOpacity.k': 'Opacità precipitazioni', 'set.rainOpacity.d': 'livello RainViewer sul radar',
+  'set.cloudOpacity.k': 'Opacità nuvole', 'set.cloudOpacity.d': 'modello meteo Open-Meteo',
+  'set.mapLight.k': 'Mappa base chiara', 'set.mapLight.d': 'vista Mappa: chiara o scura',
+  'set.autoLoc.k': "Posizione automatica all'avvio", 'set.autoLoc.d': "centra il radar sul GPS all'apertura",
+  'set.cellLabels.k': 'Info celle', 'set.cellLabels.d': 'etichetta distanza/velocità/ETA accanto a ogni cella',
+  'set.wind.k': 'Vento sulla mappa', 'set.wind.d': 'frecce di direzione a 10 m · Open-Meteo',
+  'set.lightOpacity.k': 'Opacità inquinamento luminoso', 'set.lightOpacity.d': 'livello «Inquinamento» (atlante 2025)',
+  'set.notify.k': 'Notifiche di sistema', 'set.notify.d': 'fulmine vicino e cella in avvicinamento',
+  'set.reconnect.k': 'Riconnessione automatica', 'set.reconnect.d': 'riapre il flusso se si interrompe',
+  'set.firmsKey': 'Chiave NASA FIRMS',
+  'set.firmsHint': 'necessaria per il livello «Incendi». Gratuita e immediata su firms.modaps.eosdis.nasa.gov/api/map_key — resta sul tuo dispositivo.',
+  'set.firmsPlaceholder': 'incolla qui la tua chiave',
+  'set.lang.k': 'Lingua', 'set.lang.d': "lingua dell'interfaccia",
+  'help.title': 'Come funziona', 'disc.title': "Da leggere prima dell'uso", 'disc.ok': 'Ho capito',
+  'err.title': 'Dati meteo non disponibili',
+  'err.quota': 'Quota di chiamate raggiunta. Nuvole e vento tornano da soli appena la quota si azzera (limiti al minuto/ora: pochi minuti; limite giornaliero: a mezzanotte UTC). Pioggia e fulmini continuano normalmente.',
+  'err.other': "Nuvole e vento non sono momentaneamente disponibili. L'app riprova automaticamente. Pioggia e fulmini continuano normalmente.",
+  'err.fireKey': 'Incendi: manca la chiave NASA FIRMS',
+  'err.fireKeyHint': 'Apri Impostazioni → «Chiave NASA FIRMS» e incolla una chiave (gratuita e immediata su firms.modaps.eosdis.nasa.gov/api/map_key). Resta sul tuo dispositivo.',
+  'err.fireHint': 'Controlla la chiave NASA FIRMS nelle Impostazioni. Gli altri livelli continuano normalmente.',
+  'pick.tap': 'Tocca la mappa dove si trova il sito da sorvegliare.',
+  'pick.hint': 'Sposta con un dito, ingrandisci con due.',
+  'pick.selected': 'Sito selezionato — tocca altrove per correggere.',
+  'pick.from': 'da te',
+  'meta.rain': 'pioggia', 'meta.clouds': 'nuvole', 'meta.wind': 'vento', 'meta.drift': 'deriva',
+  'meta.fire': 'incendio', 'meta.fires': 'incendi',
+  'cell.goes': 'va verso', 'cell.static': 'stazionaria',
+  'cell.banner': 'CELLA A {d} KM {pos}, VA VERSO {hdg} · {spd} KM/H · ARRIVO ~{eta} MIN',
+  'alarm.banner': 'FULMINE A {d} KM · {dir} ({deg}°)',
+  'drift.low': 'nuvole basse', 'drift.mid': 'nuvole medie', 'drift.high': 'nuvole alte',
+  'notif.near': '⚡ Fulmine vicino', 'notif.nearBody': '{d} km {dir} dalla tua posizione',
+  'notif.site': '⚡ Fulmine vicino a «{name}»', 'notif.siteBody': '{d} km dal sito sorvegliato',
+  'notif.cell': 'Cella temporalesca in avvicinamento', 'notif.cellBody': 'A {d} km {dir}, arrivo stimato ~{eta} min',
+  'toast.restored': '{n} fulmine/i ripristinato/i (cronologia locale)',
+  'toast.needLoc': 'Ottieni prima la posizione', 'toast.badCoords': 'Coordinate non valide',
+  'toast.pickSite': 'Seleziona un sito', 'toast.siteSavedGps': "Sito salvato · rilevamento GPS all'avvio",
+  'toast.siteSavedFixed': 'Sito fisso salvato (posizione automatica disattivata)',
+  'toast.centered': 'Radar centrato sulla tua posizione', 'toast.recentered': 'Mappa ricentrata sulla tua posizione',
+  'toast.connecting': 'Connessione alla rete fulmini…', 'toast.feedLost': 'Flusso fulmini interrotto',
+  'toast.animOn': 'Animazione pioggia attivata', 'toast.animOff': 'Animazione fermata · ritorno alla diretta',
+  'toast.simInjected': 'Fulmine simulato inserito', 'toast.notifOn': 'Notifiche attivate',
+  'toast.notifDenied': 'Notifiche rifiutate dal sistema',
+  'toast.rainUnavail': 'Radar pioggia non disponibile', 'toast.lightUnavail': 'Inquinamento luminoso non disponibile',
+  'toast.keySaved': 'Chiave salvata · ricerca incendi…', 'toast.siteRemoved': 'Sito rimosso dalla sorveglianza',
+  'toast.tapMap': 'Tocca la mappa per posizionare il sito',
+  'toast.siteWatched': '«{name}» salvato e sorvegliato',
+  'toast.strikeNearSite': '⚡ Fulmine a {d} km da «{name}»',
+  'age.sec': 's', 'age.min': 'min',
+  'compass': ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'],
+  'card': { n: 'N', s: 'S', e: 'E', w: 'O' },
+  'credits.warn': '⚠ Strumento di osservazione — non usare per la protezione di persone e beni.',
+  'credits.src': 'Fulmini © Blitzortung.org e i collaboratori della rete · Pioggia © RainViewer · Nuvole e vento © Open-Meteo · Incendi © NASA FIRMS · Inquinamento luminoso © D. Lorenz · Mappa base © OpenStreetMap, © CARTO',
+  'help.html': `<h3>Il radar PPI</h3>
+      <p>Vista «Plan Position Indicator» centrata sul tuo sito. Il nord è in alto. Gli anelli indicano la distanza; la portata totale si regola con i pulsanti.</p>
+      <ul>
+        <li><strong>Precipitazioni</strong> — livello radar <code>RainViewer</code> proiettato nel radar (pulsante <code>Pioggia</code>).</li>
+        <li><strong>Nuvolosità</strong> — modello meteo Open-Meteo, aggiornato ogni ora (pulsante <code>Nuvole</code>).</li>
+        <li><strong>Incendi attivi</strong> — rilevamenti satellitari degli ultimi 3 giorni (pulsante <code>Incendi</code>), filtrati dalle sorgenti industriali.</li>
+        <li><strong>Inquinamento luminoso</strong> — atlante 2025, livello statico attivabile (pulsante <code>Inquinamento</code>), opacità regolabile nelle Impostazioni.</li>
+        <li><strong>Deriva delle nuvole</strong> — riquadro in basso a sinistra: direzione e velocità dello strato nuvoloso dominante (mostrato con il livello <code>Nuvole</code>).</li>
+        <li><strong>Vento a 10 m</strong> — frecce nella vista Mappa, orientate nel verso del vento, con lunghezza e intensità secondo la velocità (Impostazioni &rarr; «Vento sulla mappa»).</li>
+        <li><strong>Fulmini</strong> — rossi quando recenti (meno di 2 minuti), poi ambra, sbiadendo con il tempo (pulsante <code>Fulmini</code>).</li>
+        <li><strong>Scansione</strong> — la linea verde ruota come un vero radar (decorativa).</li>
+      </ul>
+      <p>Ogni livello si attiva o disattiva separatamente. Il pulsante <code>Mappa</code> alterna tra il radar e una mappa geografica (con città e coste) con gli stessi livelli sovrapposti.</p>
+      <p>Il registro e il contatore mostrano solo i fulmini <strong>entro la portata visualizzata</strong>; quelli fino al doppio della portata appaiono come piccoli punti sul bordo.</p>
+
+      <h3>Fonti</h3>
+      <ul>
+        <li><code>api.rainviewer.com</code> — mosaico radar mondiale delle precipitazioni (gratuito, senza chiave).</li>
+        <li><code>open-meteo.com</code> — nuvolosità e vento a 10 m (analisi del modello meteo, gratuito, senza chiave).</li>
+        <li><code>firms.modaps.eosdis.nasa.gov</code> — incendi attivi rilevati dai satelliti VIIRS/NOAA-20 (NASA FIRMS, gratuito con una chiave personale).</li>
+        <li><code>djlorenz.github.io</code> — atlante mondiale dell'inquinamento luminoso 2025 (David Lorenz), utile per preparare una sessione astronomica.</li>
+        <li><code>ws*.blitzortung.org</code> — rete comunitaria di rilevamento dei fulmini, trasmessa in diretta via WebSocket.</li>
+      </ul>
+      <p>I fulmini sono localizzati per triangolazione da una rete di volontari: qualche secondo di latenza e copertura variabile secondo la regione.</p>
+
+      <h3>Condizioni d'uso dei dati sui fulmini</h3>
+      <p><strong>Blitzortung.org</strong> non è un servizio commerciale ma una rete di appassionati che ospitano i propri rilevatori e condividono le loro misure. I dati sono messi a disposizione per un <strong>uso privato e ricreativo</strong>; qualsiasi uso commerciale, così come una diffusione ampia, richiedono il loro accordo preventivo. Non devono servire alla <strong>protezione di persone e beni</strong>.</p>
+      <p>Questa applicazione rispetta tale spirito: uso personale, nessuna rivendita, fonti citate. Se pensi di diffonderla ampiamente o di pubblicarla su uno store, contattali prima — e verifica il testo in vigore su <code>blitzortung.org</code>. Se l'argomento ti appassiona, ospitare una stazione è il modo migliore di sostenere la rete.</p>
+      <p><button class="ctl" id="showDisclaimerBtn" style="width:100%;margin-top:6px;">Rivedi l'avvertenza</button></p>
+      <p><strong>Cronologia locale:</strong> i fulmini ricevuti sono memorizzati sul dispositivo (1 ora scorrevole) e ripristinati all'apertura dell'app. Poiché il flusso Blitzortung è puramente in diretta, l'app può mostrare solo ciò che ha ricevuto mentre era aperta — la «Durata di visualizzazione» nelle Impostazioni fissa la finestra mostrata.</p>
+
+      <h3>Deriva delle nuvole</h3>
+      <p>Il riquadro in basso a sinistra indica <strong>dove va lo strato nuvoloso e a che velocità</strong>. Da non confondere con le frecce del vento: queste danno il vento <em>a 10 m dal suolo</em>, mentre le nuvole sono trasportate dal flusso <em>alla loro quota</em>, spesso molto più veloce e talvolta orientato in modo del tutto diverso.</p>
+      <p>L'app determina lo strato dominante del momento (basso, medio o alto) e fornisce il vento al livello corrispondente — circa 1 500 m per le nuvole basse, 3 000 m per quelle medie, 9 000 m per quelle alte. La percentuale mostrata è la copertura di quello strato. È questo flusso a spiegare lo spostamento dei sistemi nuvolosi, e di solito coincide con la traiettoria calcolata per le celle temporalesche.</p>
+
+      <h3>Posizione</h3>
+      <p>Per impostazione predefinita il radar si centra automaticamente sulla posizione GPS a ogni apertura (impostazione «Posizione automatica all'avvio»). Scegliere un sito manuale o salvato disattiva questo aggancio; riselezionare «GPS» nella finestra Sito lo riattiva.</p>
+
+      <h3>Allerta di prossimità</h3>
+      <p>Quando un fulmine cade sotto la <strong>soglia di allerta</strong>, il radar lampeggia in rosso, con bip e vibrazione (se attivati). Utile per sorvegliare una cella temporalesca in avvicinamento.</p>
+
+      <h3>Incendi attivi</h3>
+      <p>Il pulsante <code>Incendi</code> mostra i rilevamenti dei satelliti VIIRS/NOAA-20 degli ultimi 3 giorni. Serve una <strong>chiave NASA FIRMS</strong> (gratuita, immediata, da incollare nelle Impostazioni): resta sul tuo dispositivo ed è inviata solo alla NASA.</p>
+      <p><strong>Cosa significa «incendio» qui:</strong> i satelliti misurano anomalie termiche, non fiamme. Torce di raffinerie, acciaierie e altre sorgenti di calore fisse verrebbero quindi segnalate come incendi. L'app scarta questi falsi rilevamenti in due modi: conserva solo i rilevamenti classificati come incendio di vegetazione dalla NASA (il campo <code>type</code> distingue vulcani, sorgenti fisse terrestri e torce offshore) ed elimina inoltre i punti che tornano nello stesso luogo ogni giorno della finestra — firma di un impianto industriale, mentre un vero incendio si sposta e si spegne. Anche i rilevamenti a bassa affidabilità vengono ignorati.</p>
+      <p>Nonostante questo filtraggio, un rilevamento resta un'indicazione, non una conferma: nuvole, rilievo e orari di passaggio del satellite (da 2 a 4 al giorno) limitano la copertura. In caso di dubbio, il riferimento restano le autorità locali.</p>
+
+      <h3>Celle temporalesche e traiettoria</h3>
+      <p>L'app raggruppa i fulmini degli ultimi 16 minuti in <strong>celle</strong> (cerchi tratteggiati) e ne stima lo spostamento: la freccia mostra la posizione prevista tra 30 minuti. Se una cella si dirige verso il tuo raggio di allerta diventa rossa e una banda ambra indica distanza, velocità e orario stimato di arrivo. È una semplice estrapolazione: affidabile per celle ben attive, indicativa negli altri casi.</p>
+      <p>Lettura dell'etichetta: la 1ª riga dà la <strong>posizione</strong> della cella (distanza e direzione da te), la 2ª la sua <strong>direzione di spostamento</strong> («va verso NE») e la velocità.</p>
+
+      <h3>Siti sorvegliati</h3>
+      <p>Due modi per salvare un luogo da sorvegliare (casa, baita, terreno…):</p>
+      <ul>
+        <li><strong>Sulla mappa</strong> — passa alla vista <code>Mappa</code>, tocca il pulsante <span style="color:var(--warn)">📍</span> in alto a sinistra, portati sul luogo desiderato e tocca la mappa: viene posato un segnaposto, gli dai un nome ed è salvato.</li>
+        <li><strong>Dal sito corrente</strong> — finestra Sito &rarr; Salvati &rarr; <strong>«＋ Salva il sito attuale»</strong>.</li>
+      </ul>
+      <p>I siti salvati appaiono come segnaposto gialli sulla mappa. Ogni fulmine che cade sotto la soglia di allerta attorno a uno di essi genera un'allerta con il suo nome, ovunque sia centrato il radar. La ✕ nell'elenco dei salvati rimuove un sito.</p>
+
+      <h3>Spostare e ingrandire la mappa</h3>
+      <p>Nella vista <code>Mappa</code>: un dito per spostare, due dita per ingrandire (rotellina sul computer). Il <strong>sito di riferimento resta invariato</strong> — distanze, direzioni e allerte continuano a essere calcolate dalla tua posizione, e l'anello di allerta e i cerchi di distanza restano solidali con essa anche quando esce dallo schermo. Il pulsante <span style="color:var(--accent)">⌖</span> ricentra la mappa; cambiare portata o tornare al radar la ricentra ugualmente.</p>
+
+      <h3>Notifiche di sistema</h3>
+      <p>Attivabili nelle Impostazioni: un fulmine vicino e una cella in avvicinamento generano una notifica (con il permesso del sistema). Un limite da conoscere: senza server, l'app può notificare solo <strong>mentre è in esecuzione</strong> — su iPhone il sistema la sospende in background dopo alcune decine di secondi; su computer o Android le notifiche funzionano anche in background.</p>
+
+      <h3>Installare come app</h3>
+      <p>In Safari (iOS) o Chrome (Android): menu Condividi &rarr; <strong>Aggiungi a Home</strong>. L'interfaccia funziona offline (i dati richiedono la rete).</p>
+
+      <h3>Riservatezza</h3>
+      <p>La tua posizione non lascia mai il dispositivo: tutti i calcoli (distanza, direzione) sono locali. Vengono inviate solo le richieste di tasselli a RainViewer.</p>`,
+  'disc.html': `<span class="dz-key">Questa app serve a osservare i temporali, non a garantire la tua sicurezza.
+      Non basare alcuna decisione di mettersi al riparo su ciò che mostra.</span>
+      <p>I fulmini provengono da <strong>Blitzortung.org</strong>, una rete di volontari che ospitano i propri
+      rilevatori. La copertura varia secondo le regioni, la localizzazione ha un margine di errore, alcuni
+      fulmini possono mancare e il flusso può interrompersi. I dati sono messi a disposizione per un uso
+      privato e ricreativo, esplicitamente non per la protezione di persone e beni.</p>
+      <p>In caso di rischio reale, fai riferimento al tuo <strong>servizio meteorologico nazionale</strong> e
+      alle indicazioni delle autorità locali.</p>
+      <span class="dz-src">Fonti: Blitzortung.org (fulmini) · RainViewer (precipitazioni) ·
+      Open-Meteo (nuvole e vento) · NASA FIRMS (incendi) · D. Lorenz (inquinamento luminoso) ·
+      OpenStreetMap e CARTO (mappa base). Grazie ai volontari che alimentano queste reti.</span>`
 },
 en: {
   'app.title': 'Radar &amp; lightning scope',
