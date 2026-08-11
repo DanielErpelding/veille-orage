@@ -483,7 +483,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v2.9 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v3.0 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1 data-i18n="app.title">Cadran radar &amp; foudre</h1>
   <div class="subtitle" data-i18n="app.sub">précipitations · impacts temps réel · alerte proximité</div>
@@ -695,6 +695,11 @@
     </div>
 
     <div class="set-row">
+      <div class="sk"><span data-i18n="set.fireFilter.k">Écarter les sources fixes</span><small data-i18n="set.fireFilter.d">retire les usines et torchères des feux détectés</small></div>
+      <label class="switch"><input type="checkbox" id="setFireFilter"><span class="slider"></span></label>
+    </div>
+
+    <div class="set-row">
       <div class="sk"><span data-i18n="set.quakeMag.k">Magnitude minimale</span><small data-i18n="set.quakeMag.d">séismes affichés · 30 derniers jours</small></div>
       <div style="display:flex;align-items:center;gap:6px;">
         <input type="number" class="set-num" id="setQuakeMag" min="0" max="9" step="0.5">
@@ -795,6 +800,7 @@ const state = Object.assign({
   firmsKey: '',
   quakesOn: false,
   quakeMinMag: 2.5,
+  fireFilterFixed: true,
   disclaimerSeen: false,
   lang: null,
   animate: false,
@@ -919,6 +925,7 @@ fr: {
   'toast.tapMap': 'Touche la carte pour placer le site',
   'toast.siteWatched': '« {name} » enregistré et surveillé',
   'toast.strikeNearSite': '⚡ Foudre à {d} km de « {name} »',
+  'set.fireFilter.k': 'Écarter les sources fixes', 'set.fireFilter.d': 'retire les usines et torchères des feux détectés',
   'btn.quakes': 'Séismes',
   'leg.quake': 'Séisme (30 derniers jours) · taille = magnitude',
   'set.quakeMag.k': 'Magnitude minimale', 'set.quakeMag.d': 'séismes affichés · 30 derniers jours',
@@ -972,7 +979,7 @@ fr: {
 
       <h3>Feux actifs</h3>
       <p>Le bouton <code>Feux</code> affiche les détections des satellites VIIRS/NOAA-20 sur les 3 derniers jours. Il faut une <strong>clé NASA FIRMS</strong> (gratuite, immédiate, à coller dans les Réglages) : elle reste sur ton appareil et n'est envoyée qu'à la NASA.</p>
-      <p><strong>Ce que « feu » veut dire ici :</strong> les satellites mesurent des anomalies thermiques, pas des flammes. Torchères de raffineries, aciéries et autres sources de chaleur fixes seraient donc signalées comme des feux. L'app écarte ces fausses détections de deux façons : elle ne garde que les détections classées « feu de végétation » par la NASA (son champ <code>type</code> distingue volcans, sources fixes terrestres et torchères offshore), et elle élimine en plus les points qui reviennent au même endroit chaque jour de la fenêtre — signature d'une installation industrielle, alors qu'un vrai feu se déplace et s'éteint. Les détections de faible confiance sont également ignorées.</p>
+      <p><strong>Ce que « feu » veut dire ici :</strong> les satellites mesurent des anomalies thermiques, pas des flammes. Torchères de raffineries, aciéries et autres sources de chaleur fixes seraient donc signalées comme des feux. L'app écarte ces fausses détections de deux façons : elle ne garde que les détections classées « feu de végétation » par la NASA (son champ <code>type</code> distingue volcans, sources fixes terrestres et torchères offshore), et elle regroupe surtout les détections par proximité réelle (2 km) sur une fenêtre de 7 jours et écarte tout groupe revu 3 jours différents ou étalé sur plus de 4 jours — signature d'une installation permanente, alors qu'un vrai feu brûle un à trois jours puis s'éteint. Plusieurs satellites sont interrogés (VIIRS NOAA-20, VIIRS S-NPP, MODIS), ce qui multiplie les passages et rend les sources fixes d'autant plus évidentes ; un feu vu par plusieurs satellites porte un second cercle de confirmation. Les détections de faible confiance sont également ignorées. Le compteur affiche entre parenthèses le nombre de sources fixes écartées, et le filtre se désactive dans les Réglages pour voir ce qu'il retire.</p>
       <p>Malgré ce filtrage, une détection reste une indication, pas une confirmation : nuages, relief et heure de passage du satellite (2 à 4 survols par jour) limitent la couverture. En cas de doute, la référence reste les autorités locales.</p>
 
       <h3>Séismes</h3>
@@ -1095,6 +1102,7 @@ es: {
   'toast.tapMap': 'Toca el mapa para colocar el sitio',
   'toast.siteWatched': '«{name}» guardado y vigilado',
   'toast.strikeNearSite': '⚡ Impacto a {d} km de «{name}»',
+  'set.fireFilter.k': 'Descartar fuentes fijas', 'set.fireFilter.d': 'elimina fábricas y antorchas de los incendios detectados',
   'btn.quakes': 'Sismos',
   'leg.quake': 'Sismo (últimos 30 días) · tamaño = magnitud',
   'set.quakeMag.k': 'Magnitud mínima', 'set.quakeMag.d': 'sismos mostrados · últimos 30 días',
@@ -1271,6 +1279,7 @@ de: {
   'toast.tapMap': 'Tippe auf die Karte, um den Standort zu setzen',
   'toast.siteWatched': '„{name}“ gespeichert und überwacht',
   'toast.strikeNearSite': '⚡ Einschlag {d} km von „{name}“',
+  'set.fireFilter.k': 'Ortsfeste Quellen verwerfen', 'set.fireFilter.d': 'entfernt Fabriken und Fackeln aus den erkannten Bränden',
   'btn.quakes': 'Beben',
   'leg.quake': 'Erdbeben (letzte 30 Tage) · Größe = Magnitude',
   'set.quakeMag.k': 'Mindestmagnitude', 'set.quakeMag.d': 'angezeigte Beben · letzte 30 Tage',
@@ -1447,6 +1456,7 @@ it: {
   'toast.tapMap': 'Tocca la mappa per posizionare il sito',
   'toast.siteWatched': '«{name}» salvato e sorvegliato',
   'toast.strikeNearSite': '⚡ Fulmine a {d} km da «{name}»',
+  'set.fireFilter.k': 'Scarta le sorgenti fisse', 'set.fireFilter.d': 'rimuove fabbriche e torce dagli incendi rilevati',
   'btn.quakes': 'Sismi',
   'leg.quake': 'Sisma (ultimi 30 giorni) · dimensione = magnitudo',
   'set.quakeMag.k': 'Magnitudo minima', 'set.quakeMag.d': 'sismi mostrati · ultimi 30 giorni',
@@ -1623,6 +1633,7 @@ en: {
   'toast.tapMap': 'Tap the map to drop the site',
   'toast.siteWatched': '"{name}" saved and watched',
   'toast.strikeNearSite': '⚡ Strike {d} km from "{name}"',
+  'set.fireFilter.k': 'Discard fixed sources', 'set.fireFilter.d': 'removes factories and flares from detected fires',
   'btn.quakes': 'Quakes',
   'leg.quake': 'Earthquake (last 30 days) · size = magnitude',
   'set.quakeMag.k': 'Minimum magnitude', 'set.quakeMag.d': 'earthquakes shown · last 30 days',
@@ -2434,6 +2445,17 @@ function confOk(row) {
   return isNaN(n) ? true : n >= 30;
 }
 
+const FIRE_SOURCES = ['VIIRS_NOAA20_NRT', 'VIIRS_SNPP_NRT', 'MODIS_NRT'];
+const FIRE_EVIDENCE_DAYS = 7;   // window used as evidence against fixed sources
+const FIRE_DISPLAY_DAYS = 3;    // window actually drawn
+let firesFiltered = 0;          // clusters rejected as permanent heat sources
+
+/* Great-circle distance in km, small-angle friendly (used for clustering). */
+function quickDist(a, b) {
+  const kx = 111.32 * Math.cos(rad((a.lat + b.lat) / 2));
+  return Math.hypot((a.lon - b.lon) * kx, (a.lat - b.lat) * 111.32);
+}
+
 async function buildFireLayer(force) {
   if (!state.firesOn) return;
   const key = (state.firmsKey || '').trim();
@@ -2443,7 +2465,7 @@ async function buildFireLayer(force) {
   }
   const sameView = firesSite && firesSite.lat === view.lat &&
                    firesSite.lon === view.lon && firesSite.range === view.range;
-  if (!force && sameView && Date.now() - firesFetchedAt < 1800000) return; // FIRMS updates ~3 h
+  if (!force && sameView && Date.now() - firesFetchedAt < 1800000) return;
 
   const seq = ++firesBuildSeq;
   try {
@@ -2452,44 +2474,91 @@ async function buildFireLayer(force) {
     const dLon = (view.range / (111.32 * Math.cos(rad(lat)))) * 1.5;
     const bbox = [lon - dLon, lat - dLat, lon + dLon, lat + dLat]
       .map(v => v.toFixed(3)).join(',');
-    // 3 days: enough freshness, and enough repetition to spot fixed sources
-    const url = `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${encodeURIComponent(key)}` +
-                `/VIIRS_NOAA20_NRT/${bbox}/3`;
-    const res = await fetch(url);
-    const txt = await res.text();
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    if (/invalid|error|unauthor/i.test(txt.slice(0, 200)) && !/latitude/i.test(txt.slice(0, 200))) {
-      throw new Error(txt.trim().split('\n')[0].slice(0, 120));
-    }
-    const rows = parseCsv(txt);
+
+    /* Several constellations are queried: each adds overpasses, which both
+       reduces missed fires and — decisively — multiplies the evidence that
+       exposes a permanent industrial source. A source that fails is skipped
+       rather than failing the whole layer. */
+    const perSource = await Promise.all(FIRE_SOURCES.map(async (srcName) => {
+      try {
+        const url = `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${encodeURIComponent(key)}` +
+                    `/${srcName}/${bbox}/${FIRE_EVIDENCE_DAYS}`;
+        const res = await fetch(url);
+        const txt = await res.text();
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const headPeek = txt.slice(0, 200);
+        if (/invalid|unauthor/i.test(headPeek) && !/latitude/i.test(headPeek)) {
+          throw new Error(txt.trim().split('\n')[0].slice(0, 120));
+        }
+        return { name: srcName, rows: parseCsv(txt) };
+      } catch (e) { return { name: srcName, rows: null, error: e }; }
+    }));
     if (seq !== firesBuildSeq) return;
 
-    // pass 1: keep plausible vegetation fires
-    const kept = [];
-    for (const r of rows) {
-      const la = parseFloat(r.latitude), lo = parseFloat(r.longitude);
-      if (isNaN(la) || isNaN(lo)) continue;
-      if (r.type !== undefined && r.type !== '' && String(r.type) !== '0') continue; // industry/volcano/offshore
-      if (!confOk(r)) continue;
-      kept.push({ lat: la, lon: lo, t: firmsTimestamp(r),
-                  frp: parseFloat(r.frp) || 0, conf: r.confidence || '' });
+    const ok = perSource.filter(s => s.rows);
+    if (!ok.length) {
+      const first = perSource.find(s => s.error);
+      throw new Error(first && first.error ? first.error.message : '—');
     }
 
-    // pass 2: drop spots burning on 3+ distinct days at the same place —
-    // a signature of permanent heat sources rather than wildfires
-    const byCell = new Map();
-    const CELL = 0.01; // ~1 km
-    for (const f of kept) {
-      const k = Math.round(f.lat / CELL) + '_' + Math.round(f.lon / CELL);
-      let a = byCell.get(k);
-      if (!a) { a = []; byCell.set(k, a); }
-      a.push(f);
+    // merge all constellations into one detection set
+    const dets = [];
+    for (const s of ok) {
+      for (const r of s.rows) {
+        const la = parseFloat(r.latitude), lo = parseFloat(r.longitude);
+        if (isNaN(la) || isNaN(lo)) continue;
+        // NASA's own classification, when the feed carries it: 0 = vegetation
+        if (r.type !== undefined && r.type !== '' && String(r.type) !== '0') continue;
+        if (!confOk(r)) continue;
+        dets.push({ lat: la, lon: lo, t: firmsTimestamp(r),
+                    frp: parseFloat(r.frp) || 0, conf: r.confidence || '', sat: s.name });
+      }
     }
+
+    /* Cluster by real distance rather than by a fixed grid: the same plant
+       observed from different viewing geometries drifts by a few hundred
+       metres and used to land in neighbouring grid cells, splitting its
+       evidence in two and slipping through. */
+    const CLUSTER_KM = 2;
+    const clusters = [];
+    for (const d of dets) {
+      let best = null, bestD = Infinity;
+      for (const c of clusters) {
+        const dd = quickDist(d, c);
+        if (dd < bestD) { bestD = dd; best = c; }
+      }
+      if (best && bestD <= CLUSTER_KM) {
+        best.items.push(d);
+        const k = best.items.length;
+        best.lat += (d.lat - best.lat) / k;   // running centroid
+        best.lon += (d.lon - best.lon) / k;
+      } else {
+        clusters.push({ lat: d.lat, lon: d.lon, items: [d] });
+      }
+    }
+
+    /* A wildfire burns for a day or three and then stops. A factory, a flare
+       or a steelworks is seen again and again across the whole window — even
+       with clouds and gaps. Both the number of distinct days and the span
+       between first and last sighting are tested, so a source hidden by
+       cloud in the middle of the window is still caught. */
+    const DAY = 86400000;
+    firesFiltered = 0;
     const out = [];
-    for (const arr of byCell.values()) {
-      const days = new Set(arr.map(f => new Date(f.t).toISOString().slice(0, 10)));
-      if (days.size >= 3) continue; // present every day of the window -> fixed source
-      out.push(...arr);
+    const nowT = Date.now();
+    for (const c of clusters) {
+      const days = new Set(c.items.map(f => new Date(f.t).toISOString().slice(0, 10)));
+      const times = c.items.map(f => f.t);
+      const span = Math.max(...times) - Math.min(...times);
+      const fixed = state.fireFilterFixed !== false &&
+                    (days.size >= 3 || span >= 4 * DAY);
+      if (fixed) { firesFiltered++; continue; }
+      const sats = new Set(c.items.map(f => f.sat));
+      for (const f of c.items) {
+        if (nowT - f.t > FIRE_DISPLAY_DAYS * DAY) continue; // evidence only
+        f.confirmed = sats.size > 1 || days.size > 1;
+        out.push(f);
+      }
     }
 
     for (const f of out) {
@@ -2530,6 +2599,10 @@ function drawFires(project) {
     ctx.strokeStyle = `rgba(255,225,180,${0.5 * fresh + 0.2})`;
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.arc(p.x, p.y, r + 2.5, 0, Math.PI * 2); ctx.stroke();
+    if (f.confirmed) {   // seen by several satellites or several passes
+      ctx.strokeStyle = `rgba(255,200,120,${0.35 * fresh + 0.15})`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, r + 6, 0, Math.PI * 2); ctx.stroke();
+    }
   }
   ctx.restore();
 }
@@ -3565,7 +3638,10 @@ function updateLogMeta() {
     else if (windFetchedAt) parts.push(t('meta.wind') + ' ' + fmtFrameTime(windFetchedAt / 1000));
   }
   if (state.cloudsOn && cloudDrift) parts.push(t('meta.drift') + ' ' + compass(cloudDrift.toBrg) + ' ' + cloudDrift.spd + ' km/h');
-  if (state.firesOn && firesFetchedAt) parts.push(fires.length + ' ' + t(fires.length > 1 ? 'meta.fires' : 'meta.fire'));
+  if (state.firesOn && firesFetchedAt) {
+    parts.push(fires.length + ' ' + t(fires.length > 1 ? 'meta.fires' : 'meta.fire') +
+               (firesFiltered ? ' (−' + firesFiltered + ')' : ''));
+  }
   if (state.quakesOn && quakesFetchedAt) parts.push(quakes.length + ' ' + t(quakes.length > 1 ? 'meta.quakes' : 'meta.quake'));
   meta.textContent = parts.length ? parts.join(' · ') : '—';
 }
@@ -3843,6 +3919,7 @@ function syncSettingsInputs() {
   $('#setLightOpacity').value = state.lightOpacity;
   $('#setFirmsKey').value = state.firmsKey || '';
   $('#setQuakeMag').value = state.quakeMinMag;
+  $('#setFireFilter').checked = state.fireFilterFixed !== false;
   $('#setNotify').checked = state.notify;
   $('#setAuto').checked = state.autoReconnect;
 }
@@ -3864,6 +3941,11 @@ $('#setAutoLoc').onchange = (e) => {
   state.autoLocate = e.target.checked;
   saveState();
   if (state.autoLocate) autoLocateNow();
+};
+$('#setFireFilter').onchange = (e) => {
+  state.fireFilterFixed = e.target.checked;
+  saveState();
+  if (state.firesOn) buildFireLayer(true);
 };
 $('#setQuakeMag').onchange = (e) => {
   state.quakeMinMag = Math.max(0, Math.min(9, parseFloat(e.target.value) || 2.5));
