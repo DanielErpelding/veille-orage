@@ -330,6 +330,7 @@
   .leg-cellico { width: 16px; height: 16px; border: 1.5px dashed var(--warn); border-radius: 50%; color: var(--warn); font-size: 10px; display: flex; align-items: center; justify-content: center; }
   .leg-windico { color: #78CDFF; font-size: 14px; font-weight: 600; }
   .leg-driftico { color: #78CDFF; font-size: 12px; font-weight: 600; letter-spacing: -1px; }
+  .leg-quakeico { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid #C77DFF; background: rgba(199,125,255,0.22); }
   .leg-fireico { width: 11px; height: 11px; border-radius: 50%; background: #FFA03C; box-shadow: 0 0 7px rgba(255,120,40,0.95), 0 0 0 2.5px rgba(255,225,180,0.35); }
   .leg-lightgrad { width: 30px; height: 9px; border-radius: 2px; background: linear-gradient(90deg, #14224E, #2C5BA8, #3E9A4E, #E8E84A, #E88A2A, #D8352A, #FFFFFF); }
   .leg-clouds { width: 26px; height: 11px; border-radius: 8px; background: radial-gradient(ellipse at 35% 45%, rgba(230,236,232,0.85), rgba(180,190,184,0.45) 65%, transparent); }
@@ -482,7 +483,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v2.8 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v2.9 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1 data-i18n="app.title">Cadran radar &amp; foudre</h1>
   <div class="subtitle" data-i18n="app.sub">précipitations · impacts temps réel · alerte proximité</div>
@@ -514,6 +515,7 @@
   <button class="ctl" id="cloudsBtn" data-i18n="btn.clouds">Nuages</button>
   <button class="ctl" id="lightBtn" data-i18n="btn.light">Pollution</button>
   <button class="ctl" id="firesBtn" data-i18n="btn.fires">Feux</button>
+  <button class="ctl" id="quakesBtn" data-i18n="btn.quakes">Séismes</button>
   <button class="ctl on" id="strikesBtn" data-i18n="btn.strikes">Impacts</button>
   <button class="ctl" id="animBtn" data-i18n="btn.anim">Anim</button>
   <button class="ctl" id="settingsBtn" data-i18n="btn.settings">Réglages</button>
@@ -571,6 +573,7 @@
     <div class="leg-item"><span class="leg-ico"><span class="leg-windico">→</span></span><span data-i18n="leg.wind">Vent à 10 m (vue Carte) : flèche = sens du vent, longueur = vitesse</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-driftico">⇢</span></span><span data-i18n="leg.drift">Dérive des nuages (encart en bas à gauche) : sens et vitesse de déplacement de la couche dominante</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-lightgrad"></span></span><span data-i18n="leg.light">Pollution lumineuse : ciel noir → très pollué (bouton Pollution)</span></div>
+    <div class="leg-item"><span class="leg-ico"><span class="leg-quakeico"></span></span><span data-i18n="leg.quake">Séisme (30 derniers jours) · taille = magnitude</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-fireico"></span></span><span data-i18n="leg.fire">Feu actif (3 derniers jours) · taille = puissance, éclat = fraîcheur</span></div>
     <div class="leg-item"><span class="leg-ico"><span class="leg-center"></span></span><span data-i18n="leg.you">Votre position (centre)</span></div>
   </div>
@@ -692,6 +695,13 @@
     </div>
 
     <div class="set-row">
+      <div class="sk"><span data-i18n="set.quakeMag.k">Magnitude minimale</span><small data-i18n="set.quakeMag.d">séismes affichés · 30 derniers jours</small></div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <input type="number" class="set-num" id="setQuakeMag" min="0" max="9" step="0.5">
+      </div>
+    </div>
+
+    <div class="set-row">
       <div class="sk"><span data-i18n="set.notify.k">Notifications système</span><small data-i18n="set.notify.d">impact proche & cellule en approche</small></div>
       <label class="switch"><input type="checkbox" id="setNotify"><span class="slider"></span></label>
     </div>
@@ -783,6 +793,8 @@ const state = Object.assign({
   lightOpacity: 0.5,
   firesOn: false,
   firmsKey: '',
+  quakesOn: false,
+  quakeMinMag: 2.5,
   disclaimerSeen: false,
   lang: null,
   animate: false,
@@ -829,12 +841,12 @@ const I18N = {
 fr: {
   'app.title': 'Cadran radar & foudre',
   'app.sub': 'précipitations · impacts temps réel · alerte proximité',
-  'st.site': 'Site', 'st.lightning': 'Foudre', 'st.strikes': 'Impacts', 'st.nearest': 'Plus proche',
+  'st.site': 'Site', 'st.lightning': 'Réseau', 'st.strikes': 'Foudre', 'st.nearest': 'Plus proche',
   'btn.map': 'Carte', 'btn.rain': 'Pluie', 'btn.clouds': 'Nuages', 'btn.light': 'Pollution',
-  'btn.fires': 'Feux', 'btn.strikes': 'Impacts', 'btn.anim': 'Anim', 'btn.settings': 'Réglages',
+  'btn.fires': 'Feux', 'btn.strikes': 'Foudre', 'btn.anim': 'Anim', 'btn.settings': 'Réglages',
   'btn.connect': '▶ Connecter', 'btn.disconnect': '■ Déconnecter',
-  'ui.range': 'Portée', 'ui.legend': 'Légende', 'ui.log': 'Journal des impacts',
-  'ui.logEmpty': 'Aucun impact reçu. Touche <strong>Connecter</strong> pour ouvrir le flux Blitzortung.',
+  'ui.range': 'Portée', 'ui.legend': 'Légende', 'ui.log': 'Journal de la foudre',
+  'ui.logEmpty': 'Aucun éclair reçu. Touche <strong>Connecter</strong> pour ouvrir le flux Blitzortung.',
   'ui.cancel': 'Annuler', 'ui.save': 'Enregistrer', 'ui.close': 'Fermer', 'ui.gotIt': 'Compris',
   'ws.offline': 'hors ligne', 'ws.connecting': 'connexion…', 'ws.live': 'en direct', 'ws.reconnecting': 'reconnexion…',
   'leg.rain': 'Pluie : faible → intense', 'leg.clouds': 'Couverture nuageuse (modèle météo)',
@@ -853,12 +865,12 @@ fr: {
   'site.manualHint': "Longitude positive vers l'EST. L'altitude n'est pas utilisée par le cadran (informative).",
   'site.presetHint': 'Sites préenregistrés.',
   'site.current': 'Position actuelle', 'site.custom': 'Site personnalisé',
-  'site.addBtn': '＋ Mémoriser le site affiché', 'site.addHint': 'alerte ⚡ si impact proche de ce site',
+  'site.addBtn': '＋ Mémoriser le site affiché', 'site.addHint': 'alerte ⚡ si la foudre tombe près de ce site',
   'site.namePrompt': 'Nom du site à surveiller :', 'site.defaultName': 'Maison',
-  'set.title': 'Réglages', 'set.simulate': 'Simuler un impact',
+  'set.title': 'Réglages', 'set.simulate': 'Simuler un éclair',
   'set.alert.k': "Seuil d'alerte", 'set.alert.d': "déclenche l'alarme sous cette distance — repère d'observation, pas un dispositif de sécurité",
-  'set.persist.k': 'Durée de persistance', 'set.persist.d': "temps d'affichage d'un impact",
-  'set.sound.k': "Son de l'alerte", 'set.sound.d': 'bip à chaque impact proche',
+  'set.persist.k': 'Durée de persistance', 'set.persist.d': "temps d'affichage d'un éclair",
+  'set.sound.k': "Son de l'alerte", 'set.sound.d': 'bip à chaque éclair proche',
   'set.vibrate.k': 'Vibration', 'set.vibrate.d': 'vibreur si supporté',
   'set.rainOpacity.k': 'Opacité précipitations', 'set.rainOpacity.d': 'couche RainViewer sur le cadran',
   'set.cloudOpacity.k': 'Opacité nuages', 'set.cloudOpacity.d': 'modèle météo Open-Meteo',
@@ -867,7 +879,7 @@ fr: {
   'set.cellLabels.k': 'Infos cellules', 'set.cellLabels.d': 'étiquette distance/vitesse/ETA à côté de chaque cellule',
   'set.wind.k': 'Vent sur la carte', 'set.wind.d': 'flèches de direction à 10 m · Open-Meteo',
   'set.lightOpacity.k': 'Opacité pollution lumineuse', 'set.lightOpacity.d': 'couche « Pollution » (atlas 2025)',
-  'set.notify.k': 'Notifications système', 'set.notify.d': 'impact proche & cellule en approche',
+  'set.notify.k': 'Notifications système', 'set.notify.d': 'foudre proche & cellule en approche',
   'set.reconnect.k': 'Reconnexion auto', 'set.reconnect.d': 'rouvre le flux si coupé',
   'set.firmsKey': 'Clé NASA FIRMS',
   'set.firmsHint': 'nécessaire pour la couche « Feux ». Gratuite et immédiate sur firms.modaps.eosdis.nasa.gov/api/map_key — elle reste sur ton appareil.',
@@ -888,30 +900,35 @@ fr: {
   'meta.fire': 'feu', 'meta.fires': 'feux',
   'cell.goes': 'va vers', 'cell.static': 'statique',
   'cell.banner': 'CELLULE À {d} KM {pos}, VA VERS {hdg} · {spd} KM/H · ARRIVÉE ~{eta} MIN',
-  'alarm.banner': 'IMPACT À {d} KM · {dir} ({deg}°)',
+  'alarm.banner': 'FOUDRE À {d} KM · {dir} ({deg}°)',
   'drift.low': 'nuages bas', 'drift.mid': 'nuages moyens', 'drift.high': 'nuages élevés',
-  'notif.near': '⚡ Impact proche', 'notif.nearBody': '{d} km {dir} de ta position',
-  'notif.site': '⚡ Impact près de « {name} »', 'notif.siteBody': '{d} km du site surveillé',
+  'notif.near': '⚡ Foudre à proximité', 'notif.nearBody': '{d} km {dir} de ta position',
+  'notif.site': '⚡ Foudre près de « {name} »', 'notif.siteBody': '{d} km du site surveillé',
   'notif.cell': 'Cellule orageuse en approche', 'notif.cellBody': 'À {d} km {dir}, arrivée estimée ~{eta} min',
-  'toast.restored': '{n} impact(s) restauré(s) (historique local)',
+  'toast.restored': '{n} éclair(s) restauré(s) (historique local)',
   'toast.needLoc': "Acquiers d'abord la position", 'toast.badCoords': 'Coordonnées invalides',
   'toast.pickSite': 'Sélectionne un site', 'toast.siteSavedGps': 'Site enregistré · suivi GPS au démarrage',
   'toast.siteSavedFixed': 'Site fixe enregistré (position auto désactivée)',
   'toast.centered': 'Cadran calé sur ta position', 'toast.recentered': 'Carte recentrée sur ta position',
   'toast.connecting': 'Connexion au réseau foudre…', 'toast.feedLost': 'Flux foudre interrompu',
   'toast.animOn': 'Animation pluie activée', 'toast.animOff': 'Animation arrêtée · retour au direct',
-  'toast.simInjected': 'Impact simulé injecté', 'toast.notifOn': 'Notifications activées',
+  'toast.simInjected': 'Éclair simulé injecté', 'toast.notifOn': 'Notifications activées',
   'toast.notifDenied': 'Notifications refusées par le système',
   'toast.rainUnavail': 'Radar pluie indisponible', 'toast.lightUnavail': 'Pollution lumineuse indisponible',
   'toast.keySaved': 'Clé enregistrée · recherche des feux…', 'toast.siteRemoved': 'Site retiré de la surveillance',
   'toast.tapMap': 'Touche la carte pour placer le site',
   'toast.siteWatched': '« {name} » enregistré et surveillé',
-  'toast.strikeNearSite': '⚡ Impact à {d} km de « {name} »',
+  'toast.strikeNearSite': '⚡ Foudre à {d} km de « {name} »',
+  'btn.quakes': 'Séismes',
+  'leg.quake': 'Séisme (30 derniers jours) · taille = magnitude',
+  'set.quakeMag.k': 'Magnitude minimale', 'set.quakeMag.d': 'séismes affichés · 30 derniers jours',
+  'meta.quake': 'séisme', 'meta.quakes': 'séismes',
+  'err.quakeHint': 'Service USGS momentanément injoignable. L\'app réessaie automatiquement ; les autres couches continuent normalement.',
   'age.sec': 's', 'age.min': 'min',
   'compass': ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'],
   'card': { n: 'N', s: 'S', e: 'E', w: 'O' },
   'credits.warn': "⚠ Outil d'observation — ne pas utiliser pour la protection des personnes et des biens.",
-  'credits.src': 'Foudre © Blitzortung.org et les contributeurs du réseau · Pluie © RainViewer · Nuages &amp; vent © Open-Meteo · Feux © NASA FIRMS · Pollution lumineuse © D. Lorenz · Fond de carte © OpenStreetMap, © CARTO',
+  'credits.src': 'Foudre © Blitzortung.org et les contributeurs du réseau · Pluie © RainViewer · Nuages &amp; vent © Open-Meteo · Feux © NASA FIRMS · Séismes © USGS · Pollution lumineuse © D. Lorenz · Fond de carte © OpenStreetMap, © CARTO',
   'help.html': `<h3>Le cadran PPI</h3>
       <p>Vue « Plan Position Indicator » centrée sur votre site. Le Nord est en haut. Les anneaux marquent la distance ; la portée totale est réglable via les pastilles.</p>
       <ul>
@@ -921,27 +938,27 @@ fr: {
         <li><strong>Pollution lumineuse</strong> — atlas 2025, couche statique activable (bouton <code>Pollution</code>), opacité réglable dans Réglages.</li>
         <li><strong>Dérive des nuages</strong> — encart en bas à gauche : direction et vitesse de déplacement de la couche nuageuse dominante (affiché avec la couche <code>Nuages</code>).</li>
         <li><strong>Vent à 10 m</strong> — flèches sur la vue Carte, orientées dans le sens du vent, longueur et intensité selon la vitesse (Réglages → « Vent sur la carte »).</li>
-        <li><strong>Impacts de foudre</strong> — rouges quand récents (moins de 2 minutes), puis ambre en s'estompant avec le temps (bouton <code>Impacts</code>).</li>
+        <li><strong>Foudre</strong> — éclairs rouges quand récents (moins de 2 minutes), puis ambre en s'estompant avec le temps (bouton <code>Impacts</code>).</li>
         <li><strong>Balayage</strong> — la ligne verte tourne comme un vrai radar (esthétique).</li>
       </ul>
       <p>Chaque couche s'active ou se désactive indépendamment. Le bouton <code>Carte</code> bascule entre le cadran radar et une carte géographique (fond sombre, villes et côtes visibles) avec les mêmes couches superposées.</p>
-      <p>Le journal et le compteur ne montrent que les impacts <strong>dans la portée affichée</strong> ; les impacts jusqu'à 2× la portée apparaissent en petits points sur le bord du cadran.</p>
+      <p>Le journal et le compteur ne montrent que les éclairs <strong>dans la portée affichée</strong> ; les éclairs jusqu'à 2× la portée apparaissent en petits points sur le bord du cadran.</p>
 
       <h3>Sources</h3>
       <ul>
         <li><code>api.rainviewer.com</code> — mosaïque radar mondiale des précipitations (gratuite, sans clé).</li>
         <li><code>open-meteo.com</code> — couverture nuageuse et vent à 10 m (analyse du modèle météo, gratuite, sans clé).</li>
         <li><code>firms.modaps.eosdis.nasa.gov</code> — feux actifs détectés par les satellites VIIRS/NOAA-20 (NASA FIRMS, gratuit avec une clé personnelle).</li>
-        <li><code>djlorenz.github.io</code> — atlas mondial de pollution lumineuse 2025 (David Lorenz), utile pour préparer une session astro.</li>
+        <li><code>earthquake.usgs.gov</code> — séismes mondiaux (USGS, gratuit, sans clé).</li>\n        <li><code>djlorenz.github.io</code> — atlas mondial de pollution lumineuse 2025 (David Lorenz), utile pour préparer une session astro.</li>
         <li><code>ws*.blitzortung.org</code> — réseau communautaire de détection de foudre, diffusé en direct par WebSocket.</li>
       </ul>
-      <p>Les impacts sont détectés par triangulation par un réseau de bénévoles : latence de quelques secondes et couverture variable selon la région.</p>
+      <p>Les éclairs sont détectés par triangulation par un réseau de bénévoles : latence de quelques secondes et couverture variable selon la région.</p>
 
       <h3>Conditions d'usage des données de foudre</h3>
       <p><strong>Blitzortung.org</strong> n'est pas un service commercial mais un réseau de passionnés qui hébergent leurs propres détecteurs et partagent leurs mesures. Leurs données sont mises à disposition pour un <strong>usage privé et de loisir</strong> ; tout usage commercial, ainsi que la rediffusion large, demandent leur accord préalable. Elles ne doivent pas servir à la <strong>protection des personnes et des biens</strong>.</p>
       <p>Cette application respecte cet esprit : usage personnel, aucune revente, sources citées. Si tu envisages de la diffuser largement ou de la publier sur un magasin d'applications, contacte-les au préalable — et vérifie le texte en vigueur sur <code>blitzortung.org</code>. Si le sujet te passionne, héberger une station est le meilleur moyen de soutenir le réseau.</p>
       <p><button class="ctl" id="showDisclaimerBtn" style="width:100%;margin-top:6px;">Revoir l'avertissement</button></p>
-      <p><strong>Historique local :</strong> les impacts reçus sont mémorisés sur l'appareil (1 h glissante) et restaurés à l'ouverture de l'app. Le flux Blitzortung étant un direct pur, l'app ne peut montrer que ce qu'elle a reçu pendant qu'elle était ouverte — la « Durée de persistance » des Réglages fixe la fenêtre affichée.</p>
+      <p><strong>Historique local :</strong> les éclairs reçus sont mémorisés sur l'appareil (1 h glissante) et restaurés à l'ouverture de l'app. Le flux Blitzortung étant un direct pur, l'app ne peut montrer que ce qu'elle a reçu pendant qu'elle était ouverte — la « Durée de persistance » des Réglages fixe la fenêtre affichée.</p>
 
       <h3>Dérive des nuages</h3>
       <p>L'encart en bas à gauche indique <strong>où va la couche nuageuse et à quelle vitesse</strong>. Attention à ne pas le confondre avec les flèches de vent : celles-ci donnent le vent <em>à 10 m du sol</em>, alors que les nuages sont emportés par le flux <em>à leur propre altitude</em>, souvent bien plus rapide et parfois orienté tout autrement.</p>
@@ -951,15 +968,19 @@ fr: {
       <p>Par défaut, le cadran se cale automatiquement sur la position GPS à chaque ouverture (réglage « Position auto au démarrage »). Choisir un site manuel ou préréglé désactive ce suivi ; re-choisir « GPS » dans la fenêtre Site le réactive.</p>
 
       <h3>Alerte de proximité</h3>
-      <p>Quand un impact tombe sous le <strong>seuil d'alerte</strong>, le cadran clignote en rouge, avec bip et vibration (si activés). Utile pour surveiller une cellule orageuse qui approche.</p>
+      <p>Quand un éclair tombe sous le <strong>seuil d'alerte</strong>, le cadran clignote en rouge, avec bip et vibration (si activés). Utile pour surveiller une cellule orageuse qui approche.</p>
 
       <h3>Feux actifs</h3>
       <p>Le bouton <code>Feux</code> affiche les détections des satellites VIIRS/NOAA-20 sur les 3 derniers jours. Il faut une <strong>clé NASA FIRMS</strong> (gratuite, immédiate, à coller dans les Réglages) : elle reste sur ton appareil et n'est envoyée qu'à la NASA.</p>
       <p><strong>Ce que « feu » veut dire ici :</strong> les satellites mesurent des anomalies thermiques, pas des flammes. Torchères de raffineries, aciéries et autres sources de chaleur fixes seraient donc signalées comme des feux. L'app écarte ces fausses détections de deux façons : elle ne garde que les détections classées « feu de végétation » par la NASA (son champ <code>type</code> distingue volcans, sources fixes terrestres et torchères offshore), et elle élimine en plus les points qui reviennent au même endroit chaque jour de la fenêtre — signature d'une installation industrielle, alors qu'un vrai feu se déplace et s'éteint. Les détections de faible confiance sont également ignorées.</p>
       <p>Malgré ce filtrage, une détection reste une indication, pas une confirmation : nuages, relief et heure de passage du satellite (2 à 4 survols par jour) limitent la couverture. En cas de doute, la référence reste les autorités locales.</p>
 
+      <h3>Séismes</h3>
+      <p>Le bouton <code>Séismes</code> affiche les séismes des 30 derniers jours dans la zone visible, d'après le service <strong>USGS</strong> (gratuit, sans clé). Le rayon du cercle croît avec la magnitude, l'intensité du violet avec la fraîcheur, et la magnitude est écrite à partir de M3.</p>
+      <p>La sismicité est rare à courte portée : c'est surtout aux portées larges que la couche prend son sens. Le seuil de magnitude est réglable dans les Réglages — descendre à 1 ou 2 fait apparaître la microsismicité des Pyrénées, monter à 4 ne garde que les secousses notables.</p>
+
       <h3>Cellules orageuses &amp; trajectoire</h3>
-      <p>L'app regroupe les impacts des 16 dernières minutes en <strong>cellules</strong> (cercles pointillés) et estime leur déplacement : la flèche montre la position prévue dans 30 minutes. Si une cellule se dirige vers ton rayon d'alerte, elle passe en rouge et un bandeau ambre annonce distance, vitesse et heure d'arrivée estimée. C'est une extrapolation simple : fiable pour des cellules bien actives, indicative sinon.</p>
+      <p>L'app regroupe les éclairs des 16 dernières minutes en <strong>cellules</strong> (cercles pointillés) et estime leur déplacement : la flèche montre la position prévue dans 30 minutes. Si une cellule se dirige vers ton rayon d'alerte, elle passe en rouge et un bandeau ambre annonce distance, vitesse et heure d'arrivée estimée. C'est une extrapolation simple : fiable pour des cellules bien actives, indicative sinon.</p>
       <p>Lecture de l'étiquette : la 1<sup>re</sup> ligne donne la <strong>position</strong> de la cellule (distance et direction depuis toi), la 2<sup>e</sup> son <strong>cap de déplacement</strong> (« va vers NE ») et sa vitesse.</p>
 
       <h3>Sites surveillés</h3>
@@ -968,13 +989,13 @@ fr: {
         <li><strong>Sur la carte</strong> — passe en vue <code>Carte</code>, touche le bouton <span style="color:var(--warn)">📍</span> en haut à gauche, place-toi sur le lieu voulu puis touche la carte : une épingle se pose, tu la nommes et elle est enregistrée.</li>
         <li><strong>Depuis le site courant</strong> — fenêtre Site → Préréglés → <strong>« ＋ Mémoriser le site affiché »</strong>.</li>
       </ul>
-      <p>Les sites enregistrés apparaissent en épingles jaunes sur la carte. Tout impact tombant sous le seuil d'alerte autour de l'un d'eux déclenche une alerte nommée, où que soit centré le cadran. Le ✕ dans la liste des préréglés retire un site.</p>
+      <p>Les sites enregistrés apparaissent en épingles jaunes sur la carte. Tout éclair tombant sous le seuil d'alerte autour de l'un d'eux déclenche une alerte nommée, où que soit centré le cadran. Le ✕ dans la liste des préréglés retire un site.</p>
 
       <h3>Déplacer et zoomer la carte</h3>
       <p>En vue <code>Carte</code> : un doigt pour déplacer, deux doigts pour zoomer (molette sur ordinateur). Le <strong>site de référence reste inchangé</strong> — distances, cap et alertes continuent d'être calculés depuis ta position, dont l'anneau d'alerte et les cercles de distance restent solidaires même quand elle sort de l'écran. Le bouton <span style="color:var(--accent)">⌖</span> recentre la carte ; changer de portée ou revenir au cadran la recentre aussi.</p>
 
       <h3>Notifications système</h3>
-      <p>Activables dans Réglages : impact proche et cellule en approche génèrent une notification (avec l'accord du système). Limite à connaître : sans serveur, l'app ne peut notifier que <strong>pendant qu'elle tourne</strong> — sur iPhone, le système suspend l'app en arrière-plan après quelques dizaines de secondes ; sur ordinateur ou Android, les notifications fonctionnent aussi en arrière-plan.</p>
+      <p>Activables dans Réglages : un éclair proche et une cellule en approche génèrent une notification (avec l'accord du système). Limite à connaître : sans serveur, l'app ne peut notifier que <strong>pendant qu'elle tourne</strong> — sur iPhone, le système suspend l'app en arrière-plan après quelques dizaines de secondes ; sur ordinateur ou Android, les notifications fonctionnent aussi en arrière-plan.</p>
 
       <h3>Installer comme app</h3>
       <p>Dans Safari (iOS) ou Chrome (Android) : menu Partager → <strong>Sur l'écran d'accueil</strong>. Fonctionne hors-ligne pour l'interface (les données nécessitent le réseau).</p>
@@ -983,9 +1004,9 @@ fr: {
       <p>Votre position ne quitte jamais l'appareil : tous les calculs (distance, cap) sont locaux. Seules les requêtes de tuiles RainViewer sont envoyées.</p>`,
   'disc.html': `<span class="dz-key">Cette application sert à observer les orages, pas à assurer une sécurité.
       Ne fonde aucune décision de mise à l'abri sur ce qu'elle affiche.</span>
-      <p>Les impacts de foudre proviennent de <strong>Blitzortung.org</strong>, un réseau de bénévoles qui hébergent
+      <p>Les éclairs proviennent de <strong>Blitzortung.org</strong>, un réseau de bénévoles qui hébergent
       leurs propres détecteurs. La couverture varie selon les régions, la localisation a une marge d'erreur,
-      des impacts peuvent manquer et le flux peut s'interrompre. Ses données sont mises à disposition pour
+      des éclairs peuvent manquer et le flux peut s'interrompre. Ses données sont mises à disposition pour
       un usage privé et de loisir, explicitement pas pour la protection des personnes et des biens.</p>
       <p>En cas de risque réel, réfère-toi à <strong>Météo-France</strong> (vigilance orages) et aux consignes
       des autorités locales.</p>
@@ -996,7 +1017,7 @@ fr: {
 es: {
   'app.title': 'Radar y rayos',
   'app.sub': 'precipitación · impactos en directo · alerta de proximidad',
-  'st.site': 'Sitio', 'st.lightning': 'Rayos', 'st.strikes': 'Impactos', 'st.nearest': 'Más cercano',
+  'st.site': 'Sitio', 'st.lightning': 'Red', 'st.strikes': 'Impactos', 'st.nearest': 'Más cercano',
   'btn.map': 'Mapa', 'btn.rain': 'Lluvia', 'btn.clouds': 'Nubes', 'btn.light': 'Contaminación',
   'btn.fires': 'Incendios', 'btn.strikes': 'Impactos', 'btn.anim': 'Anim', 'btn.settings': 'Ajustes',
   'btn.connect': '▶ Conectar', 'btn.disconnect': '■ Desconectar',
@@ -1074,11 +1095,16 @@ es: {
   'toast.tapMap': 'Toca el mapa para colocar el sitio',
   'toast.siteWatched': '«{name}» guardado y vigilado',
   'toast.strikeNearSite': '⚡ Impacto a {d} km de «{name}»',
+  'btn.quakes': 'Sismos',
+  'leg.quake': 'Sismo (últimos 30 días) · tamaño = magnitud',
+  'set.quakeMag.k': 'Magnitud mínima', 'set.quakeMag.d': 'sismos mostrados · últimos 30 días',
+  'meta.quake': 'sismo', 'meta.quakes': 'sismos',
+  'err.quakeHint': 'Servicio USGS momentáneamente inaccesible. La app reintenta automáticamente; las demás capas siguen funcionando.',
   'age.sec': 's', 'age.min': 'min',
   'compass': ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'],
   'card': { n: 'N', s: 'S', e: 'E', w: 'O' },
   'credits.warn': '⚠ Herramienta de observación — no usar para la protección de personas y bienes.',
-  'credits.src': 'Rayos © Blitzortung.org y los colaboradores de la red · Lluvia © RainViewer · Nubes y viento © Open-Meteo · Incendios © NASA FIRMS · Contaminación lumínica © D. Lorenz · Mapa base © OpenStreetMap, © CARTO',
+  'credits.src': 'Rayos © Blitzortung.org y los colaboradores de la red · Lluvia © RainViewer · Nubes y viento © Open-Meteo · Incendios © NASA FIRMS · Sismos © USGS · Contaminación lumínica © D. Lorenz · Mapa base © OpenStreetMap, © CARTO',
   'help.html': `<h3>El radar PPI</h3>
       <p>Vista «Plan Position Indicator» centrada en tu sitio. El norte está arriba. Los anillos marcan la distancia; el alcance total se ajusta con las pastillas.</p>
       <ul>
@@ -1099,7 +1125,7 @@ es: {
         <li><code>api.rainviewer.com</code> — mosaico mundial de radar de precipitación (gratuito, sin clave).</li>
         <li><code>open-meteo.com</code> — nubosidad y viento a 10 m (análisis del modelo meteorológico, gratuito, sin clave).</li>
         <li><code>firms.modaps.eosdis.nasa.gov</code> — incendios activos detectados por los satélites VIIRS/NOAA-20 (NASA FIRMS, gratuito con una clave personal).</li>
-        <li><code>djlorenz.github.io</code> — atlas mundial de contaminación lumínica 2025 (David Lorenz), útil para preparar una sesión astronómica.</li>
+        <li><code>earthquake.usgs.gov</code> — sismos mundiales (USGS, gratuito, sin clave).</li>\n        <li><code>djlorenz.github.io</code> — atlas mundial de contaminación lumínica 2025 (David Lorenz), útil para preparar una sesión astronómica.</li>
         <li><code>ws*.blitzortung.org</code> — red comunitaria de detección de rayos, difundida en directo por WebSocket.</li>
       </ul>
       <p>Los impactos se localizan por triangulación mediante una red de voluntarios: unos segundos de latencia y cobertura variable según la región.</p>
@@ -1124,6 +1150,10 @@ es: {
       <p>El botón <code>Incendios</code> muestra las detecciones de los satélites VIIRS/NOAA-20 de los últimos 3 días. Hace falta una <strong>clave NASA FIRMS</strong> (gratuita, inmediata, que se pega en los Ajustes): se queda en tu dispositivo y solo se envía a la NASA.</p>
       <p><strong>Qué significa «incendio» aquí:</strong> los satélites miden anomalías térmicas, no llamas. Antorchas de refinerías, acerías y otras fuentes de calor fijas se señalarían por tanto como incendios. La app descarta estas falsas detecciones de dos formas: solo conserva las detecciones clasificadas como incendio de vegetación por la NASA (su campo <code>type</code> distingue volcanes, fuentes fijas terrestres y antorchas marinas), y además elimina los puntos que vuelven al mismo lugar cada día de la ventana — firma de una instalación industrial, mientras que un incendio real se desplaza y se apaga. Las detecciones de baja confianza también se ignoran.</p>
       <p>Pese a este filtrado, una detección es una indicación, no una confirmación: nubes, relieve y horas de paso del satélite (2 a 4 al día) limitan la cobertura. En caso de duda, la referencia siguen siendo las autoridades locales.</p>
+
+      <h3>Sismos</h3>
+      <p>El botón <code>Sismos</code> muestra los sismos de los últimos 30 días en la zona visible, según el servicio <strong>USGS</strong> (gratuito, sin clave). El radio del círculo crece con la magnitud, la intensidad del violeta con la frescura, y la magnitud se escribe a partir de M3.</p>
+      <p>La sismicidad es rara a corto alcance: la capa cobra sentido sobre todo en alcances amplios. El umbral de magnitud es ajustable en los Ajustes — bajar a 1 o 2 revela la microsismicidad, subir a 4 deja solo los seísmos notables.</p>
 
       <h3>Células tormentosas y trayectoria</h3>
       <p>La app agrupa los impactos de los últimos 16 minutos en <strong>células</strong> (círculos punteados) y estima su desplazamiento: la flecha muestra la posición prevista dentro de 30 minutos. Si una célula se dirige hacia tu radio de alerta, pasa a rojo y un banner ámbar anuncia distancia, velocidad y hora estimada de llegada. Es una extrapolación simple: fiable para células bien activas, indicativa en los demás casos.</p>
@@ -1163,7 +1193,7 @@ es: {
 de: {
   'app.title': 'Radar &amp; Blitzortung',
   'app.sub': 'Niederschlag · Blitze in Echtzeit · Näherungsalarm',
-  'st.site': 'Standort', 'st.lightning': 'Blitze', 'st.strikes': 'Einschläge', 'st.nearest': 'Nächster',
+  'st.site': 'Standort', 'st.lightning': 'Netz', 'st.strikes': 'Einschläge', 'st.nearest': 'Nächster',
   'btn.map': 'Karte', 'btn.rain': 'Regen', 'btn.clouds': 'Wolken', 'btn.light': 'Lichtsmog',
   'btn.fires': 'Brände', 'btn.strikes': 'Blitze', 'btn.anim': 'Anim', 'btn.settings': 'Einstellungen',
   'btn.connect': '▶ Verbinden', 'btn.disconnect': '■ Trennen',
@@ -1241,11 +1271,16 @@ de: {
   'toast.tapMap': 'Tippe auf die Karte, um den Standort zu setzen',
   'toast.siteWatched': '„{name}“ gespeichert und überwacht',
   'toast.strikeNearSite': '⚡ Einschlag {d} km von „{name}“',
+  'btn.quakes': 'Beben',
+  'leg.quake': 'Erdbeben (letzte 30 Tage) · Größe = Magnitude',
+  'set.quakeMag.k': 'Mindestmagnitude', 'set.quakeMag.d': 'angezeigte Beben · letzte 30 Tage',
+  'meta.quake': 'Beben', 'meta.quakes': 'Beben',
+  'err.quakeHint': 'USGS-Dienst vorübergehend nicht erreichbar. Die App versucht es automatisch erneut; die übrigen Ebenen laufen normal weiter.',
   'age.sec': 's', 'age.min': 'Min.',
   'compass': ['N','NNO','NO','ONO','O','OSO','SO','SSO','S','SSW','SW','WSW','W','WNW','NW','NNW'],
   'card': { n: 'N', s: 'S', e: 'O', w: 'W' },
   'credits.warn': '⚠ Beobachtungswerkzeug — nicht zum Schutz von Leben und Sachwerten verwenden.',
-  'credits.src': 'Blitze © Blitzortung.org und die Mitwirkenden des Netzes · Regen © RainViewer · Wolken &amp; Wind © Open-Meteo · Brände © NASA FIRMS · Lichtverschmutzung © D. Lorenz · Grundkarte © OpenStreetMap, © CARTO',
+  'credits.src': 'Blitze © Blitzortung.org und die Mitwirkenden des Netzes · Regen © RainViewer · Wolken &amp; Wind © Open-Meteo · Brände © NASA FIRMS · Erdbeben © USGS · Lichtverschmutzung © D. Lorenz · Grundkarte © OpenStreetMap, © CARTO',
   'help.html': `<h3>Das PPI-Radar</h3>
       <p>Eine „Plan Position Indicator“-Ansicht, zentriert auf deinen Standort. Norden ist oben. Die Ringe zeigen die Entfernung; die Gesamtreichweite stellst du mit den Schaltflächen ein.</p>
       <ul>
@@ -1266,7 +1301,7 @@ de: {
         <li><code>api.rainviewer.com</code> — weltweites Niederschlagsradar-Mosaik (kostenlos, ohne Schlüssel).</li>
         <li><code>open-meteo.com</code> — Bewölkung und Wind in 10 m (Wettermodell-Analyse, kostenlos, ohne Schlüssel).</li>
         <li><code>firms.modaps.eosdis.nasa.gov</code> — aktive Brände, erkannt von den Satelliten VIIRS/NOAA-20 (NASA FIRMS, kostenlos mit persönlichem Schlüssel).</li>
-        <li><code>djlorenz.github.io</code> — Weltatlas der Lichtverschmutzung 2025 (David Lorenz), nützlich zur Vorbereitung einer Beobachtungsnacht.</li>
+        <li><code>earthquake.usgs.gov</code> — weltweite Erdbeben (USGS, kostenlos, ohne Schlüssel).</li>\n        <li><code>djlorenz.github.io</code> — Weltatlas der Lichtverschmutzung 2025 (David Lorenz), nützlich zur Vorbereitung einer Beobachtungsnacht.</li>
         <li><code>ws*.blitzortung.org</code> — gemeinschaftliches Blitzortungsnetz, live über WebSocket übertragen.</li>
       </ul>
       <p>Die Einschläge werden von einem Netz Freiwilliger durch Triangulation geortet: einige Sekunden Verzögerung und je nach Region unterschiedliche Abdeckung.</p>
@@ -1291,6 +1326,10 @@ de: {
       <p>Die Schaltfläche <code>Brände</code> zeigt Erkennungen der Satelliten VIIRS/NOAA-20 aus den letzten 3 Tagen. Dafür ist ein <strong>NASA-FIRMS-Schlüssel</strong> nötig (kostenlos, sofort, in den Einstellungen einzufügen): Er bleibt auf deinem Gerät und wird nur an die NASA gesendet.</p>
       <p><strong>Was „Brand“ hier bedeutet:</strong> Satelliten messen Wärmeanomalien, keine Flammen. Abfackelanlagen von Raffinerien, Stahlwerke und andere ortsfeste Wärmequellen würden daher als Brände gemeldet. Die App verwirft diese Fehlerkennungen doppelt: Sie behält nur Erkennungen, die die NASA als Vegetationsbrand einstuft (ihr Feld <code>type</code> unterscheidet Vulkane, ortsfeste Landquellen und Offshore-Fackeln), und entfernt zusätzlich Punkte, die an jedem Tag des Zeitfensters am selben Ort wiederkehren — die Signatur einer Industrieanlage, während ein echtes Feuer wandert und erlischt. Erkennungen geringer Zuverlässigkeit werden ebenfalls ignoriert.</p>
       <p>Trotz dieser Filterung bleibt eine Erkennung ein Hinweis, keine Bestätigung: Bewölkung, Gelände und Überflugzeiten (2 bis 4 pro Tag) begrenzen die Abdeckung. Im Zweifel bleiben die örtlichen Behörden maßgeblich.</p>
+
+      <h3>Erdbeben</h3>
+      <p>Die Schaltfläche <code>Beben</code> zeigt Erdbeben der letzten 30 Tage im sichtbaren Bereich, nach dem <strong>USGS</strong>-Dienst (kostenlos, ohne Schlüssel). Der Kreisradius wächst mit der Magnitude, das Violett wird mit der Aktualität kräftiger, und ab M3 wird die Magnitude ausgeschrieben.</p>
+      <p>Seismizität ist auf kurze Entfernung selten: Die Ebene entfaltet ihren Nutzen vor allem bei großen Reichweiten. Die Mindestmagnitude lässt sich in den Einstellungen ändern — 1 oder 2 zeigt Mikroseismizität, 4 behält nur spürbare Beben.</p>
 
       <h3>Gewitterzellen &amp; Zugbahn</h3>
       <p>Die App fasst die Einschläge der letzten 16 Minuten zu <strong>Zellen</strong> zusammen (gestrichelte Kreise) und schätzt ihre Verlagerung: Der Pfeil zeigt die in 30 Minuten erwartete Position. Steuert eine Zelle auf deinen Alarmradius zu, wird sie rot und ein bernsteinfarbenes Band nennt Entfernung, Geschwindigkeit und voraussichtliche Ankunft. Das ist eine einfache Extrapolation: verlässlich bei gut ausgeprägten Zellen, sonst nur ein Anhaltspunkt.</p>
@@ -1330,7 +1369,7 @@ de: {
 it: {
   'app.title': 'Radar e fulmini',
   'app.sub': 'precipitazioni · fulmini in tempo reale · allerta di prossimità',
-  'st.site': 'Sito', 'st.lightning': 'Fulmini', 'st.strikes': 'Impatti', 'st.nearest': 'Più vicino',
+  'st.site': 'Sito', 'st.lightning': 'Rete', 'st.strikes': 'Impatti', 'st.nearest': 'Più vicino',
   'btn.map': 'Mappa', 'btn.rain': 'Pioggia', 'btn.clouds': 'Nuvole', 'btn.light': 'Inquinamento',
   'btn.fires': 'Incendi', 'btn.strikes': 'Fulmini', 'btn.anim': 'Anim', 'btn.settings': 'Impostazioni',
   'btn.connect': '▶ Connetti', 'btn.disconnect': '■ Disconnetti',
@@ -1408,11 +1447,16 @@ it: {
   'toast.tapMap': 'Tocca la mappa per posizionare il sito',
   'toast.siteWatched': '«{name}» salvato e sorvegliato',
   'toast.strikeNearSite': '⚡ Fulmine a {d} km da «{name}»',
+  'btn.quakes': 'Sismi',
+  'leg.quake': 'Sisma (ultimi 30 giorni) · dimensione = magnitudo',
+  'set.quakeMag.k': 'Magnitudo minima', 'set.quakeMag.d': 'sismi mostrati · ultimi 30 giorni',
+  'meta.quake': 'sisma', 'meta.quakes': 'sismi',
+  'err.quakeHint': 'Servizio USGS momentaneamente irraggiungibile. L\'app riprova automaticamente; gli altri livelli continuano normalmente.',
   'age.sec': 's', 'age.min': 'min',
   'compass': ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSO','SO','OSO','O','ONO','NO','NNO'],
   'card': { n: 'N', s: 'S', e: 'E', w: 'O' },
   'credits.warn': '⚠ Strumento di osservazione — non usare per la protezione di persone e beni.',
-  'credits.src': 'Fulmini © Blitzortung.org e i collaboratori della rete · Pioggia © RainViewer · Nuvole e vento © Open-Meteo · Incendi © NASA FIRMS · Inquinamento luminoso © D. Lorenz · Mappa base © OpenStreetMap, © CARTO',
+  'credits.src': 'Fulmini © Blitzortung.org e i collaboratori della rete · Pioggia © RainViewer · Nuvole e vento © Open-Meteo · Incendi © NASA FIRMS · Sismi © USGS · Inquinamento luminoso © D. Lorenz · Mappa base © OpenStreetMap, © CARTO',
   'help.html': `<h3>Il radar PPI</h3>
       <p>Vista «Plan Position Indicator» centrata sul tuo sito. Il nord è in alto. Gli anelli indicano la distanza; la portata totale si regola con i pulsanti.</p>
       <ul>
@@ -1433,7 +1477,7 @@ it: {
         <li><code>api.rainviewer.com</code> — mosaico radar mondiale delle precipitazioni (gratuito, senza chiave).</li>
         <li><code>open-meteo.com</code> — nuvolosità e vento a 10 m (analisi del modello meteo, gratuito, senza chiave).</li>
         <li><code>firms.modaps.eosdis.nasa.gov</code> — incendi attivi rilevati dai satelliti VIIRS/NOAA-20 (NASA FIRMS, gratuito con una chiave personale).</li>
-        <li><code>djlorenz.github.io</code> — atlante mondiale dell'inquinamento luminoso 2025 (David Lorenz), utile per preparare una sessione astronomica.</li>
+        <li><code>earthquake.usgs.gov</code> — sismi mondiali (USGS, gratuito, senza chiave).</li>\n        <li><code>djlorenz.github.io</code> — atlante mondiale dell'inquinamento luminoso 2025 (David Lorenz), utile per preparare una sessione astronomica.</li>
         <li><code>ws*.blitzortung.org</code> — rete comunitaria di rilevamento dei fulmini, trasmessa in diretta via WebSocket.</li>
       </ul>
       <p>I fulmini sono localizzati per triangolazione da una rete di volontari: qualche secondo di latenza e copertura variabile secondo la regione.</p>
@@ -1458,6 +1502,10 @@ it: {
       <p>Il pulsante <code>Incendi</code> mostra i rilevamenti dei satelliti VIIRS/NOAA-20 degli ultimi 3 giorni. Serve una <strong>chiave NASA FIRMS</strong> (gratuita, immediata, da incollare nelle Impostazioni): resta sul tuo dispositivo ed è inviata solo alla NASA.</p>
       <p><strong>Cosa significa «incendio» qui:</strong> i satelliti misurano anomalie termiche, non fiamme. Torce di raffinerie, acciaierie e altre sorgenti di calore fisse verrebbero quindi segnalate come incendi. L'app scarta questi falsi rilevamenti in due modi: conserva solo i rilevamenti classificati come incendio di vegetazione dalla NASA (il campo <code>type</code> distingue vulcani, sorgenti fisse terrestri e torce offshore) ed elimina inoltre i punti che tornano nello stesso luogo ogni giorno della finestra — firma di un impianto industriale, mentre un vero incendio si sposta e si spegne. Anche i rilevamenti a bassa affidabilità vengono ignorati.</p>
       <p>Nonostante questo filtraggio, un rilevamento resta un'indicazione, non una conferma: nuvole, rilievo e orari di passaggio del satellite (da 2 a 4 al giorno) limitano la copertura. In caso di dubbio, il riferimento restano le autorità locali.</p>
+
+      <h3>Sismi</h3>
+      <p>Il pulsante <code>Sismi</code> mostra i sismi degli ultimi 30 giorni nell'area visibile, secondo il servizio <strong>USGS</strong> (gratuito, senza chiave). Il raggio del cerchio cresce con la magnitudo, l'intensità del viola con la freschezza, e la magnitudo è scritta a partire da M3.</p>
+      <p>La sismicità è rara a corto raggio: il livello acquista senso soprattutto alle portate ampie. La soglia di magnitudo è regolabile nelle Impostazioni — scendere a 1 o 2 rivela la microsismicità, salire a 4 lascia solo le scosse rilevanti.</p>
 
       <h3>Celle temporalesche e traiettoria</h3>
       <p>L'app raggruppa i fulmini degli ultimi 16 minuti in <strong>celle</strong> (cerchi tratteggiati) e ne stima lo spostamento: la freccia mostra la posizione prevista tra 30 minuti. Se una cella si dirige verso il tuo raggio di allerta diventa rossa e una banda ambra indica distanza, velocità e orario stimato di arrivo. È una semplice estrapolazione: affidabile per celle ben attive, indicativa negli altri casi.</p>
@@ -1497,7 +1545,7 @@ it: {
 en: {
   'app.title': 'Radar &amp; lightning scope',
   'app.sub': 'precipitation · live strikes · proximity alert',
-  'st.site': 'Site', 'st.lightning': 'Lightning', 'st.strikes': 'Strikes', 'st.nearest': 'Nearest',
+  'st.site': 'Site', 'st.lightning': 'Network', 'st.strikes': 'Strikes', 'st.nearest': 'Nearest',
   'btn.map': 'Map', 'btn.rain': 'Rain', 'btn.clouds': 'Clouds', 'btn.light': 'Light',
   'btn.fires': 'Fires', 'btn.strikes': 'Strikes', 'btn.anim': 'Anim', 'btn.settings': 'Settings',
   'btn.connect': '▶ Connect', 'btn.disconnect': '■ Disconnect',
@@ -1575,11 +1623,16 @@ en: {
   'toast.tapMap': 'Tap the map to drop the site',
   'toast.siteWatched': '"{name}" saved and watched',
   'toast.strikeNearSite': '⚡ Strike {d} km from "{name}"',
+  'btn.quakes': 'Quakes',
+  'leg.quake': 'Earthquake (last 30 days) · size = magnitude',
+  'set.quakeMag.k': 'Minimum magnitude', 'set.quakeMag.d': 'earthquakes shown · last 30 days',
+  'meta.quake': 'quake', 'meta.quakes': 'quakes',
+  'err.quakeHint': 'The USGS service is momentarily unreachable. The app retries automatically; the other layers carry on normally.',
   'age.sec': 's', 'age.min': 'min',
   'compass': ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'],
   'card': { n: 'N', s: 'S', e: 'E', w: 'W' },
   'credits.warn': '⚠ An observation tool — not to be used for the protection of life and property.',
-  'credits.src': 'Lightning © Blitzortung.org and the network contributors · Rain © RainViewer · Clouds &amp; wind © Open-Meteo · Fires © NASA FIRMS · Light pollution © D. Lorenz · Basemap © OpenStreetMap, © CARTO',
+  'credits.src': 'Lightning © Blitzortung.org and the network contributors · Rain © RainViewer · Clouds &amp; wind © Open-Meteo · Fires © NASA FIRMS · Earthquakes © USGS · Light pollution © D. Lorenz · Basemap © OpenStreetMap, © CARTO',
   'help.html': `<h3>The PPI scope</h3>
       <p>A "Plan Position Indicator" view centred on your site. North is up. The rings mark distance; the total range is set with the chips.</p>
       <ul>
@@ -1600,7 +1653,7 @@ en: {
         <li><code>api.rainviewer.com</code> — worldwide precipitation radar mosaic (free, no key).</li>
         <li><code>open-meteo.com</code> — cloud cover and wind at 10 m (weather model analysis, free, no key).</li>
         <li><code>firms.modaps.eosdis.nasa.gov</code> — active fires detected by the VIIRS/NOAA-20 satellites (NASA FIRMS, free with a personal key).</li>
-        <li><code>djlorenz.github.io</code> — world light pollution atlas 2025 (David Lorenz), handy when planning an observing session.</li>
+        <li><code>earthquake.usgs.gov</code> — worldwide earthquakes (USGS, free, no key).</li>\n        <li><code>djlorenz.github.io</code> — world light pollution atlas 2025 (David Lorenz), handy when planning an observing session.</li>
         <li><code>ws*.blitzortung.org</code> — community lightning detection network, streamed live over WebSocket.</li>
       </ul>
       <p>Strikes are located by triangulation across a network of volunteers: a few seconds of latency, and coverage that varies by region.</p>
@@ -1625,6 +1678,10 @@ en: {
       <p>The <code>Fires</code> button shows VIIRS/NOAA-20 satellite detections from the last 3 days. It needs a <strong>NASA FIRMS key</strong> (free, instant, pasted into Settings): it stays on your device and is only ever sent to NASA.</p>
       <p><strong>What "fire" means here:</strong> satellites measure thermal anomalies, not flames. Refinery flares, steelworks and other fixed heat sources would therefore be reported as fires. The app discards these false detections in two ways: it keeps only detections NASA classifies as vegetation fires (its <code>type</code> field separates volcanoes, static land sources and offshore flares), and it further removes points that come back at the same spot every day of the window — the signature of an industrial site, whereas a real fire moves and dies out. Low-confidence detections are ignored as well.</p>
       <p>Even with that filtering, a detection is an indication, not a confirmation: cloud, terrain and satellite overpass times (2 to 4 per day) limit coverage. When in doubt, local authorities remain the reference.</p>
+
+      <h3>Earthquakes</h3>
+      <p>The <code>Quakes</code> button shows earthquakes from the last 30 days inside the visible area, from the <strong>USGS</strong> service (free, no key). Circle radius grows with magnitude, the violet deepens with freshness, and the magnitude is written out from M3 upwards.</p>
+      <p>Seismicity is rare at short range: the layer really comes into its own at wide ranges. The magnitude floor is adjustable in Settings — dropping to 1 or 2 reveals microseismicity, raising it to 4 keeps only notable shocks.</p>
 
       <h3>Storm cells &amp; track</h3>
       <p>The app groups strikes from the last 16 minutes into <strong>cells</strong> (dashed circles) and estimates their motion: the arrow shows the position expected in 30 minutes. If a cell is heading for your alert radius it turns red and an amber banner gives distance, speed and estimated arrival. This is a simple extrapolation: reliable for well-established cells, indicative otherwise.</p>
@@ -2477,11 +2534,101 @@ function drawFires(project) {
   ctx.restore();
 }
 
+/* ============================================================
+   EARTHQUAKES — USGS FDSN event service
+   Free, no key, CORS-enabled. Queried over the current view's bounding
+   box for the last 30 days above a magnitude floor. Seismicity is rare
+   at short range, so this layer is most useful at wide ranges.
+   The GeoJSON is parsed defensively: a change of shape degrades into an
+   explicit banner instead of a silent blank layer.
+   ============================================================ */
+let quakes = [];          // {lat, lon, mag, depth, t, place}
+let quakesFetchedAt = 0;
+let quakesSeq = 0;
+let quakesView = null;
+
+async function buildQuakeLayer(force) {
+  if (!state.quakesOn) return;
+  const same = quakesView && quakesView.lat === view.lat &&
+               quakesView.lon === view.lon && quakesView.range === view.range;
+  if (!force && same && Date.now() - quakesFetchedAt < 600000) return;
+  const seq = ++quakesSeq;
+  try {
+    const { lat, lon } = view;
+    const dLat = (view.range / 111.32) * 1.5;
+    const dLon = (view.range / (111.32 * Math.cos(rad(lat)))) * 1.5;
+    const start = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+    const url = 'https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson' +
+      '&starttime=' + start +
+      '&minmagnitude=' + (state.quakeMinMag || 2.5) +
+      '&minlatitude=' + Math.max(-90, lat - dLat).toFixed(3) +
+      '&maxlatitude=' + Math.min(90, lat + dLat).toFixed(3) +
+      '&minlongitude=' + (lon - dLon).toFixed(3) +
+      '&maxlongitude=' + (lon + dLon).toFixed(3) +
+      '&orderby=time&limit=500';
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const j = await res.json();
+    if (seq !== quakesSeq) return;
+    if (!j || !Array.isArray(j.features)) throw new Error('réponse inattendue');
+    const out = [];
+    for (const f of j.features) {
+      const g = f && f.geometry, p = f && f.properties;
+      if (!g || !Array.isArray(g.coordinates) || !p) continue;
+      const lo = +g.coordinates[0], la = +g.coordinates[1], dp = +g.coordinates[2];
+      const mag = +p.mag;
+      if (!isFinite(lo) || !isFinite(la) || !isFinite(mag)) continue;
+      out.push({ lat: la, lon: lo, mag, depth: isFinite(dp) ? dp : null,
+                 t: +p.time || Date.now(), place: p.place || '' });
+    }
+    quakes = out;
+    quakesFetchedAt = Date.now();
+    quakesView = { lat: view.lat, lon: view.lon, range: view.range };
+    clearDataError('quakes');
+    updateLogMeta();
+  } catch (e) {
+    console.warn('USGS error', e);
+    if (seq === quakesSeq) {
+      setDataError('quakes', t('btn.quakes') + ' : ' + (e && e.message ? e.message : '—'), t('err.quakeHint'));
+    }
+  }
+}
+
+/* Violet circles: radius grows with magnitude, opacity fades with age;
+   the magnitude is written out for the ones that are actually felt. */
+function drawQuakes(project) {
+  if (!state.quakesOn || !quakes.length) return;
+  const now = Date.now();
+  ctx.save();
+  ctx.textAlign = 'center';
+  for (const q of quakes) {
+    const p = project(q.lat, q.lon);
+    if (!p) continue;
+    const ageD = (now - q.t) / 86400000;
+    const fresh = Math.max(0.15, 1 - ageD / 30);
+    const r = Math.max(3, Math.min(18, Math.pow(Math.max(q.mag, 0.5), 1.6) * 1.5));
+    ctx.strokeStyle = `rgba(199,125,255,${0.35 + 0.55 * fresh})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = `rgba(199,125,255,${0.10 + 0.20 * fresh})`;
+    ctx.fill();
+    ctx.fillStyle = `rgba(233,214,255,${0.55 + 0.45 * fresh})`;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI * 2); ctx.fill();
+    if (q.mag >= 3) {
+      ctx.font = 'bold 9px ' + getCSS('--mono');
+      ctx.fillStyle = `rgba(233,214,255,${0.6 + 0.4 * fresh})`;
+      ctx.fillText('M' + q.mag.toFixed(1), p.x, p.y - r - 3);
+    }
+  }
+  ctx.restore();
+}
+
 function rebuildLayers() {
   if (state.precipOn) buildPrecipLayer();
   if (state.cloudsOn || state.windOn) buildMeteoLayers();
   if (state.lightOn) buildLightLayer();
   if (state.firesOn) buildFireLayer(true);
+  if (state.quakesOn) buildQuakeLayer(true);
   if (state.viewMode === 'map') buildBaseLayer();
 }
 
@@ -3101,6 +3248,7 @@ function drawScope(ts) {
     const rr = R * d / state.range;
     return { x: cx + Math.sin(b) * rr, y: cy - Math.cos(b) * rr };
   };
+  drawQuakes(scopeProject);
   drawFires(scopeProject);
   drawCells(scopeProject);
 
@@ -3253,6 +3401,7 @@ function drawMap() {
     if (Math.abs(p.x - cx) > R || Math.abs(p.y - cy) > R) return null;
     return p;
   };
+  drawQuakes(mapProject);
   drawFires(mapProject);
   drawCells(mapProject);
 
@@ -3417,6 +3566,7 @@ function updateLogMeta() {
   }
   if (state.cloudsOn && cloudDrift) parts.push(t('meta.drift') + ' ' + compass(cloudDrift.toBrg) + ' ' + cloudDrift.spd + ' km/h');
   if (state.firesOn && firesFetchedAt) parts.push(fires.length + ' ' + t(fires.length > 1 ? 'meta.fires' : 'meta.fire'));
+  if (state.quakesOn && quakesFetchedAt) parts.push(quakes.length + ' ' + t(quakes.length > 1 ? 'meta.quakes' : 'meta.quake'));
   meta.textContent = parts.length ? parts.join(' · ') : '—';
 }
 function renderLog() {
@@ -3506,6 +3656,7 @@ $('#lightBtn').onclick = () => {
   state.lightOn = !state.lightOn;
   $('#lightBtn').classList.toggle('on', state.lightOn);
   $('#firesBtn').classList.toggle('on', state.firesOn);
+  $('#quakesBtn').classList.toggle('on', state.quakesOn);
   saveState();
   updateAttrib();
   if (state.lightOn) buildLightLayer();
@@ -3519,6 +3670,15 @@ $('#firesBtn').onclick = () => {
   else { clearDataError('fires'); }
   updateLogMeta();
 };
+$('#quakesBtn').onclick = () => {
+  state.quakesOn = !state.quakesOn;
+  $('#quakesBtn').classList.toggle('on', state.quakesOn);
+  saveState();
+  updateAttrib();
+  if (state.quakesOn) buildQuakeLayer(true);
+  else clearDataError('quakes');
+  updateLogMeta();
+};
 $('#strikesBtn').onclick = () => {
   state.strikesShow = !state.strikesShow;
   $('#strikesBtn').classList.toggle('on', state.strikesShow);
@@ -3527,7 +3687,8 @@ $('#strikesBtn').onclick = () => {
 function updateAttrib() {
   $('#mapAttrib').textContent = 'fond de carte © OpenStreetMap · © CARTO' +
     (state.lightOn ? ' · pollution lumineuse © D. Lorenz' : '') +
-    (state.firesOn ? ' · feux © NASA FIRMS' : '');
+    (state.firesOn ? ' · ' + t('btn.fires') + ' © NASA FIRMS' : '') +
+    (state.quakesOn ? ' · ' + t('btn.quakes') + ' © USGS' : '');
 }
 $('#viewBtn').onclick = () => {
   state.viewMode = state.viewMode === 'map' ? 'ppi' : 'map';
@@ -3681,6 +3842,7 @@ function syncSettingsInputs() {
   $('#setWind').checked = state.windOn;
   $('#setLightOpacity').value = state.lightOpacity;
   $('#setFirmsKey').value = state.firmsKey || '';
+  $('#setQuakeMag').value = state.quakeMinMag;
   $('#setNotify').checked = state.notify;
   $('#setAuto').checked = state.autoReconnect;
 }
@@ -3702,6 +3864,11 @@ $('#setAutoLoc').onchange = (e) => {
   state.autoLocate = e.target.checked;
   saveState();
   if (state.autoLocate) autoLocateNow();
+};
+$('#setQuakeMag').onchange = (e) => {
+  state.quakeMinMag = Math.max(0, Math.min(9, parseFloat(e.target.value) || 2.5));
+  saveState();
+  if (state.quakesOn) buildQuakeLayer(true);
 };
 $('#setCellLabels').onchange = (e) => { state.cellLabels = e.target.checked; saveState(); };
 $('#setLightOpacity').oninput = (e) => { state.lightOpacity = parseFloat(e.target.value); saveState(); };
@@ -4016,6 +4183,8 @@ document.addEventListener('visibilitychange', () => {
     // refresh weather layers if stale (> 4 min)
     if (state.precipOn && (Date.now() - RV.fetchedAt > 240000)) loadRainviewerIndex();
     if (state.cloudsOn || state.windOn) buildMeteoLayers();
+    if (state.firesOn) buildFireLayer();
+    if (state.quakesOn) buildQuakeLayer();
     if (wsWanted && !ws) { wsBackoff = 1000; openWs(); }
   }
 });
@@ -4059,6 +4228,7 @@ function init() {
   if (state.cloudsOn || state.windOn) buildMeteoLayers();
   if (state.lightOn) buildLightLayer();
   if (state.firesOn) buildFireLayer(true);
+  if (state.quakesOn) buildQuakeLayer(true);
   if (state.viewMode === 'map') buildBaseLayer();
   if (state.animate) startAnim();
   if (!state.disclaimerSeen) openModal('disclaimerModal');
