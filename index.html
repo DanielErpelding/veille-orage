@@ -483,7 +483,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v3.0.1 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v3.0.2 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1 data-i18n="app.title">Cadran radar &amp; foudre</h1>
   <div class="subtitle" data-i18n="app.sub">précipitations · impacts temps réel · alerte proximité</div>
@@ -897,6 +897,7 @@ fr: {
   'err.other': "Nuages et vent sont momentanément indisponibles. L'app réessaie automatiquement. La pluie et la foudre continuent normalement.",
   'err.fireKey': 'Feux : clé NASA FIRMS manquante',
   'err.fireKeyHint': 'Ouvre Réglages → « Clé NASA FIRMS » et colle une clé (gratuite et immédiate sur firms.modaps.eosdis.nasa.gov/api/map_key). Elle reste sur ton appareil.',
+  'err.fireBadRequest': 'requête refusée (paramètres)',
   'err.fireLimit': "Quota de requêtes NASA FIRMS atteint — la clé reste valable. Attends une dizaine de minutes : les feux reviennent seuls. Éviter d'enchaîner les déplacements de carte avec la couche Feux active.",
   'err.fireHint': 'Vérifie la clé NASA FIRMS dans les Réglages. Les autres couches continuent normalement.',
   'pick.tap': "Touche la carte à l'endroit du site à surveiller.",
@@ -980,7 +981,7 @@ fr: {
 
       <h3>Feux actifs</h3>
       <p>Le bouton <code>Feux</code> affiche les détections des satellites VIIRS/NOAA-20 sur les 3 derniers jours. Il faut une <strong>clé NASA FIRMS</strong> (gratuite, immédiate, à coller dans les Réglages) : elle reste sur ton appareil et n'est envoyée qu'à la NASA.</p>
-      <p><strong>Ce que « feu » veut dire ici :</strong> les satellites mesurent des anomalies thermiques, pas des flammes. Torchères de raffineries, aciéries et autres sources de chaleur fixes seraient donc signalées comme des feux. L'app écarte ces fausses détections de deux façons : elle ne garde que les détections classées « feu de végétation » par la NASA (son champ <code>type</code> distingue volcans, sources fixes terrestres et torchères offshore), et elle regroupe surtout les détections par proximité réelle (2 km) sur une fenêtre de 7 jours et écarte tout groupe revu 3 jours différents ou étalé sur plus de 4 jours — signature d'une installation permanente, alors qu'un vrai feu brûle un à trois jours puis s'éteint. Plusieurs satellites sont interrogés (VIIRS NOAA-20, VIIRS S-NPP, MODIS), ce qui multiplie les passages et rend les sources fixes d'autant plus évidentes ; un feu vu par plusieurs satellites porte un second cercle de confirmation. Les détections de faible confiance sont également ignorées. Le compteur affiche entre parenthèses le nombre de sources fixes écartées, et le filtre se désactive dans les Réglages pour voir ce qu'il retire.</p>
+      <p><strong>Ce que « feu » veut dire ici :</strong> les satellites mesurent des anomalies thermiques, pas des flammes. Torchères de raffineries, aciéries et autres sources de chaleur fixes seraient donc signalées comme des feux. L'app écarte ces fausses détections de deux façons : elle ne garde que les détections classées « feu de végétation » par la NASA (son champ <code>type</code> distingue volcans, sources fixes terrestres et torchères offshore), et elle regroupe surtout les détections par proximité réelle (2 km) sur une fenêtre de 5 jours (le maximum accepté par FIRMS) et écarte tout groupe revu 4 jours différents ou étalé sur plus de 3 jours et demi — signature d'une installation permanente, alors qu'un vrai feu brûle un à trois jours puis s'éteint. Plusieurs satellites sont interrogés (VIIRS NOAA-20, VIIRS S-NPP, MODIS), ce qui multiplie les passages et rend les sources fixes d'autant plus évidentes ; un feu vu par plusieurs satellites porte un second cercle de confirmation. Les détections de faible confiance sont également ignorées. Le compteur affiche entre parenthèses le nombre de sources fixes écartées, et le filtre se désactive dans les Réglages pour voir ce qu'il retire.</p>
       <p>Malgré ce filtrage, une détection reste une indication, pas une confirmation : nuages, relief et heure de passage du satellite (2 à 4 survols par jour) limitent la couverture. En cas de doute, la référence reste les autorités locales.</p>
 
       <h3>Séismes</h3>
@@ -1075,6 +1076,7 @@ es: {
   'err.other': 'Nubes y viento no están disponibles momentáneamente. La app reintenta automáticamente. La lluvia y los rayos siguen funcionando.',
   'err.fireKey': 'Incendios: falta la clave NASA FIRMS',
   'err.fireKeyHint': 'Abre Ajustes → «Clave NASA FIRMS» y pega una clave (gratuita e inmediata en firms.modaps.eosdis.nasa.gov/api/map_key). Se queda en tu dispositivo.',
+  'err.fireBadRequest': 'petición rechazada (parámetros)',
   'err.fireLimit': 'Cuota de peticiones NASA FIRMS alcanzada — la clave sigue siendo válida. Espera unos diez minutos y los incendios vuelven solos. Evita encadenar desplazamientos del mapa con la capa Incendios activa.',
   'err.fireHint': 'Comprueba la clave NASA FIRMS en los Ajustes. Las demás capas siguen funcionando.',
   'pick.tap': 'Toca el mapa donde está el sitio a vigilar.',
@@ -1253,6 +1255,7 @@ de: {
   'err.other': 'Wolken und Wind sind vorübergehend nicht verfügbar. Die App versucht es automatisch erneut. Regen und Blitze laufen normal weiter.',
   'err.fireKey': 'Brände: NASA-FIRMS-Schlüssel fehlt',
   'err.fireKeyHint': 'Öffne Einstellungen → „NASA-FIRMS-Schlüssel“ und füge einen Schlüssel ein (kostenlos und sofort unter firms.modaps.eosdis.nasa.gov/api/map_key). Er bleibt auf deinem Gerät.',
+  'err.fireBadRequest': 'Anfrage abgelehnt (Parameter)',
   'err.fireLimit': 'NASA-FIRMS-Abruflimit erreicht — der Schlüssel bleibt gültig. Warte etwa zehn Minuten, dann kommen die Brände von selbst zurück. Vermeide es, die Karte bei aktiver Brände-Ebene wiederholt zu verschieben.',
   'err.fireHint': 'Prüfe den NASA-FIRMS-Schlüssel in den Einstellungen. Die übrigen Ebenen laufen normal weiter.',
   'pick.tap': 'Tippe auf die Karte an die Stelle des zu überwachenden Standorts.',
@@ -1431,6 +1434,7 @@ it: {
   'err.other': "Nuvole e vento non sono momentaneamente disponibili. L'app riprova automaticamente. Pioggia e fulmini continuano normalmente.",
   'err.fireKey': 'Incendi: manca la chiave NASA FIRMS',
   'err.fireKeyHint': 'Apri Impostazioni → «Chiave NASA FIRMS» e incolla una chiave (gratuita e immediata su firms.modaps.eosdis.nasa.gov/api/map_key). Resta sul tuo dispositivo.',
+  'err.fireBadRequest': 'richiesta rifiutata (parametri)',
   'err.fireLimit': 'Quota di richieste NASA FIRMS raggiunta — la chiave resta valida. Attendi una decina di minuti e gli incendi tornano da soli. Evita di spostare ripetutamente la mappa con il livello Incendi attivo.',
   'err.fireHint': 'Controlla la chiave NASA FIRMS nelle Impostazioni. Gli altri livelli continuano normalmente.',
   'pick.tap': 'Tocca la mappa dove si trova il sito da sorvegliare.',
@@ -1609,6 +1613,7 @@ en: {
   'err.other': 'Clouds and wind are momentarily unavailable. The app retries automatically. Rain and lightning carry on normally.',
   'err.fireKey': 'Fires: NASA FIRMS key missing',
   'err.fireKeyHint': 'Open Settings → "NASA FIRMS key" and paste a key (free and instant at firms.modaps.eosdis.nasa.gov/api/map_key). It stays on your device.',
+  'err.fireBadRequest': 'request rejected (parameters)',
   'err.fireLimit': 'NASA FIRMS request quota reached — the key is still valid. Wait about ten minutes and the fires come back on their own. Avoid panning the map repeatedly with the Fires layer on.',
   'err.fireHint': 'Check the NASA FIRMS key in Settings. The other layers carry on normally.',
   'pick.tap': 'Tap the map where the site to watch is.',
@@ -2459,8 +2464,12 @@ const FIRE_SOURCES = ['VIIRS_NOAA20_NRT', 'VIIRS_SNPP_NRT', 'MODIS_NRT'];
 const FIRE_MIN_INTERVAL = 120000;
 let fireRetryTimer = null;
 let firesSourcesOk = 0;
-const FIRE_EVIDENCE_DAYS = 7;   // window used as evidence against fixed sources
-const FIRE_DISPLAY_DAYS = 3;    // window actually drawn
+/* The FIRMS area API accepts a day range of 1..5 — asking for more makes it
+   reject the whole request and answer with its full usage notice, whose very
+   first line is "Invalid MAP_KEY." even when the key is perfectly good. */
+const FIRE_MAX_DAYS = 5;
+const FIRE_EVIDENCE_DAYS = Math.min(5, FIRE_MAX_DAYS);  // evidence against fixed sources
+const FIRE_DISPLAY_DAYS = 3;                            // window actually drawn
 let firesFiltered = 0;          // clusters rejected as permanent heat sources
 
 /* Great-circle distance in km, small-angle friendly (used for clustering). */
@@ -2513,7 +2522,15 @@ async function buildFireLayer(force) {
            surfaced, never an empty result to be swallowed. */
         const head = (txt.split('\n')[0] || '').toLowerCase();
         if (!head.includes('latitude')) {
-          throw new Error((txt.trim().split('\n')[0] || 'réponse inattendue').slice(0, 140));
+          /* When any parameter is wrong FIRMS prints every rule it knows,
+             starting with "Invalid MAP_KEY." — reporting that first line
+             verbatim wrongly accuses the key, so a multi-rule dump is
+             reported as a malformed request instead. */
+          const lines = txt.trim().split('\n').filter(l => l.trim());
+          const dump = lines.filter(l => /^invalid/i.test(l.trim())).length > 1;
+          throw new Error(dump
+            ? t('err.fireBadRequest') + ' — ' + lines.slice(1, 3).join(' ').slice(0, 110)
+            : (lines[0] || 'réponse inattendue').slice(0, 140));
         }
         perSource.push({ name: srcName, rows: parseCsv(txt) });
       } catch (e) {
@@ -2583,8 +2600,11 @@ async function buildFireLayer(force) {
       const days = new Set(c.items.map(f => new Date(f.t).toISOString().slice(0, 10)));
       const times = c.items.map(f => f.t);
       const span = Math.max(...times) - Math.min(...times);
+      /* Over a five-day window a wildfire burns one to three consecutive
+         days; a plant is caught at both ends of the window even when cloud
+         hides it in between. The span is therefore the stronger signal. */
       const fixed = state.fireFilterFixed !== false &&
-                    (days.size >= 3 || span >= 4 * DAY);
+                    (days.size >= 4 || span >= 3.5 * DAY);
       if (fixed) { firesFiltered++; continue; }
       const sats = new Set(c.items.map(f => f.sat));
       for (const f of c.items) {
