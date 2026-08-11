@@ -483,7 +483,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>PPI STORM SCOPE</span>
-    <span class="version">v3.0 · RAINVIEWER + BLITZORTUNG</span>
+    <span class="version">v3.0.1 · RAINVIEWER + BLITZORTUNG</span>
   </div>
   <h1 data-i18n="app.title">Cadran radar &amp; foudre</h1>
   <div class="subtitle" data-i18n="app.sub">précipitations · impacts temps réel · alerte proximité</div>
@@ -897,6 +897,7 @@ fr: {
   'err.other': "Nuages et vent sont momentanément indisponibles. L'app réessaie automatiquement. La pluie et la foudre continuent normalement.",
   'err.fireKey': 'Feux : clé NASA FIRMS manquante',
   'err.fireKeyHint': 'Ouvre Réglages → « Clé NASA FIRMS » et colle une clé (gratuite et immédiate sur firms.modaps.eosdis.nasa.gov/api/map_key). Elle reste sur ton appareil.',
+  'err.fireLimit': "Quota de requêtes NASA FIRMS atteint — la clé reste valable. Attends une dizaine de minutes : les feux reviennent seuls. Éviter d'enchaîner les déplacements de carte avec la couche Feux active.",
   'err.fireHint': 'Vérifie la clé NASA FIRMS dans les Réglages. Les autres couches continuent normalement.',
   'pick.tap': "Touche la carte à l'endroit du site à surveiller.",
   'pick.hint': "Déplace la carte d'un doigt, zoome à deux doigts.",
@@ -1074,6 +1075,7 @@ es: {
   'err.other': 'Nubes y viento no están disponibles momentáneamente. La app reintenta automáticamente. La lluvia y los rayos siguen funcionando.',
   'err.fireKey': 'Incendios: falta la clave NASA FIRMS',
   'err.fireKeyHint': 'Abre Ajustes → «Clave NASA FIRMS» y pega una clave (gratuita e inmediata en firms.modaps.eosdis.nasa.gov/api/map_key). Se queda en tu dispositivo.',
+  'err.fireLimit': 'Cuota de peticiones NASA FIRMS alcanzada — la clave sigue siendo válida. Espera unos diez minutos y los incendios vuelven solos. Evita encadenar desplazamientos del mapa con la capa Incendios activa.',
   'err.fireHint': 'Comprueba la clave NASA FIRMS en los Ajustes. Las demás capas siguen funcionando.',
   'pick.tap': 'Toca el mapa donde está el sitio a vigilar.',
   'pick.hint': 'Desplaza con un dedo, haz zoom con dos.',
@@ -1251,6 +1253,7 @@ de: {
   'err.other': 'Wolken und Wind sind vorübergehend nicht verfügbar. Die App versucht es automatisch erneut. Regen und Blitze laufen normal weiter.',
   'err.fireKey': 'Brände: NASA-FIRMS-Schlüssel fehlt',
   'err.fireKeyHint': 'Öffne Einstellungen → „NASA-FIRMS-Schlüssel“ und füge einen Schlüssel ein (kostenlos und sofort unter firms.modaps.eosdis.nasa.gov/api/map_key). Er bleibt auf deinem Gerät.',
+  'err.fireLimit': 'NASA-FIRMS-Abruflimit erreicht — der Schlüssel bleibt gültig. Warte etwa zehn Minuten, dann kommen die Brände von selbst zurück. Vermeide es, die Karte bei aktiver Brände-Ebene wiederholt zu verschieben.',
   'err.fireHint': 'Prüfe den NASA-FIRMS-Schlüssel in den Einstellungen. Die übrigen Ebenen laufen normal weiter.',
   'pick.tap': 'Tippe auf die Karte an die Stelle des zu überwachenden Standorts.',
   'pick.hint': 'Mit einem Finger verschieben, mit zwei Fingern zoomen.',
@@ -1428,6 +1431,7 @@ it: {
   'err.other': "Nuvole e vento non sono momentaneamente disponibili. L'app riprova automaticamente. Pioggia e fulmini continuano normalmente.",
   'err.fireKey': 'Incendi: manca la chiave NASA FIRMS',
   'err.fireKeyHint': 'Apri Impostazioni → «Chiave NASA FIRMS» e incolla una chiave (gratuita e immediata su firms.modaps.eosdis.nasa.gov/api/map_key). Resta sul tuo dispositivo.',
+  'err.fireLimit': 'Quota di richieste NASA FIRMS raggiunta — la chiave resta valida. Attendi una decina di minuti e gli incendi tornano da soli. Evita di spostare ripetutamente la mappa con il livello Incendi attivo.',
   'err.fireHint': 'Controlla la chiave NASA FIRMS nelle Impostazioni. Gli altri livelli continuano normalmente.',
   'pick.tap': 'Tocca la mappa dove si trova il sito da sorvegliare.',
   'pick.hint': 'Sposta con un dito, ingrandisci con due.',
@@ -1605,6 +1609,7 @@ en: {
   'err.other': 'Clouds and wind are momentarily unavailable. The app retries automatically. Rain and lightning carry on normally.',
   'err.fireKey': 'Fires: NASA FIRMS key missing',
   'err.fireKeyHint': 'Open Settings → "NASA FIRMS key" and paste a key (free and instant at firms.modaps.eosdis.nasa.gov/api/map_key). It stays on your device.',
+  'err.fireLimit': 'NASA FIRMS request quota reached — the key is still valid. Wait about ten minutes and the fires come back on their own. Avoid panning the map repeatedly with the Fires layer on.',
   'err.fireHint': 'Check the NASA FIRMS key in Settings. The other layers carry on normally.',
   'pick.tap': 'Tap the map where the site to watch is.',
   'pick.hint': 'Pan with one finger, zoom with two.',
@@ -2446,6 +2451,14 @@ function confOk(row) {
 }
 
 const FIRE_SOURCES = ['VIIRS_NOAA20_NRT', 'VIIRS_SNPP_NRT', 'MODIS_NRT'];
+/* FIRMS meters transactions per key over a rolling window. Panning the map
+   used to force a full refetch on every settle, which — once each refetch
+   became three requests — was enough to exhaust the allowance and make a
+   perfectly valid key look revoked. Fetches are now throttled, deferred
+   rather than dropped, and issued one after another. */
+const FIRE_MIN_INTERVAL = 120000;
+let fireRetryTimer = null;
+let firesSourcesOk = 0;
 const FIRE_EVIDENCE_DAYS = 7;   // window used as evidence against fixed sources
 const FIRE_DISPLAY_DAYS = 3;    // window actually drawn
 let firesFiltered = 0;          // clusters rejected as permanent heat sources
@@ -2465,7 +2478,15 @@ async function buildFireLayer(force) {
   }
   const sameView = firesSite && firesSite.lat === view.lat &&
                    firesSite.lon === view.lon && firesSite.range === view.range;
-  if (!force && sameView && Date.now() - firesFetchedAt < 1800000) return;
+  const since = Date.now() - firesFetchedAt;
+  if (!force) {
+    if (sameView && since < 1800000) return;
+    if (firesFetchedAt && since < FIRE_MIN_INTERVAL) {
+      clearTimeout(fireRetryTimer);   // defer, so a real move still gets data
+      fireRetryTimer = setTimeout(() => buildFireLayer(), FIRE_MIN_INTERVAL - since + 500);
+      return;
+    }
+  }
 
   const seq = ++firesBuildSeq;
   try {
@@ -2479,26 +2500,38 @@ async function buildFireLayer(force) {
        reduces missed fires and — decisively — multiplies the evidence that
        exposes a permanent industrial source. A source that fails is skipped
        rather than failing the whole layer. */
-    const perSource = await Promise.all(FIRE_SOURCES.map(async (srcName) => {
+    const perSource = [];
+    for (const srcName of FIRE_SOURCES) {
       try {
         const url = `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${encodeURIComponent(key)}` +
                     `/${srcName}/${bbox}/${FIRE_EVIDENCE_DAYS}`;
         const res = await fetch(url);
         const txt = await res.text();
         if (!res.ok) throw new Error('HTTP ' + res.status);
-        const headPeek = txt.slice(0, 200);
-        if (/invalid|unauthor/i.test(headPeek) && !/latitude/i.test(headPeek)) {
-          throw new Error(txt.trim().split('\n')[0].slice(0, 120));
+        /* A FIRMS refusal comes back as plain prose, not as CSV. Anything
+           whose header lacks a latitude column is an error message to be
+           surfaced, never an empty result to be swallowed. */
+        const head = (txt.split('\n')[0] || '').toLowerCase();
+        if (!head.includes('latitude')) {
+          throw new Error((txt.trim().split('\n')[0] || 'réponse inattendue').slice(0, 140));
         }
-        return { name: srcName, rows: parseCsv(txt) };
-      } catch (e) { return { name: srcName, rows: null, error: e }; }
-    }));
-    if (seq !== firesBuildSeq) return;
+        perSource.push({ name: srcName, rows: parseCsv(txt) });
+      } catch (e) {
+        perSource.push({ name: srcName, rows: null, error: e });
+      }
+      if (seq !== firesBuildSeq) return;
+    }
 
     const ok = perSource.filter(s => s.rows);
+    firesSourcesOk = ok.length;
     if (!ok.length) {
-      const first = perSource.find(s => s.error);
-      throw new Error(first && first.error ? first.error.message : '—');
+      const detail = perSource
+        .map(s => s.name.replace(/_NRT$/, '') + ' : ' + ((s.error && s.error.message) || '—'))
+        .join(' · ');
+      const limited = /transaction|limit|exceed|too many|429|quota/i.test(detail);
+      setDataError('fires', t('btn.fires') + ' — ' + detail.slice(0, 200),
+                   t(limited ? 'err.fireLimit' : 'err.fireHint'));
+      return;
     }
 
     // merge all constellations into one detection set
@@ -2620,11 +2653,20 @@ let quakesFetchedAt = 0;
 let quakesSeq = 0;
 let quakesView = null;
 
+let quakeRetryTimer = null;
 async function buildQuakeLayer(force) {
   if (!state.quakesOn) return;
   const same = quakesView && quakesView.lat === view.lat &&
                quakesView.lon === view.lon && quakesView.range === view.range;
-  if (!force && same && Date.now() - quakesFetchedAt < 600000) return;
+  const sinceQ = Date.now() - quakesFetchedAt;
+  if (!force) {
+    if (same && sinceQ < 600000) return;
+    if (quakesFetchedAt && sinceQ < 60000) {
+      clearTimeout(quakeRetryTimer);
+      quakeRetryTimer = setTimeout(() => buildQuakeLayer(), 60000 - sinceQ + 500);
+      return;
+    }
+  }
   const seq = ++quakesSeq;
   try {
     const { lat, lon } = view;
@@ -2700,8 +2742,8 @@ function rebuildLayers() {
   if (state.precipOn) buildPrecipLayer();
   if (state.cloudsOn || state.windOn) buildMeteoLayers();
   if (state.lightOn) buildLightLayer();
-  if (state.firesOn) buildFireLayer(true);
-  if (state.quakesOn) buildQuakeLayer(true);
+  if (state.firesOn) buildFireLayer();
+  if (state.quakesOn) buildQuakeLayer();
   if (state.viewMode === 'map') buildBaseLayer();
 }
 
@@ -3640,7 +3682,9 @@ function updateLogMeta() {
   if (state.cloudsOn && cloudDrift) parts.push(t('meta.drift') + ' ' + compass(cloudDrift.toBrg) + ' ' + cloudDrift.spd + ' km/h');
   if (state.firesOn && firesFetchedAt) {
     parts.push(fires.length + ' ' + t(fires.length > 1 ? 'meta.fires' : 'meta.fire') +
-               (firesFiltered ? ' (−' + firesFiltered + ')' : ''));
+               (firesFiltered ? ' (−' + firesFiltered + ')' : '') +
+               (firesSourcesOk && firesSourcesOk < FIRE_SOURCES.length
+                 ? ' ' + firesSourcesOk + '/' + FIRE_SOURCES.length : ''));
   }
   if (state.quakesOn && quakesFetchedAt) parts.push(quakes.length + ' ' + t(quakes.length > 1 ? 'meta.quakes' : 'meta.quake'));
   meta.textContent = parts.length ? parts.join(' · ') : '—';

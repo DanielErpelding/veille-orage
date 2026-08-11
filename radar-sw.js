@@ -3,7 +3,7 @@
    Blitzortung WebSocket) always goes to the network. */
 'use strict';
 
-const CACHE = 'jlp-radar-ppi-v33';
+const CACHE = 'jlp-radar-ppi-v34';
 const SHELL = [
   './',
   'index.html',
